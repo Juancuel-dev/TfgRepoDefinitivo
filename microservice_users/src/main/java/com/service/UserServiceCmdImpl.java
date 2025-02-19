@@ -2,7 +2,9 @@ package com.service;
 
 import com.model.User;
 import com.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,6 +13,8 @@ import java.util.List;
 public class UserServiceCmdImpl implements UserServiceCmd {
 
     private final UserRepository userRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     // Constructor de inyección de dependencias
     public UserServiceCmdImpl(UserRepository userRepository) {
@@ -35,33 +39,42 @@ public class UserServiceCmdImpl implements UserServiceCmd {
     }
 
     // Guardar un juego (crear o actualizar)
-    public User save(User User) {
-        return userRepository.save(User);
+    public User save(User user) {
+        String encryptedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encryptedPassword);
+        return userRepository.save(user);
     }
 
     // Guardar un juego (crear o actualizar)
-    public List<User> saveAll(List<User> Users) {
-        return userRepository.saveAll(Users);
+    public List<User> saveAll(List<User> users) {
+        // Cifrar las contraseñas de todos los usuarios
+        users.forEach(user -> {
+            String encryptedPassword = passwordEncoder.encode(user.getPassword());
+            user.setPassword(encryptedPassword);
+        });
+
+        // Lógica para guardar los usuarios en la base de datos
+        return userRepository.saveAll(users);
     }
 
     // Actualizar un juego
-    public User update(User User) throws NotFoundException{
+    public User update(User user) throws NotFoundException{
         // Buscar el juego por ID
-        return userRepository.findById(User.getId())
+        return userRepository.findById(user.getId())
                 .map(buscado -> {
                     // Si el juego existe, actualizamos sus campos
-                    buscado.setName(User.getName());
-                    buscado.setEmail(User.getEmail());
-                    buscado.setPassword(User.getPassword());
-                    buscado.setAge(User.getAge());
-                    buscado.setSurname1(User.getSurname1());
-                    buscado.setSurname2(User.getSurname2());
-                    buscado.setRoles(User.getRoles());
-                    buscado.setUsername(User.getUsername());
+                    buscado.setName(user.getName());
+                    buscado.setEmail(user.getEmail());
+                    buscado.setPassword(user.getPassword());
+                    buscado.setAge(user.getAge());
+                    buscado.setSurname1(user.getSurname1());
+                    buscado.setSurname2(user.getSurname2());
+                    buscado.setRoles(user.getRoles());
+                    buscado.setUsername(user.getUsername());
 
                     return userRepository.save(buscado);
                 })
-                .orElseThrow(() -> new NotFoundException());
+                .orElseThrow(NotFoundException::new);
     }
 
     // Comprobar si un juego existe por su ID

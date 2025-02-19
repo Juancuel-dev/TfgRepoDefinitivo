@@ -1,7 +1,9 @@
 package com.controller;
 
 import com.model.User;
+import com.model.UserDTO;
 import com.service.UserServiceCmdImpl;
+import com.util.UserMapper;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +17,13 @@ import java.util.List;
 public class UsersController {
 
     private final UserServiceCmdImpl UsersService;
+    private final UserServiceCmdImpl userServiceCmdImpl;
 
     // Constructor de inyección de dependencias
-    public UsersController(UserServiceCmdImpl UsersService)
+    public UsersController(UserServiceCmdImpl UsersService, UserServiceCmdImpl userServiceCmdImpl)
     {
         this.UsersService = UsersService;
+        this.userServiceCmdImpl = userServiceCmdImpl;
     }
 
     // Obtener todos los usuarios
@@ -104,6 +108,15 @@ public class UsersController {
             return ResponseEntity.noContent().build();
         } catch (NotFoundException nfe) {
             return ResponseEntity.notFound().build(); // Retornamos 204 No Content si el usuario se eliminó correctamente
+        }
+    }
+
+    @GetMapping("/auth")
+    public ResponseEntity<UserDTO> getUserDTOByUsername(@RequestParam String username){
+        try{
+            return ResponseEntity.ok(UserMapper.INSTANCE.userToUserDTO(userServiceCmdImpl.findByUsername(username)));
+        }catch(NotFoundException nfe){
+            return ResponseEntity.notFound().build();
         }
     }
 }

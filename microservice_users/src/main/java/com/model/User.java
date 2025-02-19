@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.persistence.Id;
 import lombok.*;
 
+@Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -11,8 +12,6 @@ import lombok.*;
 @Setter
 @Table(name = "users")
 public class User {
-
-    private static int cuantosId = 0;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
