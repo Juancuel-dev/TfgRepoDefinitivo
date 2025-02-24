@@ -1,6 +1,6 @@
-package gateway.service;
+package tfg.service;
 
-import gateway.model.Game;
+import tfg.model.Game;
 
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.stereotype.Service;
@@ -24,5 +24,5 @@ public interface GamesServiceCmd {
     // Comprobar si un juego existe por su ID
     boolean existsById(String id) throws NotFoundException;
 
-    void deleteById(String id);
+    void deleteById(String id) throws NotFoundException;
 }

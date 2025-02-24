@@ -1,4 +1,4 @@
-package gateway.model;
+package tfg.model;
 
 import lombok.Data;
 

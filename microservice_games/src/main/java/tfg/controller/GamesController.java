@@ -1,12 +1,12 @@
-package gateway.controller;
+package tfg.controller;
 
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import gateway.model.Game;
-import gateway.service.GamesServiceCmdImpl;
+import tfg.model.Game;
+import tfg.service.GamesServiceCmdImpl;
 
 import java.net.URI;
 import java.util.List;

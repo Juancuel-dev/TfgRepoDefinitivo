@@ -1,10 +1,10 @@
-package gateway.service;
+package tfg.service;
 
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.stereotype.Service;
 
-import gateway.model.Game;
-import gateway.repository.GamesRepository;
+import tfg.model.Game;
+import tfg.repository.GamesRepository;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package gateway.controller;
+package tfg.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

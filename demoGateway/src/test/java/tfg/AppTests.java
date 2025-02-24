@@ -1,10 +1,10 @@
-package gateway.example.demotfgmongo;
+package tfg;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DemoTfgMongoApplicationTests {
+class AppTests {
 
     @Test
     void contextLoads() {
