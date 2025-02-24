@@ -1,4 +1,4 @@
-package com.model;
+package gateway.model;
 
 import lombok.Data;
 

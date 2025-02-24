@@ -1,10 +1,10 @@
-package com.service;
+package gateway.service;
 
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.model.Game;
-import com.repository.GamesRepository;
+import gateway.model.Game;
+import gateway.repository.GamesRepository;
 
 import java.util.List;
 

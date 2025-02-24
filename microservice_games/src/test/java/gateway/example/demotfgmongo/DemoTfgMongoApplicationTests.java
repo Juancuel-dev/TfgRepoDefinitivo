@@ -1,4 +1,4 @@
-package com.example.demotfgmongo;
+package gateway.example.demotfgmongo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,12 +1,12 @@
-package com.controller;
+package gateway.controller;
 
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.model.Game;
-import com.service.GamesServiceCmdImpl;
+import gateway.model.Game;
+import gateway.service.GamesServiceCmdImpl;
 
 import java.net.URI;
 import java.util.List;
