@@ -2,24 +2,22 @@ package com.service;
 
 import com.model.User;
 import com.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
+@AllArgsConstructor
 public class UserServiceCmdImpl implements UserServiceCmd {
 
     private final UserRepository userRepository;
-    @Autowired
     private PasswordEncoder passwordEncoder;
-
-    // Constructor de inyección de dependencias
-    public UserServiceCmdImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     // Obtener todos los juegos
     public List<User> findAll() {
@@ -89,4 +87,13 @@ public class UserServiceCmdImpl implements UserServiceCmd {
         }
         userRepository.deleteById(id);
     }
+
+    @Override
+    public boolean isAdmin() {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"));
+
+    }
+
+
 }

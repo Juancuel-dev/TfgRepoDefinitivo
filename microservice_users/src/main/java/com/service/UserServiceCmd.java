@@ -26,4 +26,6 @@ public interface UserServiceCmd {
     boolean existsById(Long id);
 
     void deleteById(Long id) throws NotFoundException;
+
+    boolean isAdmin();
 }
