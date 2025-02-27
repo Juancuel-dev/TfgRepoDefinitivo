@@ -1,7 +1,7 @@
 package com.service;
 
 import com.model.User;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,19 +13,19 @@ public interface UserServiceCmd {
     List<User> findAll();
 
     // Buscar un usuario por su ID
-    User findById(Long id) throws NotFoundException;
+    User findById(Long id) throws EntityNotFoundException;
     // Buscar un usuario por su username
-    User findByUsername(String username) throws NotFoundException;
+    User findByUsername(String username) throws EntityNotFoundException;
 
     // Guardar un usuario (crear o actualizar)
     User save(User User);
     // Actualizar un usuario
-    User update(User User) throws NotFoundException;
+    User update(User User) throws EntityNotFoundException;
 
     // Comprobar si un usuario existe por su ID
     boolean existsById(Long id);
 
-    void deleteById(Long id) throws NotFoundException;
+    void deleteById(Long id) throws EntityNotFoundException;
 
     boolean isAdmin();
 }

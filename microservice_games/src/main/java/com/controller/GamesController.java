@@ -1,6 +1,6 @@
 package com.controller;
 
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -33,7 +33,7 @@ public class GamesController {
 
     // Obtener un juego por id
     @GetMapping("/{id}")
-    public ResponseEntity<Game> findById(@PathVariable String id) throws NotFoundException {
+    public ResponseEntity<Game> findById(@PathVariable String id) throws EntityNotFoundException {
         return ResponseEntity.ok(gamesService.findById(id));
     }
 
@@ -83,7 +83,7 @@ public class GamesController {
         try {
             gamesService.deleteById(id);  // Llamamos al servicio para eliminar el juego
             return ResponseEntity.noContent().build();
-        } catch (NotFoundException nfe) {
+        } catch (EntityNotFoundException nfe) {
             return ResponseEntity.notFound().build();
         }
     }

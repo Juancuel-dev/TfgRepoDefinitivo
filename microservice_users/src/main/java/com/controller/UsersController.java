@@ -4,9 +4,9 @@ import com.model.User;
 import com.model.UserDTO;
 import com.service.UserServiceCmdImpl;
 import com.util.UserMapper;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +33,7 @@ public class UsersController {
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(userService.findById(id));
-        } catch (NotFoundException nfe) {
+        } catch (EntityNotFoundException nfe) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -53,7 +53,7 @@ public class UsersController {
     public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
         try {
             return ResponseEntity.ok(userService.update(user));
-        } catch (NotFoundException nfe) {
+        } catch (EntityNotFoundException nfe) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -65,7 +65,7 @@ public class UsersController {
 
             userService.deleteById(id);
             return ResponseEntity.noContent().build();
-        } catch (NotFoundException nfe) {
+        } catch (EntityNotFoundException nfe) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -76,7 +76,7 @@ public class UsersController {
     public ResponseEntity<UserDTO> getUserDTOByUsername(@RequestParam String username) {
         try {
             return ResponseEntity.ok(UserMapper.INSTANCE.userToUserDTO(userService.findByUsername(username)));
-        } catch (NotFoundException nfe) {
+        } catch (EntityNotFoundException nfe) {
             return ResponseEntity.notFound().build();
         }
     }

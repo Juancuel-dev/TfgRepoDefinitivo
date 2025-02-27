@@ -1,8 +1,5 @@
 package com.config;
 
-import com.repository.UserRepository;
-import com.service.UserServiceCmd;
-import com.service.UserServiceCmdImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;

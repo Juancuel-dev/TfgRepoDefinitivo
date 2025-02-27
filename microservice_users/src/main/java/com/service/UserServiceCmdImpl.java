@@ -2,15 +2,14 @@ package com.service;
 
 import com.model.User;
 import com.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @AllArgsConstructor
@@ -25,15 +24,15 @@ public class UserServiceCmdImpl implements UserServiceCmd {
     }
 
     // Buscar un juego por su ID
-    public User findById(Long id) throws NotFoundException{
+    public User findById(Long id) throws EntityNotFoundException {
         return userRepository.findById(id)
-                .orElseThrow(NotFoundException::new);
+                .orElseThrow(EntityNotFoundException::new);
     }
 
     @Override
-    public User findByUsername(String username) throws NotFoundException {
+    public User findByUsername(String username) throws EntityNotFoundException {
         return userRepository.findByUsername(username)
-                .orElseThrow(NotFoundException::new);
+                .orElseThrow(EntityNotFoundException::new);
     }
 
     // Guardar un juego (crear o actualizar)
@@ -56,7 +55,7 @@ public class UserServiceCmdImpl implements UserServiceCmd {
     }
 
     // Actualizar un juego
-    public User update(User user) throws NotFoundException{
+    public User update(User user) throws EntityNotFoundException{
         // Buscar el juego por ID
         return userRepository.findById(user.getId())
                 .map(buscado -> {
@@ -72,7 +71,7 @@ public class UserServiceCmdImpl implements UserServiceCmd {
 
                     return userRepository.save(buscado);
                 })
-                .orElseThrow(NotFoundException::new);
+                .orElseThrow(EntityNotFoundException::new);
     }
 
     // Comprobar si un juego existe por su ID
@@ -81,9 +80,9 @@ public class UserServiceCmdImpl implements UserServiceCmd {
     }
 
     // Eliminar un juego por su ID
-    public void deleteById(Long id) throws NotFoundException{
+    public void deleteById(Long id) throws EntityNotFoundException{
         if (!userRepository.existsById(id)) {
-            throw new NotFoundException();
+            throw new EntityNotFoundException();
         }
         userRepository.deleteById(id);
     }

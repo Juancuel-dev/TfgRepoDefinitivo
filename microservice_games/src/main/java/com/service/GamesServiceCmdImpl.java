@@ -1,6 +1,6 @@
 package com.service;
 
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.model.Game;
@@ -24,9 +24,9 @@ public class GamesServiceCmdImpl implements GamesServiceCmd{
     }
 
     // Buscar un juego por su ID
-    public Game findById(String id) throws NotFoundException{
+    public Game findById(String id) throws EntityNotFoundException {
         return gamesRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException());
+                .orElseThrow(EntityNotFoundException::new);
     }
 
     // Guardar un juego (crear o actualizar)
@@ -62,9 +62,9 @@ public class GamesServiceCmdImpl implements GamesServiceCmd{
     }
 
     // Eliminar un juego por su ID
-    public void deleteById(String id) throws NotFoundException {
+    public void deleteById(String id) throws EntityNotFoundException {
         if (!gamesRepository.existsById(id)) {
-            throw new NotFoundException();
+            throw new EntityNotFoundException();
         }
         gamesRepository.deleteById(id);
     }

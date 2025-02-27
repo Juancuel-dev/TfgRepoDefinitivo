@@ -10,7 +10,7 @@ import lombok.*;
 public class GameDTO {
 
     private String name;
-    private Integer precio;
+    private Float precio;
     private Integer metacritic;
     private String consola;
 

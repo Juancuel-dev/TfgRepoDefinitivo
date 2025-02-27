@@ -24,7 +24,7 @@ public class Game {
     private String creator;
 
     @Field("price")
-    private Integer precio;
+    private Float precio;
 
     @Field("stock")
     private Integer stock;
@@ -36,7 +36,7 @@ public class Game {
     private String consola;
 
     // Constructor parametrizado
-    public Game(String name, String description, String creator, Integer precio, Integer stock, Integer metacritic, String consola) {
+    public Game(String name, String description, String creator, Float precio, Integer stock, Integer metacritic, String consola) {
 
         cuantosId++;
         this.id = cuantosId + "";
@@ -56,7 +56,7 @@ public class Game {
         this.name = "";
         this.description = "";
         this.creator = "";
-        this.precio = -1;
+        this.precio = -1F;
         this.stock = -1;
         this.metacritic = -1;
         this.consola = "";

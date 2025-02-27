@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "cart_entry")
 public class CartEntry {
 
     @Id
@@ -16,12 +17,18 @@ public class CartEntry {
     private Long id;
 
     @Column(nullable = false)
-    private Long productId;
+    private Long gameId;
 
     @Column(nullable = false)
     private Long customerId;
 
     @Column(nullable = false)
     private Integer quantity;
+
+    public CartEntry(CartEntryDTO cartEntryDTO) {
+        this.gameId = cartEntryDTO.getGameId();
+        this.customerId = cartEntryDTO.getCustomerId();
+        this.quantity = cartEntryDTO.getQuantity();
+    }
 
 }

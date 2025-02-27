@@ -8,7 +8,7 @@ import org.mapstruct.factory.Mappers;
 public interface CartEntryMapper {
 
     CartEntryMapper INSTANCE = Mappers.getMapper(CartEntryMapper.class);
-    CartEntryDTO cartEntryToCartEntryDTO(CartEntry entry);
+    CartEntryDTO cartEntryToCartEntryDTO(CartEntry game);
 }
 
 
