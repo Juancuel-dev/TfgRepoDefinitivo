@@ -35,7 +35,7 @@ public class UserServiceCmdImpl implements UserServiceCmd {
                 .orElseThrow(EntityNotFoundException::new);
     }
 
-    // Guardar un juego (crear o actualizar)
+    // Guardar un user (crear o actualizar)
     public User save(User user) {
         String encryptedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encryptedPassword);

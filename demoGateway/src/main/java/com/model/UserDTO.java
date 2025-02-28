@@ -5,8 +5,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Setter
@@ -19,11 +19,12 @@ public class UserDTO implements UserDetails {
 
     private String password;
 
-    private List<String> roles;
+    private String roles;
+
     public UserDTO(String username, String password) {
         this.username = username;
         this.password = password;
-        this.roles = List.of("USER");
+        this.roles = "USER";
     }
 
     @Override
@@ -43,12 +44,10 @@ public class UserDTO implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Si roles es un ArrayList<String>, puedes usarlo directamente
-        return roles.stream()
+        return Arrays.stream(roles.split(","))
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }
-
 
     @Override
     public boolean isAccountNonExpired() {

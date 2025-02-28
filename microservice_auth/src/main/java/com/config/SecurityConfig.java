@@ -1,16 +1,35 @@
-package com.auth;
+package com.config;
 
+import com.model.UserDTO;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.http.MediaType;
-import org.springframework.security.config.Customizer;
+import org.springframework.http.*;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -22,22 +41,10 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
-
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.web.client.RestTemplate;
-
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.UUID;
 
 @Configuration
 @EnableWebSecurity
@@ -54,14 +61,12 @@ public class SecurityConfig {
                 .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
                 .with(authorizationServerConfigurer, (authorizationServer) ->
                         authorizationServer
-                                .oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0
+                                .oidc(Customizer.withDefaults())    // Enable OpenID Connect 1.0
                 )
                 .authorizeHttpRequests((authorize) ->
                         authorize
-                                .requestMatchers("/auth/login", "/auth/signup").permitAll()
                                 .anyRequest().authenticated()
                 )
-                // Redirect to the login page when not authenticated from the authorization endpoint
                 .exceptionHandling((exceptions) -> exceptions
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint("/login"),
@@ -72,6 +77,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
@@ -80,32 +86,70 @@ public class SecurityConfig {
                 .authorizeHttpRequests((authorize) -> authorize
                         .anyRequest().authenticated()
                 )
-                .csrf(AbstractHttpConfigurer::disable)
-                .formLogin(Customizer.withDefaults());
+                .formLogin(Customizer.withDefaults());  // Configura el formulario de login predeterminado
 
         return http.build();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService(RestTemplate restTemplate) {
-        return new CustomUserDetailsService(restTemplate);
-    }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public UserDetailsService userDetailsService() {
+        return new UserDetailsService() {
+            @Override
+            public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+                // Usamos un RestTemplate para llamar al microservicio de usuarios
+                RestTemplate restTemplate = new RestTemplate();
+                String url = "http://localhost:8081/users/auth";  // URL de autenticación del microservicio de usuarios
+
+                // Headers si es necesario (si necesitas un token de autorización)
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                // Crear el DTO con el username
+                HttpEntity<Map<String, String>> request = new HttpEntity<>(Collections.singletonMap("username", username), headers);
+                try {
+                    // Llamar al microservicio
+                    ResponseEntity<UserDTO> response = restTemplate.exchange(
+                            url,
+                            HttpMethod.GET,
+                            request,
+                            UserDTO.class
+                    );
+
+                    if (response.getStatusCode() == HttpStatus.OK) {
+                        UserDTO userDTO = response.getBody();
+
+                        // Convertir la lista de roles a GrantedAuthorities
+                        List<GrantedAuthority> authorities = userDTO.getRoles().stream()
+                                .map(SimpleGrantedAuthority::new)
+                                .collect(Collectors.toList());
+
+                        // Crear un objeto User de Spring Security
+                        return new User(userDTO.getUsername(), userDTO.getPassword(), authorities);
+                    } else {
+                        throw new UsernameNotFoundException("User not found");
+                    }
+
+                } catch (Exception e) {
+                    throw new UsernameNotFoundException("Error contacting the user service", e);
+                }
+            }
+        };
     }
+
+
+
 
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
         RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("client-app")
-                .clientSecret("{noop}admin")
+                .clientId("oidc-client")
+                .clientSecret("{noop}secret")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("http://127.0.0.1:8079/login/oauth2/code/client-app")
-                .postLogoutRedirectUri("http://127.0.0.1:8080/games")
+                .redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
+                .postLogoutRedirectUri("http://127.0.0.1:8080/")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
@@ -113,6 +157,7 @@ public class SecurityConfig {
 
         return new InMemoryRegisteredClientRepository(oidcClient);
     }
+
 
     @Bean
     public JWKSource<SecurityContext> jwkSource() {
@@ -133,7 +178,8 @@ public class SecurityConfig {
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
             keyPairGenerator.initialize(2048);
             keyPair = keyPairGenerator.generateKeyPair();
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             throw new IllegalStateException(ex);
         }
         return keyPair;
@@ -153,4 +199,6 @@ public class SecurityConfig {
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
+
+
 }
