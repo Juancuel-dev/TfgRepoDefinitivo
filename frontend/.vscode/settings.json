@@ -1,0 +1,6 @@
+{
+    "editor.inlineSuggest.enabled": true,
+    "editor.screenReaderAnnounceInlineSuggestion": false,
+    "editor.suggest.matchOnWordStartOnly": true,
+    "editor.inlineSuggest.suppressSuggestions": false
+}
