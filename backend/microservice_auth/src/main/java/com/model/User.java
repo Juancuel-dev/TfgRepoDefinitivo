@@ -6,7 +6,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.List;
 
 @Data
-public class UserDTO {
+public class User {
+    private Long id;
     private String username;
     private String email;
+    private List<SimpleGrantedAuthority> roles;
 }

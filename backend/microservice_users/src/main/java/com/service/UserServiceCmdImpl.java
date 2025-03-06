@@ -18,12 +18,12 @@ public class UserServiceCmdImpl implements UserServiceCmd {
     private final UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
 
-    // Obtener todos los juegos
+    // Obtener todos los users
     public List<User> findAll() {
         return userRepository.findAll();
     }
 
-    // Buscar un juego por su ID
+    // Buscar un user por su ID
     public User findById(Long id) throws EntityNotFoundException {
         return userRepository.findById(id)
                 .orElseThrow(EntityNotFoundException::new);
@@ -42,7 +42,7 @@ public class UserServiceCmdImpl implements UserServiceCmd {
         return userRepository.save(user);
     }
 
-    // Guardar un juego (crear o actualizar)
+    // Guardar un user (crear o actualizar)
     public List<User> saveAll(List<User> users) {
         // Cifrar las contraseñas de todos los usuarios
         users.forEach(user -> {
@@ -54,12 +54,12 @@ public class UserServiceCmdImpl implements UserServiceCmd {
         return userRepository.saveAll(users);
     }
 
-    // Actualizar un juego
+    // Actualizar un user
     public User update(User user) throws EntityNotFoundException{
-        // Buscar el juego por ID
+        // Buscar el user por ID
         return userRepository.findById(user.getId())
                 .map(buscado -> {
-                    // Si el juego existe, actualizamos sus campos
+                    // Si el user existe, actualizamos sus campos
                     buscado.setName(user.getName());
                     buscado.setEmail(user.getEmail());
                     buscado.setPassword(user.getPassword());
@@ -74,12 +74,12 @@ public class UserServiceCmdImpl implements UserServiceCmd {
                 .orElseThrow(EntityNotFoundException::new);
     }
 
-    // Comprobar si un juego existe por su ID
+    // Comprobar si un user existe por su ID
     public boolean existsById(Long id) {
         return userRepository.existsById(id);
     }
 
-    // Eliminar un juego por su ID
+    // Eliminar un user por su ID
     public void deleteById(Long id) throws EntityNotFoundException{
         if (!userRepository.existsById(id)) {
             throw new EntityNotFoundException();

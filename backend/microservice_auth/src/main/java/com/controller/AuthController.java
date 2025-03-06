@@ -1,30 +1,48 @@
 package com.controller;
 
-import com.model.UserDTO;
+import com.model.LoginRequest;
+import com.model.RegisterRequest;
 import com.service.AuthService;
-import org.springframework.http.HttpStatus;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
+@Slf4j
 @RequestMapping("/auth")
+@AllArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+    private AuthService authService;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
-
+    // Endpoint para el login
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody UserDTO userDTO) {
-        String token = authService.validateCredentials(userDTO);  // Verifica las credenciales contra el microservicio de usuarios
-        return ResponseEntity.ok(token);  // Retorna el token JWT
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        try {
+            String token = (String) authService.login(loginRequest).getBody();
+            if(token != null) {
+
+                return ResponseEntity.ok().body(Map.of("token", token));
+            } // Devuelve el token JWT
+        } catch (Exception e) {
+            log.info("Error al hacer login" );
+            e.printStackTrace();// Manejo de errores
+        }
+        return ResponseEntity.status(401).body("Credenciales inválidas");
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout() {
-        return ResponseEntity.ok("Logout exitoso");
+    // Endpoint para el registro
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
+        try {
+            String message = (String) authService.register(registerRequest).getBody();
+            return ResponseEntity.ok().body(message); // Devuelve un mensaje de éxito
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error en el registro: " + e.getMessage()); // Manejo de errores
+        }
     }
 }
 

@@ -1,55 +1,74 @@
 package com.service;
 
-import com.model.UserDTO;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import com.model.LoginRequest;
+import com.model.RegisterRequest;
+import com.model.User;
+import lombok.AllArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Date;
-import java.util.List;
-
 @Service
+@AllArgsConstructor
 public class AuthService {
 
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
     private final RestTemplate restTemplate;
 
-    @Value("${user.service.url}") // URL del User Service
-    private String userServiceUrl;
+    public ResponseEntity<?> login(LoginRequest loginRequest) {
+        // Llamar al microservicio de usuarios para autenticar
+        String url = "http://localhost:8081/users/auth";
 
-    public AuthService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
-
-    public String validateCredentials(UserDTO userDTO) {
-        // Llama al User Service para validar las credenciales
-        String url = userServiceUrl + "/users/auth"; // Asegúrate de que la URL sea correcta
+        // Configurar los headers
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<UserDTO> request = new HttpEntity<>(userDTO, headers);
-        ResponseEntity<UserDTO> response = restTemplate.exchange(url, HttpMethod.GET, request, UserDTO.class);
+        // Crear el cuerpo de la solicitud con el username y password
+        HttpEntity<String> request = new HttpEntity<>(loginRequest.getUsername(), headers);
 
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            // Obtén los roles dinámicamente desde la respuesta del UserDTO
-            List<String> roles = response.getBody().getRoles();
+        // Realizar la solicitud POST al microservicio de usuarios
+        ResponseEntity<User> response = restTemplate.exchange(
+                url, HttpMethod.POST, request, User.class);
 
-            // Genera un token JWT si las credenciales son válidas
-            String SECRET_KEY = System.getenv("JWT_SECRET_KEY"); // Usa una clave secreta almacenada de manera segura
-            long EXPIRATION_TIME = 864_000_000; // 10 días en milisegundos
+        // Si la autenticación es exitosa, generar el token JWT
+        if (response.getStatusCode() == HttpStatus.OK) {
+            // Obtener los detalles del usuario desde la respuesta
+            User user = response.getBody();
 
-            return Jwts.builder()
-                    .setSubject(response.getBody().getUsername())
-                    .claim("authorities", roles) // Usamos los roles dinámicos aquí
-                    .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                    .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
-                    .compact();
+            // Autenticar al usuario en el contexto de seguridad
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+            );
+
+            // Generar el token JWT
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String token = jwtService.generateToken(userDetails);
+
+            // Devolver el token en la respuesta
+            return ResponseEntity.ok().body(token);
         } else {
-            throw new RuntimeException("Credenciales inválidas");
+            // Si la autenticación falla, devolver un error genérico
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed");
         }
     }
 
+    public ResponseEntity<?> register(RegisterRequest user) {
+        // Llamar al microservicio de usuarios para registrar al usuario
+        String url = "http://localhost:8081/auth/register";
+
+        // Configurar los headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Crear el cuerpo de la solicitud
+        HttpEntity<RegisterRequest> request = new HttpEntity<>(user, headers);
+
+        // Realizar la solicitud POST al microservicio de usuarios
+        return restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+    }
 }

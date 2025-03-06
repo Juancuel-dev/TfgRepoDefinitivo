@@ -1,6 +1,9 @@
 package com.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,22 +16,23 @@ import java.util.stream.Collectors;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDTO implements UserDetails {
+public class LoginRequest implements UserDetails {
 
     private String username;
-
     private String password;
-
-    private List<String> roles;
-    public UserDTO(String username, String password) {
-        this.username = username;
-        this.password = password;
-        this.roles = List.of("USER");
-    }
+    private List<String> roles; // Lista de roles como cadenas (puedes modificar esto según tu necesidad)
 
     @Override
     public String getUsername() {
         return username;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // Convertir los roles a SimpleGrantedAuthority
+        return roles.stream()
+                .map(SimpleGrantedAuthority::new) // Convierte cada rol en un SimpleGrantedAuthority
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -42,31 +46,22 @@ public class UserDTO implements UserDetails {
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Si roles es un ArrayList<String>, puedes usarlo directamente
-        return roles.stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-    }
-
-
-    @Override
     public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
+        return true; // Modificado para siempre retornar true, puedes ajustarlo según tu lógica
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
+        return true; // Lo mismo, ajusta según lo que necesites
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
+        return true; // Lo mismo
     }
 
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return true; // Lo mismo
     }
 }
