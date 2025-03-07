@@ -15,42 +15,40 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 @Configuration
 public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        http.csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
+        return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Habilitar CORS
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers("/actuator/**", "/", "/login", "/logout").permitAll()
-                        .anyExchange().authenticated())
+                        .pathMatchers("/actuator/**", "/", "/gateway/login", "/gateway/logout").permitAll() // Rutas públicas
+                        .anyExchange().authenticated()) // Todas las demás rutas requieren autenticación
                 .logout(logout -> logout
-                        .logoutUrl("/logout") // Configure the logout URL
-                        .logoutSuccessHandler(logoutSuccessHandler())); // Configure the logout success handler
-
-        return http.build();
+                        .logoutUrl("/logout") // URL para logout
+                        .logoutSuccessHandler(logoutSuccessHandler())) // Manejador de éxito de logout
+                .build();
     }
 
     @Bean
     public ServerLogoutSuccessHandler logoutSuccessHandler() {
         RedirectServerLogoutSuccessHandler handler = new RedirectServerLogoutSuccessHandler();
-        handler.setLogoutSuccessUrl(URI.create("http://localhost:8080/login")); // Redirect to the login page after logout
+        handler.setLogoutSuccessUrl(URI.create("http://localhost:8080/login")); // Redirigir después del logout
         return handler;
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:65423")); // Especifica el origen permitido
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true); // Permite credenciales
+        configuration.setAllowedOrigins(Collections.singletonList("http://localhost:65423")); // Origen permitido
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Métodos permitidos
+        configuration.setAllowedHeaders(Collections.singletonList("*")); // Todos los encabezados permitidos
+        configuration.setAllowCredentials(true); // Permitir credenciales
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Apply CORS to all paths
+        source.registerCorsConfiguration("/**", configuration); // Aplicar CORS a todas las rutas
         return source;
     }
 

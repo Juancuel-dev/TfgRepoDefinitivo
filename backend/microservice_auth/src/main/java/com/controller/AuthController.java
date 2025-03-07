@@ -1,8 +1,7 @@
 package com.controller;
 
 import com.model.LoginRequest;
-import com.model.RegisterRequest;
-import com.service.AuthService;
+import com.service.auth.AuthService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -32,17 +31,6 @@ public class AuthController {
             e.printStackTrace();// Manejo de errores
         }
         return ResponseEntity.status(401).body("Credenciales inválidas");
-    }
-
-    // Endpoint para el registro
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
-        try {
-            String message = (String) authService.register(registerRequest).getBody();
-            return ResponseEntity.ok().body(message); // Devuelve un mensaje de éxito
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error en el registro: " + e.getMessage()); // Manejo de errores
-        }
     }
 }
 

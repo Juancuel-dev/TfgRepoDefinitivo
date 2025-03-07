@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDTO implements UserDetails, Serializable {
+public class UserDTO implements UserDetails {
 
     private String username;
 

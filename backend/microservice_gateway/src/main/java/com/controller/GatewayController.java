@@ -1,61 +1,49 @@
 package com.controller;
 
-import com.model.UserDTO;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.model.LoginRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.result.view.RedirectView;
-
-import java.security.Principal;
 
 @RestController
+@RequestMapping("/gateway")
 public class GatewayController {
 
     @Value("${auth.service.url}") // URL del Auth Service
     private String authServiceUrl;
 
+    @Value("${users.service.url}") // URL del Microservicio users
+    private String userServiceUrl;
+
+    @Value("${games.service.url}") // URL del Microservicio games
+    private String gamesServiceUrl;
+
+    @Value("${cart.service.url}") // URL del Microservicio cart
+    private String cartServiceUrl;
+
     private final RestTemplate restTemplate;
 
-    // Inyectar RestTemplate a través del constructor
     public GatewayController(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-    }
+        restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
 
-    // Redirige al login si se accede a la raíz
-    @GetMapping("/")
-    public RedirectView home() {
-        return new RedirectView("/login");
-    }
-
-    // Muestra el nombre del usuario autenticado
-    @GetMapping("/user")
-    public String user(Principal principal) {
-        return "Hello, " + principal.getName() + "!";
     }
 
     // Maneja el login
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {
-            // Llama al Auth Service para validar las credenciales y obtener un token JWT
             String url = authServiceUrl + "/auth/login";
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            // Crea un HttpEntity con el UserDTO
-            HttpEntity<UserDTO> request = new HttpEntity<>(userDTO, headers);
+            HttpEntity<LoginRequest> request = new HttpEntity<>(loginRequest, headers);
 
-            // Realiza la solicitud POST
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+            ResponseEntity<?> response = restTemplate.exchange(url, HttpMethod.POST, request, ResponseEntity.class);
 
-            // Retorna el token JWT generado por el Auth Service
             return ResponseEntity.ok(response.getBody());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -63,30 +51,38 @@ public class GatewayController {
         }
     }
 
+    // Redirige las solicitudes al Microservicio 1
+    @GetMapping("/users/**")
+    public ResponseEntity<?> redirectToMicroserviceUsers(@RequestHeader("Authorization") String token) {
+        return redirectRequest(userServiceUrl, token);
+    }
 
-    // Maneja el logout
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+    // Redirige las solicitudes al Microservicio 2
+    @GetMapping("/games/**")
+    public ResponseEntity<?> redirectToMicroserviceGames(@RequestHeader("Authorization") String token) {
+        return redirectRequest(gamesServiceUrl, token);
+    }
+
+    // Redirige las solicitudes al Microservicio 2
+    @GetMapping("/cart/**")
+    public ResponseEntity<?> redirectToMicroserviceCart(@RequestHeader("Authorization") String token) {
+        return redirectRequest(cartServiceUrl, token);
+    }
+
+    // auxiliar para redirigir solicitudes
+    private ResponseEntity<?> redirectRequest(String serviceUrl, String token) {
         try {
-            // Llama al Auth Service para manejar el logout
-            String url = authServiceUrl + "/auth/logout";
-
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", token);
 
-            // Invalida la autenticación actual
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null) {
-                new SecurityContextLogoutHandler().logout(request, response, auth);
-            }
+            HttpEntity<?> request = new HttpEntity<>(headers);
 
-            // Envía una solicitud al Auth Service para invalidar el token JWT
-            ResponseEntity<String> logoutResponse = restTemplate.exchange(url, HttpMethod.POST, null, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(serviceUrl, HttpMethod.GET, request, String.class);
 
-            return ResponseEntity.ok(logoutResponse.getBody());
+            return ResponseEntity.ok(response.getBody());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error durante el logout: " + e.getMessage());
+                    .body("Error al redirigir la solicitud: " + e.getMessage());
         }
     }
 }

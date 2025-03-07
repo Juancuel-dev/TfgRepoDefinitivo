@@ -19,8 +19,6 @@ public interface UserServiceCmd {
 
     // Guardar un usuario (crear o actualizar)
     User save(User User);
-    // Actualizar un usuario
-    User update(User User) throws EntityNotFoundException;
 
     // Comprobar si un usuario existe por su ID
     boolean existsById(Long id);

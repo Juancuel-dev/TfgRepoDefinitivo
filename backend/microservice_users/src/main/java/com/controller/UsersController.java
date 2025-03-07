@@ -47,7 +47,7 @@ public class UsersController {
     @PutMapping
     public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
         try {
-            return ResponseEntity.ok(userService.update(user));
+            return ResponseEntity.ok(userService.save(user));
         } catch (EntityNotFoundException nfe) {
             return ResponseEntity.notFound().build();
         }

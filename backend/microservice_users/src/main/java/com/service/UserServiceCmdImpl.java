@@ -42,38 +42,6 @@ public class UserServiceCmdImpl implements UserServiceCmd {
         return userRepository.save(user);
     }
 
-    // Guardar un user (crear o actualizar)
-    public List<User> saveAll(List<User> users) {
-        // Cifrar las contraseñas de todos los usuarios
-        users.forEach(user -> {
-            String encryptedPassword = passwordEncoder.encode(user.getPassword());
-            user.setPassword(encryptedPassword);
-        });
-
-        // Lógica para guardar los usuarios en la base de datos
-        return userRepository.saveAll(users);
-    }
-
-    // Actualizar un user
-    public User update(User user) throws EntityNotFoundException{
-        // Buscar el user por ID
-        return userRepository.findById(user.getId())
-                .map(buscado -> {
-                    // Si el user existe, actualizamos sus campos
-                    buscado.setName(user.getName());
-                    buscado.setEmail(user.getEmail());
-                    buscado.setPassword(user.getPassword());
-                    buscado.setAge(user.getAge());
-                    buscado.setSurname1(user.getSurname1());
-                    buscado.setSurname2(user.getSurname2());
-                    buscado.setRoles(user.getRoles());
-                    buscado.setUsername(user.getUsername());
-
-                    return userRepository.save(buscado);
-                })
-                .orElseThrow(EntityNotFoundException::new);
-    }
-
     // Comprobar si un user existe por su ID
     public boolean existsById(Long id) {
         return userRepository.existsById(id);
