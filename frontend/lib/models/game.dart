@@ -3,12 +3,14 @@ class Game {
   final double precio;
   final int metacritic;
   final String consola;
+  final String imageUrl;
 
   Game({
     required this.name,
     required this.precio,
     required this.metacritic,
     required this.consola,
+    required this.imageUrl,
   });
 
   factory Game.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class Game {
       precio: json['precio'].toDouble(),
       metacritic: json['metacritic'],
       consola: json['consola'],
+      imageUrl: json['imageUrl'],
     );
   }
 }

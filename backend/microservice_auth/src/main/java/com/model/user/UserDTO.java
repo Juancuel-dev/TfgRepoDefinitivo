@@ -1,31 +1,22 @@
-package com.model;
+package com.model.user;
 
-import jakarta.persistence.*;
+import com.util.Role;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
-@Entity
-@Table(name = "users")
 @Data
-public class User implements UserDetails, Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@AllArgsConstructor
+public class UserDTO implements UserDetails {
+
     private String username;
     private String password;
-    private String email;
-    private String role;
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role));
-    }
+    private Role role;
 
     @Override
     public boolean isAccountNonExpired() {
@@ -45,5 +36,9 @@ public class User implements UserDetails, Serializable {
     @Override
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
+    }
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role.name()));
     }
 }

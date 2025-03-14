@@ -8,6 +8,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -20,21 +21,19 @@ public class UsersController {
 
     private final UserServiceCmdImpl userService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.findAll();
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(userService.findAll());
     }
 
+    @PreAuthorize("hasRole('ADMIN') ")
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(userService.findById(id));
-        } catch (EntityNotFoundException nfe) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(userService.findById(id));
     }
 
+    @PreAuthorize("isAuthenticated() ")
     @PostMapping
     public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
         User createdUser = userService.save(user);
@@ -44,6 +43,7 @@ public class UsersController {
                 .body(createdUser);
     }
 
+    @PreAuthorize("hasRole('ADMIN') ")
     @PutMapping
     public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
         try {
@@ -53,6 +53,7 @@ public class UsersController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN') ")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         try {
@@ -63,6 +64,7 @@ public class UsersController {
         }
     }
 
+    @PreAuthorize("isAuthenticated() and (hasRole('ADMIN') or @authService.isSameUser(#username)) ")
     @PostMapping("/auth")
     public ResponseEntity<UserDTO> getUserDTOByUsername(@RequestBody String username) {
         try {

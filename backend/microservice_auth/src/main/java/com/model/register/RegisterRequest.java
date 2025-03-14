@@ -1,4 +1,4 @@
-package com.model;
+package com.model.register;
 
 import lombok.*;
 
@@ -6,9 +6,16 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegisterRequest {
+
     // Getters y Setters
     private String username;
     private String password;
     private String email;
+
+    private String nombre;
+
+    private Integer telefono;
+
+    private String apellido1;
 
 }

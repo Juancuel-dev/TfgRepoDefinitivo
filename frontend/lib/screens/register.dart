@@ -1,67 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_auth_app/models/userDTO.dart'; // Asegúrate de que la ruta sea correcta
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flutter_auth_app/screens/baseLayout.dart';
+import 'package:flutter_auth_app/services/authService.dart';
+import 'package:flutter_auth_app/models/cart.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class RegisterPage extends StatefulWidget {
+  final Cart cart;
+  final Function(String) onRegister;
+
+  RegisterPage({required this.cart, required this.onRegister});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  _RegisterPageState createState() => _RegisterPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   String _responseMessage = '';
+  final AuthService _authService = AuthService();
 
-  Future<void> _login() async {
+  Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
       final username = _usernameController.text;
       final password = _passwordController.text;
 
-      final url = Uri.parse('http://localhost:8080/login');
+      final success = await _authService.register(username, password);
 
-      // Crea un objeto UserDTO
-      final userDTO = UserDTO(username: username, password: password);
-
-      // Convierte el objeto a JSON
-      final body = jsonEncode(userDTO.toJson());
-
-      try {
-        final response = await http.post(
-          url,
-          headers: {
-            'Content-Type': 'application/json', // Asegúrate de incluir este encabezado
-          },
-          body: body,
-        );
-
-        if (response.statusCode == 200) {
-          setState(() {
-            _responseMessage = 'Login exitoso: ${response.body}';
-          });
+      setState(() {
+        if (success) {
+          _responseMessage = 'Registro exitoso';
+          String token = 'your-jwt-token'; // Simular obtención del token
+          widget.onRegister(token);
+          Navigator.pushReplacementNamed(context, '/home');
         } else {
-          setState(() {
-            _responseMessage = 'Error: ${response.statusCode} - ${response.body}';
-          });
+          _responseMessage = 'Error: El usuario ya existe';
         }
-      } catch (e) {
-        setState(() {
-          _responseMessage = 'Error de conexión: $e';
-        });
-      }
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Iniciar Sesión'),
-      ),
-      body: Padding(
+    return BaseLayout(
+      cart: widget.cart,
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -90,8 +73,8 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _login,
-                child: const Text('Iniciar Sesión'),
+                onPressed: _register,
+                child: const Text('Registrarse'),
               ),
               const SizedBox(height: 20),
               Text(

@@ -1,75 +1,86 @@
 package com.controller;
 
 import com.model.LoginRequest;
+import com.model.register.RegisterRequest;
+import com.service.auth.AuthService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+@Slf4j
 @RestController
 @RequestMapping("/gateway")
 public class GatewayController {
 
-    @Value("${auth.service.url}") // URL del Auth Service
+    @Value("${auth.service.url}")
     private String authServiceUrl;
 
-    @Value("${users.service.url}") // URL del Microservicio users
+    @Value("${users.service.url}")
     private String userServiceUrl;
 
-    @Value("${games.service.url}") // URL del Microservicio games
+    @Value("${games.service.url}")
     private String gamesServiceUrl;
 
-    @Value("${cart.service.url}") // URL del Microservicio cart
+    @Value("${cart.service.url}")
     private String cartServiceUrl;
 
+    private final AuthService authService;
     private final RestTemplate restTemplate;
 
-    public GatewayController(RestTemplate restTemplate) {
+    public GatewayController(AuthService authService, RestTemplate restTemplate) {
+        this.authService = authService;
         this.restTemplate = restTemplate;
-        restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-
     }
 
-    // Maneja el login
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        try {
-            String url = authServiceUrl + "/auth/login";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            HttpEntity<LoginRequest> request = new HttpEntity<>(loginRequest, headers);
-
-            ResponseEntity<?> response = restTemplate.exchange(url, HttpMethod.POST, request, ResponseEntity.class);
-
-            return ResponseEntity.ok(response.getBody());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Error durante el login: " + e.getMessage());
+    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
+        ResponseEntity<String> response = restTemplate.postForEntity(authServiceUrl + "/auth/login", loginRequest, String.class);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return ResponseEntity.status(HttpStatus.OK).body(response.getBody());
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error al hacer login usuario");
         }
     }
 
-    // Redirige las solicitudes al Microservicio 1
+    @PostMapping("/register")
+    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
+        ResponseEntity<String> response = restTemplate.postForEntity(authServiceUrl + "/auth/register", registerRequest, String.class);
+        if (response.getStatusCode() == HttpStatus.CREATED) {
+            return ResponseEntity.status(HttpStatus.CREATED).body("Usuario registrado con éxito");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error al registrar usuario");
+        }
+    }
+
     @GetMapping("/users/**")
     public ResponseEntity<?> redirectToMicroserviceUsers(@RequestHeader("Authorization") String token) {
-        return redirectRequest(userServiceUrl, token);
+        if (authService.isValid(token)) {
+            return redirectRequest(userServiceUrl, token);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
-    // Redirige las solicitudes al Microservicio 2
     @GetMapping("/games/**")
     public ResponseEntity<?> redirectToMicroserviceGames(@RequestHeader("Authorization") String token) {
-        return redirectRequest(gamesServiceUrl, token);
+        if (authService.isValid(token)) {
+            return redirectRequest(gamesServiceUrl, token);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
-    // Redirige las solicitudes al Microservicio 2
     @GetMapping("/cart/**")
     public ResponseEntity<?> redirectToMicroserviceCart(@RequestHeader("Authorization") String token) {
-        return redirectRequest(cartServiceUrl, token);
+        if (authService.isValid(token)) {
+            return redirectRequest(cartServiceUrl, token);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
-    // auxiliar para redirigir solicitudes
     private ResponseEntity<?> redirectRequest(String serviceUrl, String token) {
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -85,4 +96,5 @@ public class GatewayController {
                     .body("Error al redirigir la solicitud: " + e.getMessage());
         }
     }
+
 }

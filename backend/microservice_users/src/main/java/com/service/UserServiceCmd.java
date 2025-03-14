@@ -25,5 +25,4 @@ public interface UserServiceCmd {
 
     void deleteById(Long id) throws EntityNotFoundException;
 
-    boolean isAdmin();
 }

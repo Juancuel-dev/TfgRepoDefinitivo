@@ -1,4 +1,4 @@
-package com.model;
+package com.model.login;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

@@ -1,38 +1,55 @@
 package com.controller;
 
-import com.model.LoginRequest;
+import com.model.login.LoginRequest;
+import com.model.register.RegisterRequest;
+import com.model.token.TokenRequest;
+import com.model.user.User;
 import com.service.auth.AuthService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @RestController
 @Slf4j
 @RequestMapping("/auth")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AuthController {
 
-    private AuthService authService;
+    private final AuthService authService;
 
-    // Endpoint para el login
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        try {
-            String token = (String) authService.login(loginRequest).getBody();
-            if(token != null) {
+    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
+        String token = authService.login(loginRequest);
+        return ResponseEntity.ok(token);
+    }
 
-                return ResponseEntity.ok().body(Map.of("token", token));
-            } // Devuelve el token JWT
-        } catch (Exception e) {
-            log.info("Error al hacer login" );
-            e.printStackTrace();// Manejo de errores
-        }
-        return ResponseEntity.status(401).body("Credenciales inválidas");
+    @PostMapping("/register")
+    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
+        authService.register(registerRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Usuario registrado con éxito");
+    }
+
+
+    @PostMapping("/token")
+    public ResponseEntity<String> getToken(@RequestBody TokenRequest tokenRequest) {
+        String token = authService.getToken(tokenRequest);
+        return ResponseEntity.ok(token);
+    }
+
+    @PostMapping("/validate-token")
+    public ResponseEntity<Boolean> validateToken(@RequestBody TokenRequest tokenRequest) {
+        boolean isValid = authService.validateToken(tokenRequest);
+        return ResponseEntity.ok(isValid);
+    }
+
+    @GetMapping("/current-role")
+    public ResponseEntity<String> getCurrentRole(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(user.getRole());
     }
 }
-
 
 

@@ -1,54 +1,85 @@
 package com.service.auth;
 
-import com.model.LoginRequest;
-import com.model.User;
-import com.service.user.UserService;
+import com.model.login.LoginRequest;
+import com.model.register.RegisterRequest;
+import com.model.token.TokenRequest;
+import com.model.user.User;
+import com.repository.UserRepository;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.security.Key;
+import java.util.Date;
+
 
 @Service
 @Slf4j
 @AllArgsConstructor
 public class AuthService {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
-    private final UserService userService;
+    private UserRepository userRepository;
 
-    public ResponseEntity<?> login(LoginRequest loginRequest) {
+    private static final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+
+    private PasswordEncoder passwordEncoder;
+
+    public String login(LoginRequest loginRequest) {
+
+        User user = userRepository.findByUsername(loginRequest.getUsername()).orElseThrow(EntityNotFoundException::new);
+        if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            // Generar token de autenticación
+            return Jwts.builder()
+                    .setSubject(user.getUsername())
+                    .setIssuedAt(new Date())
+                    .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 horas
+                    .signWith(secretKey)
+                    .compact();
+
+        } else {
+            throw new RuntimeException("Usuario o contraseña incorrectos");
+        }
+    }
+
+
+    public void register(RegisterRequest registerRequest) {
+        // Registrar a un nuevo usuario
+        User user = new User();
+        user.setUsername(registerRequest.getUsername());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setEmail(registerRequest.getEmail());
+        user.setRole("USER");
+        userRepository.save(user);
+    }
+
+    public String getToken(TokenRequest tokenRequest) {
+
+        // Obtener un token de autenticación para un usuario
+        User user = userRepository.findByUsername(tokenRequest.getUsername()).orElseThrow(EntityNotFoundException::new);
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 horas
+                .signWith(secretKey)
+                .compact();
+
+        }
+
+    public boolean validateToken(TokenRequest tokenRequest) {
+        // Validar un token de autenticación
         try {
-            // Autenticar al usuario
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.getUsername(),
-                            loginRequest.getPassword()
-                    )
-            );
-
-            // Si la autenticación es exitosa, obtenemos el usuario
-            User aux = userService.findByUsername(loginRequest.getUsername());
-
-            // Generamos el token JWT
-            String token = jwtService.generateToken(aux);
-
-            // Retornamos el token y la información básica del usuario
-            Map<String, Object> response = new HashMap<>();
-            response.put("token", token);
-            response.put("user", aux);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception ex) {
-            log.info("Access Denied: Invalid credentials for user {}", loginRequest.getUsername());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(tokenRequest.getToken());
+            return true;
+        } catch (JwtException e) {
+            return false;
         }
     }
 }
+
