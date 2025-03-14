@@ -4,7 +4,8 @@ import com.model.login.LoginRequest;
 import com.model.register.RegisterRequest;
 import com.model.token.TokenRequest;
 import com.model.user.User;
-import com.repository.UserRepository;
+import com.repository.user.UserRepository;
+import com.service.key.KeyService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.persistence.EntityNotFoundException;
@@ -14,8 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.util.Arrays;
 import java.util.Date;
-
 
 @Service
 @Slf4j
@@ -24,12 +25,13 @@ public class AuthService {
 
     private UserRepository userRepository;
 
-    private static final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    private KeyService keyService;
 
     private PasswordEncoder passwordEncoder;
 
     public String login(LoginRequest loginRequest) {
-
+        String claveSecreta = Arrays.toString(keyService.getSecurityKey());
+        Key key = Keys.hmacShaKeyFor(claveSecreta.getBytes());
         User user = userRepository.findByUsername(loginRequest.getUsername()).orElseThrow(EntityNotFoundException::new);
         if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             // Generar token de autenticación
@@ -37,9 +39,8 @@ public class AuthService {
                     .setSubject(user.getUsername())
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 horas
-                    .signWith(secretKey)
+                    .signWith(key)
                     .compact();
-
         } else {
             throw new RuntimeException("Usuario o contraseña incorrectos");
         }
@@ -47,39 +48,49 @@ public class AuthService {
 
 
     public void register(RegisterRequest registerRequest) {
-        // Registrar a un nuevo usuario
-        User user = new User();
-        user.setUsername(registerRequest.getUsername());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setEmail(registerRequest.getEmail());
-        user.setRole("USER");
-        userRepository.save(user);
+
+        if(!userRepository.existsByUsername(registerRequest.getUsername())) {
+            userRepository.save(new User(registerRequest.getUsername(),passwordEncoder.encode(registerRequest.getPassword()),"USER",registerRequest.getEmail()));
+        }else{
+            throw new RuntimeException("Usuario ya existente");
+        }
+
     }
 
     public String getToken(TokenRequest tokenRequest) {
-
+        Key key= Keys.hmacShaKeyFor(keyService.getSecurityKey());
         // Obtener un token de autenticación para un usuario
         User user = userRepository.findByUsername(tokenRequest.getUsername()).orElseThrow(EntityNotFoundException::new);
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 horas
-                .signWith(secretKey)
+                .signWith(key)
                 .compact();
 
         }
 
     public boolean validateToken(TokenRequest tokenRequest) {
-        // Validar un token de autenticación
+        Key key= Keys
+                .hmacShaKeyFor(keyService
+                        .getSecurityKey());
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
+                    .setSigningKey(key)
                     .build()
                     .parseClaimsJws(tokenRequest.getToken());
             return true;
         } catch (JwtException e) {
             return false;
         }
+    }
+    // Extract the username from the token
+    public String extractUsername(String token) {
+        Key key= Keys
+                .hmacShaKeyFor(keyService
+                        .getSecurityKey());
+        Claims claims = Jwts.parser().setSigningKey(key).parseClaimsJws(token).getBody();
+        return claims.getSubject();
     }
 }
 

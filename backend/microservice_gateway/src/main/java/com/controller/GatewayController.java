@@ -54,6 +54,16 @@ public class GatewayController {
         }
     }
 
+    @PostMapping("/register-key")
+    public ResponseEntity<String> registerKey() {
+        ResponseEntity<String> response = restTemplate.postForEntity(authServiceUrl + "/auth/register", null, String.class);
+        if (response.getStatusCode() == HttpStatus.CREATED) {
+            return ResponseEntity.status(HttpStatus.CREATED).body("Clave registrada con éxito");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error al registrar usuario");
+        }
+    }
+
     @GetMapping("/users/**")
     public ResponseEntity<?> redirectToMicroserviceUsers(@RequestHeader("Authorization") String token) {
         if (authService.isValid(token)) {
@@ -96,5 +106,4 @@ public class GatewayController {
                     .body("Error al redirigir la solicitud: " + e.getMessage());
         }
     }
-
 }

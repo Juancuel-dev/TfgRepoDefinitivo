@@ -1,7 +1,7 @@
 package com.service.user;
 
 import com.model.user.User;
-import com.repository.UserRepository;
+import com.repository.user.UserRepository;
 import com.util.UserMapper;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;

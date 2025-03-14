@@ -1,16 +1,23 @@
 package com.controller;
 
+import com.model.key.Key;
 import com.model.login.LoginRequest;
 import com.model.register.RegisterRequest;
 import com.model.token.TokenRequest;
 import com.model.user.User;
 import com.service.auth.AuthService;
+import com.service.key.KeyService;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import javax.crypto.SecretKey;
+import java.util.Base64;
 
 
 @RestController
@@ -20,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final KeyService keyService;
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
@@ -50,6 +58,15 @@ public class AuthController {
     public ResponseEntity<String> getCurrentRole(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(user.getRole());
     }
+
+    @PostMapping("/register-key")
+    public ResponseEntity<String> registerKey() {
+        Key key = new Key();
+        key.setNombre("jwtSecretSign");
+        SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+        key.setValor(Base64.getEncoder().encodeToString(secretKey.getEncoded()));
+        keyService.saveSecurityKey(key);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Clave registrada con éxito");
+    }
+
 }
-
-

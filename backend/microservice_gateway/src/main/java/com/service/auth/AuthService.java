@@ -10,14 +10,15 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class AuthService {
+
+    private final Authentication authentication;
+
     public AuthService(Authentication authentication) {
         this.authentication = authentication;
     }
     public AuthService() {
         this.authentication = SecurityContextHolder.getContext().getAuthentication();
     }
-
-    private final Authentication authentication;
 
     public boolean isValid(String token){
         RestTemplate restTemplate = new RestTemplate();

@@ -25,7 +25,8 @@ public class SecurityConfig {
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers("/gateway/login", "/gateway/logout","gateway/register").permitAll()
+                        .pathMatchers("/gateway/login", "/gateway/logout", "/gateway/register", "/gateway/register-key").permitAll()
+
                         .anyExchange().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(), SecurityWebFiltersOrder.AUTHORIZATION)
@@ -46,10 +47,6 @@ public class SecurityConfig {
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter();
     }
-
-
-
-
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -73,5 +70,6 @@ public class SecurityConfig {
     public ReactiveAuthenticationManager reactiveAuthenticationManager() {
         return authentication -> Mono.empty();
     }
+
 
 }

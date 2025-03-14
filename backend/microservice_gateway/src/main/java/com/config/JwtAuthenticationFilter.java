@@ -10,14 +10,30 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter implements WebFilter {
 
     private static final SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
+    // Rutas que no requieren autenticación
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/gateway/login",
+            "/gateway/logout",
+            "/gateway/register",
+            "/gateway/register-key"
+    );
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        String path = exchange.getRequest().getURI().getPath();
+
+        // Permitir acceso sin autenticación a rutas públicas
+        if (PUBLIC_PATHS.contains(path)) {
+            return chain.filter(exchange);
+        }
+
         // Verificar la validez del token JWT
         String token = exchange.getRequest().getHeaders().getFirst("Authorization");
         if (token != null && token.startsWith("Bearer ")) {
@@ -32,12 +48,12 @@ public class JwtAuthenticationFilter implements WebFilter {
             } catch (JwtException e) {
                 // Token inválido, denegar el acceso
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return Mono.empty();
+                return exchange.getResponse().setComplete();
             }
         } else {
             // No hay token, denegar el acceso
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return Mono.empty();
+            return exchange.getResponse().setComplete();
         }
     }
 }
