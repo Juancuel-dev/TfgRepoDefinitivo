@@ -1,11 +1,13 @@
 package com.config;
 
+import io.jsonwebtoken.security.Keys;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
-import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
@@ -25,27 +27,12 @@ public class SecurityConfig {
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers("/gateway/login", "/gateway/logout", "/gateway/register", "/gateway/register-key").permitAll()
-
+                        .pathMatchers("/gateway/login", "/gateway/register").permitAll()
                         .anyExchange().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(), SecurityWebFiltersOrder.AUTHORIZATION)
-                .httpBasic(httpBasic -> httpBasic
-                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
-                )
-                .exceptionHandling(exceptionHandling -> exceptionHandling
-                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                );
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtDecoder(jwtDecoder())));
 
         return http.build();
-    }
-
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter();
     }
 
     @Bean
@@ -67,9 +54,12 @@ public class SecurityConfig {
     }
 
     @Bean
+    public ReactiveJwtDecoder jwtDecoder() {
+        return NimbusReactiveJwtDecoder.withSecretKey(Keys.hmacShaKeyFor(("dgQh7YnpnNXH3y7ojR1wQmBwN7XIbCElTEUwkG9eGgw=").getBytes())).build();
+    }
+
+    @Bean
     public ReactiveAuthenticationManager reactiveAuthenticationManager() {
         return authentication -> Mono.empty();
     }
-
-
 }

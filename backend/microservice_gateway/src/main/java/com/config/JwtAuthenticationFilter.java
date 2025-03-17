@@ -22,7 +22,8 @@ public class JwtAuthenticationFilter implements WebFilter {
             "/gateway/login",
             "/gateway/logout",
             "/gateway/register",
-            "/gateway/register-key"
+            "/gateway/register-key",
+            "/gateway/games"
     );
 
     @Override

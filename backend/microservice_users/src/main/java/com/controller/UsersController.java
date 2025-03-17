@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -33,7 +34,6 @@ public class UsersController {
         return ResponseEntity.ok(userService.findById(id));
     }
 
-   // @PreAuthorize("isAuthenticated() ")
     @PostMapping("/register")
     public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
         try{
@@ -47,6 +47,13 @@ public class UsersController {
         }
 
     }
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<User> getAuthenticatedUser(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(user);
+    }
+
 
     @PreAuthorize("hasRole('ADMIN') ")
     @PutMapping

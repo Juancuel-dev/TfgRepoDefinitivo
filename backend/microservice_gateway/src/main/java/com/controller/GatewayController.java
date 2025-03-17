@@ -47,4 +47,9 @@ public class GatewayController {
     public ResponseEntity<?> redirectToMicroserviceCart(@RequestHeader("Authorization") String token) {
         return authService.redirectToMicroserviceCart(token);
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> myself(@RequestHeader("Authorization") String token) {
+        return authService.myself(token);
+    }
 }

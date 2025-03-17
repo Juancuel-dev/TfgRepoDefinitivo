@@ -2,6 +2,7 @@ package com.controller;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -38,6 +39,7 @@ public class GamesController {
     }
 
     // Crear un nuevo juego
+    @PreAuthorize("hasRole('ADMIN') ")
     @PostMapping
     public ResponseEntity<Game> save(@RequestBody Game game) {
         Game savedGame = gamesService.save(game);
@@ -52,6 +54,7 @@ public class GamesController {
     }
 
     // Crear un nuevo juego
+    @PreAuthorize("hasRole('ADMIN') ")
     @PostMapping("/all")
     public ResponseEntity<List<Game>> saveAll(@RequestBody List<Game> games) {
         List<Game> savedGames = gamesService.saveAll(games);
@@ -67,6 +70,7 @@ public class GamesController {
 
     // Actualizar un juego existente
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') ")
     public ResponseEntity<Game> update(@PathVariable String id, @RequestBody Game game) {
         game.setId(id);  // Aseguramos que el ID del juego está presente en la solicitud
         try {
@@ -79,6 +83,7 @@ public class GamesController {
 
     // Eliminar un juego
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') ")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         try {
             gamesService.deleteById(id);  // Llamamos al servicio para eliminar el juego
