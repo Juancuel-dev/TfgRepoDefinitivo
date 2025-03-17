@@ -5,7 +5,7 @@ import com.model.login.LoginRequest;
 import com.model.register.RegisterRequest;
 import com.model.token.TokenRequest;
 import com.model.user.User;
-import com.service.auth.AuthService;
+import com.service.AuthService;
 import com.service.key.KeyService;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -37,7 +37,11 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
-        authService.register(registerRequest);
+        try {
+            authService.register(registerRequest);
+        }catch(Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body("Usuario registrado con éxito");
     }
 

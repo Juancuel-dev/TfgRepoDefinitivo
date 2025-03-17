@@ -4,11 +4,11 @@ import com.model.User;
 import com.model.UserDTO;
 import com.service.UserServiceCmdImpl;
 import com.util.UserMapper;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -29,18 +29,23 @@ public class UsersController {
 
     @PreAuthorize("hasRole('ADMIN') ")
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<User> getUserById(@PathVariable String id) {
         return ResponseEntity.ok(userService.findById(id));
     }
 
-    @PreAuthorize("isAuthenticated() ")
-    @PostMapping
+   // @PreAuthorize("isAuthenticated() ")
+    @PostMapping("/register")
     public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        User createdUser = userService.save(user);
-        return ResponseEntity.created(UriComponentsBuilder.fromPath("/users/{id}")
-                        .buildAndExpand(createdUser.getId())
-                        .toUri())
-                .body(createdUser);
+        try{
+            User createdUser = userService.save(user);
+            return ResponseEntity.created(UriComponentsBuilder.fromPath("/users/{id}")
+                            .buildAndExpand(createdUser.getId())
+                            .toUri())
+                    .body(createdUser);
+        }catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+
     }
 
     @PreAuthorize("hasRole('ADMIN') ")
@@ -48,18 +53,18 @@ public class UsersController {
     public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
         try {
             return ResponseEntity.ok(userService.save(user));
-        } catch (EntityNotFoundException nfe) {
-            return ResponseEntity.notFound().build();
+        } catch (Exception ef) {
+            return ResponseEntity.badRequest().build();
         }
     }
 
     @PreAuthorize("hasRole('ADMIN') ")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         try {
             userService.deleteById(id);
             return ResponseEntity.noContent().build();
-        } catch (EntityNotFoundException nfe) {
+        } catch (UsernameNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -70,7 +75,7 @@ public class UsersController {
         try {
             // Llamar al servicio para obtener los detalles del usuario basado en el nombre de usuario
             return ResponseEntity.ok(UserMapper.INSTANCE.toUserDTO(userService.findByUsername(username)));
-        } catch (EntityNotFoundException nfe) {
+        } catch (UsernameNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }

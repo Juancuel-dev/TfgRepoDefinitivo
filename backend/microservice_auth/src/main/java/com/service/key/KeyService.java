@@ -2,7 +2,6 @@ package com.service.key;
 
 import com.model.key.Key;
 import com.repository.key.KeyRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +20,7 @@ public class KeyService {
                         .getDecoder()
                         .decode(keyRepository
                                 .findByNombre("jwtSecretSign")
-                                .orElseThrow(EntityNotFoundException::new)
+                                .orElseThrow(IllegalArgumentException::new)
                                 .getValor());
     }
 

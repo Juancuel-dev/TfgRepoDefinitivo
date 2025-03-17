@@ -1,35 +1,25 @@
 package com.model.user;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.io.Serializable;
-
-@Entity
-@Table(name = "users")
+@Document("auth-users")
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class User implements Serializable {
+public class User{
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(nullable = false)
     private String username;
-
-    @Column(nullable = false)
     private String password;
-
-    @Column(nullable = false)
+    private String email;
     private String role;
 
-    @Column(nullable = false)
-    private String email;
-
-    public User(String username, String password, String role, String email) {
+    public User(String id,String username, String password, String role, String email) {
+        this.id=id;
         this.username = username;
         this.password = password;
         this.role = role;

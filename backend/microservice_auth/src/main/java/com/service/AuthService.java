@@ -1,4 +1,4 @@
-package com.service.auth;
+package com.service;
 
 import com.model.login.LoginRequest;
 import com.model.register.RegisterRequest;
@@ -8,9 +8,9 @@ import com.repository.user.UserRepository;
 import com.service.key.KeyService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +32,7 @@ public class AuthService {
     public String login(LoginRequest loginRequest) {
         String claveSecreta = Arrays.toString(keyService.getSecurityKey());
         Key key = Keys.hmacShaKeyFor(claveSecreta.getBytes());
-        User user = userRepository.findByUsername(loginRequest.getUsername()).orElseThrow(EntityNotFoundException::new);
+        User user = userRepository.findByUsername(loginRequest.getUsername()).orElseThrow(() -> new UsernameNotFoundException(loginRequest.getUsername()));
         if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             // Generar token de autenticación
             return Jwts.builder()
@@ -50,7 +50,7 @@ public class AuthService {
     public void register(RegisterRequest registerRequest) {
 
         if(!userRepository.existsByUsername(registerRequest.getUsername())) {
-            userRepository.save(new User(registerRequest.getUsername(),passwordEncoder.encode(registerRequest.getPassword()),"USER",registerRequest.getEmail()));
+            userRepository.save(new User(registerRequest.getId(), registerRequest.getUsername(),passwordEncoder.encode(registerRequest.getPassword()),"USER",registerRequest.getEmail()));
         }else{
             throw new RuntimeException("Usuario ya existente");
         }
@@ -60,7 +60,7 @@ public class AuthService {
     public String getToken(TokenRequest tokenRequest) {
         Key key= Keys.hmacShaKeyFor(keyService.getSecurityKey());
         // Obtener un token de autenticación para un usuario
-        User user = userRepository.findByUsername(tokenRequest.getUsername()).orElseThrow(EntityNotFoundException::new);
+        User user = userRepository.findByUsername(tokenRequest.getUsername()).orElseThrow(() -> new UsernameNotFoundException(tokenRequest.getUsername()));
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date())

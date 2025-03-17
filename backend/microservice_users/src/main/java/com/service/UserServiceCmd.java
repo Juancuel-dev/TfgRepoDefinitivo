@@ -1,7 +1,7 @@
 package com.service;
 
 import com.model.User;
-import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,16 +13,16 @@ public interface UserServiceCmd {
     List<User> findAll();
 
     // Buscar un usuario por su ID
-    User findById(Long id) throws EntityNotFoundException;
+    User findById(String id) throws UsernameNotFoundException;
     // Buscar un usuario por su username
-    User findByUsername(String username) throws EntityNotFoundException;
+    User findByUsername(String username) throws UsernameNotFoundException;
 
     // Guardar un usuario (crear o actualizar)
-    User save(User User);
+    User save(User User) throws Exception;
 
     // Comprobar si un usuario existe por su ID
-    boolean existsById(Long id);
+    boolean existsById(String id);
 
-    void deleteById(Long id) throws EntityNotFoundException;
+    void deleteById(String id) throws UsernameNotFoundException;
 
 }

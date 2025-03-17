@@ -3,11 +3,11 @@ package com.service;
 import com.model.User;
 import com.repository.UserRepository;
 import com.util.Role;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,7 @@ public class UserServiceCmdImpl implements UserServiceCmd {
     }
 
     // Buscar un user por su ID
-    public User findById(Long id) throws EntityNotFoundException {
+    public User findById(String id) throws UsernameNotFoundException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null
                 || !authentication.isAuthenticated()
@@ -34,11 +34,11 @@ public class UserServiceCmdImpl implements UserServiceCmd {
             throw new RuntimeException("No estás autenticado");
         }
         return userRepository.findById(id)
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(()-> new UsernameNotFoundException(id));
     }
 
     @Override
-    public User findByUsername(String username) throws EntityNotFoundException {
+    public User findByUsername(String username) throws UsernameNotFoundException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null
                 || !authentication.isAuthenticated()
@@ -47,18 +47,18 @@ public class UserServiceCmdImpl implements UserServiceCmd {
             throw new RuntimeException("No estás autenticado");
         }
         return userRepository.findByUsername(username)
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(()-> new UsernameNotFoundException(username));
     }
 
     // Guardar un user (crear o actualizar)
-    public User save(User user) {
+    public User save(User user) throws Exception{
         String encryptedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encryptedPassword);
         return userRepository.save(user);
     }
 
     // Comprobar si un user existe por su ID
-    public boolean existsById(Long id) {
+    public boolean existsById(String id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null
                 || !authentication.isAuthenticated()
@@ -70,10 +70,10 @@ public class UserServiceCmdImpl implements UserServiceCmd {
     }
 
     // Eliminar un user por su ID
-    public void deleteById(Long id) throws EntityNotFoundException{
+    public void deleteById(String id) throws UsernameNotFoundException{
 
         if (!userRepository.existsById(id)) {
-            throw new EntityNotFoundException();
+            throw new UsernameNotFoundException(id);
         }
         userRepository.deleteById(id);
     }

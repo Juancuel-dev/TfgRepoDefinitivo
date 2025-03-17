@@ -1,16 +1,15 @@
 package com.model.key;
 
-import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "secret_keys")
+@Document("keys")
 @Data
 public class Key {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private String id;
     private String nombre;
     private String valor;
 }
