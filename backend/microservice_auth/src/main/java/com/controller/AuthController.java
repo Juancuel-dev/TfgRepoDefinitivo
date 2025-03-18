@@ -1,42 +1,42 @@
 package com.controller;
 
 import com.model.login.LoginRequest;
+import com.model.login.LoginResponse;
 import com.model.register.RegisterRequest;
+import com.model.user.User;
+import com.model.user.UserDTO;
 import com.service.AuthService;
+import com.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
-@Slf4j
 @RequestMapping("/auth")
+@RestController
 @RequiredArgsConstructor
 public class AuthController {
+    private final JwtService jwtService;
 
-    private final AuthService authService;
+    private final AuthService authenticationService;
+
+    @PostMapping("/signup")
+    public ResponseEntity<UserDTO> register(@RequestBody RegisterRequest registerUserDto) {
+        UserDTO registeredUser = authenticationService.signup(registerUserDto);
+
+        return ResponseEntity.ok(registeredUser);
+    }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
-        String token = authService.login(loginRequest);
-        return ResponseEntity.ok(token);
-    }
+    public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginRequest loginUserDto) {
+        UserDTO authenticatedUser = authenticationService.authenticate(loginUserDto);
 
-    @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
-        authService.register(registerRequest);
-        return ResponseEntity.status(201).body("Usuario registrado con éxito");
-    }
+        String jwtToken = jwtService.generateToken(authenticatedUser);
 
-    @PostMapping("/validate-token")
-    public ResponseEntity<Boolean> validateToken(@RequestBody String token) {
-        boolean isValid = authService.validateToken(token);
-        return ResponseEntity.ok(isValid);
-    }
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setToken(jwtToken);
+        loginResponse.setExpiresIn(jwtService.getExpirationTime());
 
-    @GetMapping("/extract-username")
-    public ResponseEntity<String> extractUsername(@RequestParam String token) {
-        String username = authService.extractUsername(token);
-        return ResponseEntity.ok(username);
+        return ResponseEntity.ok(loginResponse);
     }
 }

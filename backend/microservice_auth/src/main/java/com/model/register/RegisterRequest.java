@@ -3,12 +3,14 @@ package com.model.register;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Setter
 @Getter
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterRequest {
+public class RegisterRequest implements Serializable {
 
     // Getters y Setters
 
