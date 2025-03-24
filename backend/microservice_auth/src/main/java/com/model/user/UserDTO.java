@@ -7,7 +7,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
@@ -17,7 +16,9 @@ public class UserDTO implements UserDetails {
 
     private String username;
     private String password;
+    private String email;
     private Role role;
+    private String clientId;
 
     @Override
     public boolean isAccountNonExpired() {
@@ -39,7 +40,7 @@ public class UserDTO implements UserDetails {
         return UserDetails.super.isEnabled();
     }
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
+    public Collection<SimpleGrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
     }
 }

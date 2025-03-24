@@ -1,159 +1,151 @@
 package com.service;
-import com.model.LoginRequest;
-import com.model.User;
-import com.model.register.RegisterUsersRequest;
-import com.util.RegisterRequestMapper;
-import org.springframework.beans.factory.annotation.Value;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import reactor.core.publisher.Mono;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.scheduler.Schedulers;
+import com.model.LoginRequest;
+import com.model.register.RegisterUsersRequest;
+import com.util.RegisterRequestMapper;
+import com.model.User;
 
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
-    private final Authentication authentication;
+    // Nombres de los servicios registrados en Eureka (en lugar de URLs)
+    private static final String AUTH_SERVICE = "auth-service"; // Nombre en Eureka
+    private static final String USER_SERVICE = "user-service";
+    private static final String GAME_SERVICE = "game-service";
+    private static final String CART_SERVICE = "cart-service";
 
-    @Value("${auth.service.url}/auth")
-    private String authServiceUrl;
-
-    @Value("${users.service.url}/users")
-    private String userServiceUrl;
-
-    @Value("${games.service.url}/games")
-    private String gamesServiceUrl;
-
-    @Value("${cart.service.url}/cart")
-    private String cartServiceUrl;
+    // Usa RestTemplate con balanceo de carga
     private final RestTemplate restTemplate;
 
-    public AuthService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-        this.authentication = SecurityContextHolder.getContext().getAuthentication();
-    }
+    // === Métodos de autenticación ===
+    public Mono<ResponseEntity<String>> login(LoginRequest loginRequest) {
+        return Mono.fromCallable(() -> {
+            try {
+                ResponseEntity<String> response = restTemplate.postForEntity(
+                        "http://" + AUTH_SERVICE + "/login", // Usa el nombre de Eureka
+                        loginRequest,
+                        String.class
+                );
 
-    public boolean isValid(String token){
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", token);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        return Boolean.TRUE.equals(restTemplate.exchange("http://localhost:8084/auth/validate-token", HttpMethod.POST, entity, Boolean.class).getBody());
-    }
-
-    public String currentRole(String token){
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + token);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        return restTemplate.exchange("http://localhost:8080/auth/current-role", HttpMethod.POST, entity, String.class).getBody();
-    }
-
-    public boolean isAuthenticated(){
-
-        return authentication != null
-                && authentication.isAuthenticated();
-    }
-
-    public boolean isSameUser(String username){
-        if (authentication.getPrincipal() instanceof UserDetails) {
-            return ((UserDetails) authentication.getPrincipal()).getUsername().equals(username);
-        } else {
-            return false;
-        }
-    }
-
-    public ResponseEntity<String> register(RegisterUsersRequest register) {
-
-        register.setId(UUID.randomUUID().toString());
-        try {
-            ResponseEntity<String> responseAuth = restTemplate.postForEntity(authServiceUrl + "/register", RegisterRequestMapper.INSTANCE.toRegisterAuthRequest(register), String.class);
-            ResponseEntity<String> responseUsers = restTemplate.postForEntity(userServiceUrl + "/register", register, String.class);
-            if (responseAuth.getStatusCode() == HttpStatus.CREATED && responseUsers.getStatusCode() == HttpStatus.CREATED) {
-                return ResponseEntity.status(HttpStatus.CREATED).body("Usuario registrado con éxito");
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al registrar usuario, BAD REQUEST");
+                return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+            } catch (HttpClientErrorException e) {
+                return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError()
+                        .body("Error en el servidor: " + e.getMessage());
             }
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al registrar usuario, BAD REQUEST");
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno del servidor");
+        }).subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Mono<ResponseEntity<String>> register(RegisterUsersRequest register) {
+        return Mono.fromCallable(() -> {
+            register.setId(UUID.randomUUID().toString());
+            try {
+                // Llama a auth-service usando Eureka
+                ResponseEntity<String> responseAuth = restTemplate.postForEntity(
+                        "http://" + AUTH_SERVICE + "/register",
+                        RegisterRequestMapper.INSTANCE.toRegisterAuthRequest(register),
+                        String.class
+                );
+
+                // Llama a user-service usando Eureka
+                ResponseEntity<String> responseUsers = restTemplate.postForEntity(
+                        "http://" + USER_SERVICE + "/register",
+                        register,
+                        String.class
+                );
+
+                if (responseAuth.getStatusCode() == HttpStatus.CREATED &&
+                        responseUsers.getStatusCode() == HttpStatus.CREATED) {
+                    return ResponseEntity.status(HttpStatus.CREATED)
+                            .body("Usuario registrado con éxito");
+                } else {
+                    return ResponseEntity.badRequest().body("Error al registrar usuario");
+                }
+            } catch (HttpClientErrorException e) {
+                return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError()
+                        .body("Error interno del servidor: " + e.getMessage());
             }
-        }
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 
+    // === Métodos de proxy (simplificados con Eureka) ===
+    public Mono<ResponseEntity<?>> proxyRequest(String serviceName, ServerWebExchange exchange) {
+        return Mono.fromCallable(() -> {
+            try {
+                String path = exchange.getRequest().getPath().toString()
+                        .replace("/gateway", "");
+                String method = exchange.getRequest().getMethod().name();
+                String query = exchange.getRequest().getURI().getQuery();
+                String targetUrl = "http://" + serviceName + path + (query != null ? "?" + query : "");
 
-    public ResponseEntity<String> login(LoginRequest loginRequest){
-        ResponseEntity<String> response = restTemplate.postForEntity(authServiceUrl + "/login", loginRequest, String.class);
-        if (response.getStatusCode() == HttpStatus.OK) {
-            return ResponseEntity.status(HttpStatus.OK).body(response.getBody());
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error al hacer login usuario");
-        }
+                HttpHeaders headers = new HttpHeaders();
+                exchange.getRequest().getHeaders().forEach(headers::addAll);
+
+                String body = exchange.getAttributeOrDefault("cachedRequestBody", "");
+
+                ResponseEntity<?> response = restTemplate.exchange(
+                        targetUrl,
+                        HttpMethod.valueOf(method),
+                        new HttpEntity<>(body.isEmpty() ? null : body, headers),
+                        Object.class
+                );
+
+                return ResponseEntity.status(response.getStatusCode())
+                        .headers(response.getHeaders())
+                        .body(response.getBody());
+            } catch (HttpClientErrorException e) {
+                return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError()
+                        .body("Error en el gateway: " + e.getMessage());
+            }
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 
-    public ResponseEntity<String> registerKey() {
-        ResponseEntity<String> response = restTemplate.postForEntity(authServiceUrl + "register", null, String.class);
-        if (response.getStatusCode() == HttpStatus.CREATED) {
-            return ResponseEntity.status(HttpStatus.CREATED).body("Clave registrada con éxito");
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error al registrar usuario");
-        }
+    public Mono<ResponseEntity<?>> proxyUsersRequest(ServerWebExchange exchange) {
+        return proxyRequest(USER_SERVICE, exchange);
     }
 
-    public ResponseEntity<?> redirectToMicroserviceUsers(@RequestHeader("Authorization") String token) {
-        if (isValid(token)) {
-            return redirectRequest(userServiceUrl, token);
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public Mono<ResponseEntity<?>> proxyGamesRequest(ServerWebExchange exchange) {
+        return proxyRequest(GAME_SERVICE, exchange);
     }
 
-    public ResponseEntity<?> redirectToMicroserviceGames(@RequestHeader("Authorization") String token) {
-        if (isValid(token)) {
-            return redirectRequest(gamesServiceUrl, token);
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public Mono<ResponseEntity<?>> proxyCartRequest(ServerWebExchange exchange) {
+        return proxyRequest(CART_SERVICE, exchange);
     }
 
-    public ResponseEntity<?> redirectToMicroserviceCart(@RequestHeader("Authorization") String token) {
-        if (isValid(token)) {
-            return redirectRequest(cartServiceUrl, token);
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public Mono<ResponseEntity<?>> myself(String token) {
+        return Mono.fromCallable(() -> {
+            try {
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("Authorization", token);
+
+                ResponseEntity<User> response = restTemplate.exchange(
+                        "http://" + USER_SERVICE + "/me",
+                        HttpMethod.GET,
+                        new HttpEntity<>(headers),
+                        User.class
+                );
+
+                return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError()
+                        .body("Error al obtener información del usuario");
+            }
+        }).subscribeOn(Schedulers.boundedElastic());
     }
-
-    private ResponseEntity<?> redirectRequest(String serviceUrl, String token) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", token);
-
-            HttpEntity<?> request = new HttpEntity<>(headers);
-
-            ResponseEntity<String> response = restTemplate.exchange(serviceUrl, HttpMethod.GET, request, String.class);
-
-            return ResponseEntity.ok(response.getBody());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al redirigir la solicitud: " + e.getMessage());
-        }
-    }
-
-    public ResponseEntity<?> myself(String token){
-        ResponseEntity<User> response = restTemplate.postForEntity(userServiceUrl + "/me", token, User.class);
-        if (response.getStatusCode() == HttpStatus.OK) {
-            return ResponseEntity.status(HttpStatus.OK).body(response.getBody());
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error al hacer login usuario");
-        }
-    }
-
 }

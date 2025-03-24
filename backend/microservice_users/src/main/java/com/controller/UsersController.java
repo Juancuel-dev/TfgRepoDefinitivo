@@ -1,93 +1,72 @@
 package com.controller;
 
 import com.model.User;
-import com.model.UserDTO;
-import com.service.UserServiceCmdImpl;
-import com.util.UserMapper;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import com.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/users")
-@AllArgsConstructor
+@RequestMapping
+@RequiredArgsConstructor
 public class UsersController {
 
-    private final UserServiceCmdImpl userService;
+    private final UserService userService;
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.findAll());
+    @PreAuthorize("hasRole('ADMIN')")
+    public Mono<ResponseEntity<List<User>>> findAll(ServerWebExchange exchange) {
+        String token = exchange.getRequest().getHeaders().getFirst("Authorization");
+        return Mono.fromCallable(() -> ResponseEntity.ok(userService.findAll()))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
-    @PreAuthorize("hasRole('ADMIN') ")
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable String id) {
-        return ResponseEntity.ok(userService.findById(id));
+    public Mono<ResponseEntity<User>> findById(ServerWebExchange exchange, @PathVariable String id) {
+        String token = exchange.getRequest().getHeaders().getFirst("Authorization");
+        return Mono.fromCallable(() -> ResponseEntity.ok(userService.findById(id)))
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    @GetMapping("/username/{username}")
+    public Mono<ResponseEntity<User>> findByUsername(ServerWebExchange exchange, @PathVariable String username) {
+        String token = exchange.getRequest().getHeaders().getFirst("Authorization");
+        return Mono.fromCallable(() -> ResponseEntity.ok(userService.findByUsername( username)))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        try{
-            User createdUser = userService.save(user);
-            return ResponseEntity.created(UriComponentsBuilder.fromPath("/users/{id}")
-                            .buildAndExpand(createdUser.getId())
-                            .toUri())
-                    .body(createdUser);
-        }catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
-
+    public Mono<ResponseEntity<User>> save(ServerWebExchange exchange) {
+        return exchange.getFormData()
+                .flatMap(formData -> {
+                    String token = exchange.getRequest().getHeaders().getFirst("Authorization");
+                    User user = new User();
+                    // Asignar valores del formData al usuario
+                    return Mono.fromCallable(() ->
+                            ResponseEntity.created(URI.create("/"))
+                                    .body(userService.save(user))
+                    ).subscribeOn(Schedulers.boundedElastic());
+                });
     }
 
-    @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<User> getAuthenticatedUser(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(user);
-    }
-
-
-    @PreAuthorize("hasRole('ADMIN') ")
-    @PutMapping
-    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
-        try {
-            return ResponseEntity.ok(userService.save(user));
-        } catch (Exception ef) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
-    @PreAuthorize("hasRole('ADMIN') ")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
-        try {
-            userService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @PreAuthorize("isAuthenticated() and (hasRole('ADMIN') or @authService.isSameUser(#username)) ")
-    @PostMapping("/auth")
-    public ResponseEntity<UserDTO> getUserDTOByUsername(@RequestBody String username) {
-        try {
-            // Llamar al servicio para obtener los detalles del usuario basado en el nombre de usuario
-            return ResponseEntity.ok(UserMapper.INSTANCE.toUserDTO(userService.findByUsername(username)));
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public Mono<ResponseEntity<Object>> deleteById(@PathVariable String id) {
+        return Mono.fromCallable(() -> {
+                    userService.deleteById(id);
+                    return ResponseEntity.<Void>noContent().build();
+                })
+                .onErrorResume(UsernameNotFoundException.class, e ->
+                        Mono.just(ResponseEntity.<Void>notFound().build()))
+                .onErrorResume(Exception.class, e ->
+                        Mono.just(ResponseEntity.<Void>internalServerError().build()))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 }
-
-
-
-

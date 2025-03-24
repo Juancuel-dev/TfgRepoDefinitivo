@@ -1,42 +1,105 @@
 package com.controller;
 
+import com.model.auth.AuthenticationResponse;
 import com.model.login.LoginRequest;
 import com.model.login.LoginResponse;
 import com.model.register.RegisterRequest;
-import com.model.user.User;
 import com.model.user.UserDTO;
 import com.service.AuthService;
 import com.service.JwtService;
+import com.util.exception.ClienteNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RequestMapping("/auth")
+import java.net.URI;
+import java.util.List;
+
 @RestController
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final JwtService jwtService;
 
     private final AuthService authenticationService;
 
-    @PostMapping("/signup")
-    public ResponseEntity<UserDTO> register(@RequestBody RegisterRequest registerUserDto) {
+    @PostMapping("/register")
+    public ResponseEntity<UserDTO> register(@Valid @RequestBody RegisterRequest registerUserDto) {
         UserDTO registeredUser = authenticationService.signup(registerUserDto);
 
-        return ResponseEntity.ok(registeredUser);
+        return ResponseEntity.created(URI.create("/")).body(registeredUser);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginRequest loginUserDto) {
+    public ResponseEntity<LoginResponse> authenticate(@Valid @RequestBody LoginRequest loginUserDto) {
         UserDTO authenticatedUser = authenticationService.authenticate(loginUserDto);
 
         String jwtToken = jwtService.generateToken(authenticatedUser);
 
-        LoginResponse loginResponse = new LoginResponse();
-        loginResponse.setToken(jwtToken);
-        loginResponse.setExpiresIn(jwtService.getExpirationTime());
-
-        return ResponseEntity.ok(loginResponse);
+        return ResponseEntity.ok(new LoginResponse(jwtToken));
     }
+
+    @GetMapping("/.well-known/jwks.json")
+    public ResponseEntity<String> getJwks() {
+        // Carga la clave pública desde un archivo o una base de datos
+        String publicKey = """
+                -----BEGIN PUBLIC KEY-----
+                MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy8Dbv8prpJ/0kKhlGeJY
+                ozo2t60EG8L0561g13R29LvMR5hyvGZlGJpmn65+A4xHXInJYiPuKzrKfDNSH6h
+                -----END PUBLIC KEY-----""";
+        return ResponseEntity.ok().body(publicKey);
+    }
+
+    @PostMapping("/validate-token")
+    public ResponseEntity<Boolean> validateToken(@RequestHeader("Authorization") String token) {
+        return ResponseEntity.ok(jwtService.isTokenValid(token));
+    }
+
+    @PostMapping("/has-role/{role}")
+    public ResponseEntity<Boolean> hasRole(@RequestHeader("Authorization") String token, @PathVariable String role) {
+
+        if (jwtService.isTokenValid(token)){
+                return ResponseEntity.ok(jwtService.hasRole(token,role));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+    }
+
+    @GetMapping("/token-info")
+    public ResponseEntity<AuthenticationResponse> getTokenInfo(@RequestHeader("Authorization") String token) throws ClienteNotFoundException {
+
+            UserDTO client = authenticationService.loadByClientId(jwtService.extractClientId(token));
+            List<String> authorities = jwtService.extractAuthorities(token);
+            return ResponseEntity.ok(new AuthenticationResponse(client.getUsername(), authorities, client.getClientId(), client.getEmail()));
+        }
+
+    @GetMapping("/{clientId}/email")
+    public ResponseEntity<String> getEmail(@RequestHeader("Authorization") String token, @PathVariable String clientId) {
+
+        if (jwtService.isTokenValid(token) && (jwtService.hasRole(token, "ADMIN"))|| jwtService.extractClientId(token).equals(clientId)) {
+
+            try {
+                return ResponseEntity.ok(authenticationService.getEmail(clientId));
+
+            } catch (ClienteNotFoundException cinfe) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @GetMapping("/{clientId}/info")
+    public ResponseEntity<UserDTO> getUserInfo(@RequestHeader("Authorization") String token, @PathVariable String clientId) {
+        // Verifica el token de acceso
+        if (jwtService.isTokenValid(token) && jwtService.hasRole(token, "ADMIN")) {
+            try {
+                return ResponseEntity.ok(authenticationService.loadByClientId(clientId));
+            }catch (ClienteNotFoundException cinfe) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+        }return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
 }

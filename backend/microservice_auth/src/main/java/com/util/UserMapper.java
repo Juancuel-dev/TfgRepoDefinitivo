@@ -1,5 +1,6 @@
 package com.util;
 
+import com.model.register.RegisterRequest;
 import com.model.user.User;
 import com.model.user.UserDTO;
 import org.mapstruct.Mapper;
@@ -15,8 +16,14 @@ public interface UserMapper {
             @Mapping(target = "username", source = "username"),
             @Mapping(target = "password", source = "password"),
             @Mapping(target = "role", source = "role"),
+            @Mapping(target = "clientId",source = "id")
     })
     UserDTO userToUserDTO(User user);
+
+    @Mappings({
+            @Mapping(target = "role", constant = "USER")
+    })
+    User toUser(RegisterRequest registerRequest);
 }
 
 

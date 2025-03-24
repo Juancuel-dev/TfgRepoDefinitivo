@@ -1,16 +1,15 @@
 package com.model.login;
 
-import lombok.*;
-
-import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Data
 @AllArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
-public class LoginResponse implements Serializable {
+public class LoginResponse {
 
     private String token;
-    private long expiresIn;
 }

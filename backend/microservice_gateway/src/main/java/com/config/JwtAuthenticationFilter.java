@@ -1,60 +1,43 @@
 package com.config;
-
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.http.HttpStatus;
+import com.service.JwtService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.stereotype.Component;
+
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
-import javax.crypto.SecretKey;
-import java.util.List;
-
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter implements WebFilter {
 
-    private static final SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
-
-    // Rutas que no requieren autenticación
-    private static final List<String> PUBLIC_PATHS = List.of(
-            "/gateway/login",
-            "/gateway/logout",
-            "/gateway/register",
-            "/gateway/register-key",
-            "/gateway/games"
-    );
+    private final JwtService jwtService;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String path = exchange.getRequest().getURI().getPath();
+        String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
 
-        // Permitir acceso sin autenticación a rutas públicas
-        if (PUBLIC_PATHS.contains(path)) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return chain.filter(exchange);
         }
 
-        // Verificar la validez del token JWT
-        String token = exchange.getRequest().getHeaders().getFirst("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-            try {
-                Jws<Claims> jws = Jwts.parserBuilder()
-                        .setSigningKey(secretKey)
-                        .build()
-                        .parseClaimsJws(token);
-                // Token válido, permitir el acceso
-                return chain.filter(exchange);
-            } catch (JwtException e) {
-                // Token inválido, denegar el acceso
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
-            }
-        } else {
-            // No hay token, denegar el acceso
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
-        }
+        String token = authHeader.substring(7);
+
+        return jwtService.isTokenValid(token)
+                .flatMap(isValid -> {
+                    if (!isValid) {
+                        return chain.filter(exchange);
+                    }
+                    return jwtService.getAuthentication(token)
+                            .flatMap(authentication -> {
+                                SecurityContext securityContext = new SecurityContextImpl(authentication);
+                                return chain.filter(exchange)
+                                        .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(securityContext)));
+                            });
+                });
     }
 }

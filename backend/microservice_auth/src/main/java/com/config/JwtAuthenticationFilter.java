@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final CustomUserDetailsService customUserDetailsService;
-    private static final List<String> IGNORE_AUTH_ROUTES = Arrays.asList("/auth/signup", "/auth/login");
+    private static final List<String> IGNORE_AUTH_ROUTES = Arrays.asList("/auth/signup", "/auth/login","/auth/validate-token","/auth/has-role","/auth/token-info","/.well-known/jwks.json","/auth/{clientid}/email");
 
     @Override
     protected void doFilterInternal(
@@ -38,7 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         if (IGNORE_AUTH_ROUTES.contains(request.getRequestURI())) {
-            filterChain.doFilter(request, response);
+           filterChain.doFilter(request, response);
             return;
         }
 

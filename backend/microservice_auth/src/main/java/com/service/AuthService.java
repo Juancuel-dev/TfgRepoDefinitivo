@@ -6,7 +6,7 @@ import com.model.user.User;
 import com.model.user.UserDTO;
 import com.repository.user.UserRepository;
 import com.util.UserMapper;
-import lombok.AllArgsConstructor;
+import com.util.exception.ClienteNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,11 +22,8 @@ public class AuthService {
 
     public UserDTO signup(RegisterRequest input) {
 
-        User user = new User();
-        user.setEmail(input.getEmail());
-        user.setUsername(input.getUsername());
+        User user = UserMapper.INSTANCE.toUser(input);
         user.setPassword(passwordEncoder.encode(input.getPassword()));
-        user.setRole("USER");
 
         return UserMapper.INSTANCE.userToUserDTO(userRepository.save(user));
     }
@@ -41,5 +38,17 @@ public class AuthService {
 
         return UserMapper.INSTANCE.userToUserDTO(userRepository.findByUsername(input.getUsername())
                 .orElseThrow());
+    }
+
+    public UserDTO loadByClientId(String clientId) throws ClienteNotFoundException {
+        return UserMapper
+                .INSTANCE
+                .userToUserDTO(userRepository
+                                    .findById(clientId)
+                                    .orElseThrow(()-> new ClienteNotFoundException("Cliente " + clientId + " no encontrado")));
+    }
+
+    public String getEmail(String clientId) throws ClienteNotFoundException {
+        return userRepository.findById(clientId).orElseThrow(()-> new ClienteNotFoundException("Cliente no encontrado con id " + clientId)).getEmail();
     }
 }

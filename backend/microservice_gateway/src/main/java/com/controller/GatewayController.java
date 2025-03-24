@@ -6,6 +6,8 @@ import com.service.AuthService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @RestController
@@ -19,37 +21,32 @@ public class GatewayController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
+    public Mono<ResponseEntity<String>> login(@RequestBody LoginRequest loginRequest) {
         return authService.login(loginRequest);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterUsersRequest registerUsersRequest) {
+    public Mono<ResponseEntity<String>> register(@RequestBody RegisterUsersRequest registerUsersRequest) {
         return authService.register(registerUsersRequest);
     }
 
-    @PostMapping("/register-key")
-    public ResponseEntity<String> registerKey() {
-        return authService.registerKey();
+    @RequestMapping("/users/**")
+    public Mono<ResponseEntity<?>> usersProxy(ServerWebExchange exchange) {
+        return authService.proxyUsersRequest(exchange);
     }
 
-    @GetMapping("/users/**")
-    public ResponseEntity<?> redirectToMicroserviceUsers(@RequestHeader("Authorization") String token) {
-        return authService.redirectToMicroserviceUsers(token);
+    @RequestMapping("/games/**")
+    public Mono<ResponseEntity<?>> gamesProxy(ServerWebExchange exchange) {
+        return authService.proxyGamesRequest(exchange);
     }
 
-    @GetMapping("/games/**")
-    public ResponseEntity<?> redirectToMicroserviceGames(@RequestHeader("Authorization") String token) {
-        return authService.redirectToMicroserviceGames(token);
-    }
-
-    @GetMapping("/cart/**")
-    public ResponseEntity<?> redirectToMicroserviceCart(@RequestHeader("Authorization") String token) {
-        return authService.redirectToMicroserviceCart(token);
+    @RequestMapping("/cart/**")
+    public Mono<ResponseEntity<?>> cartProxy(ServerWebExchange exchange) {
+        return authService.proxyCartRequest(exchange);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> myself(@RequestHeader("Authorization") String token) {
+    public Mono<ResponseEntity<?>> myself(@RequestHeader("Authorization") String token) {
         return authService.myself(token);
     }
 }
