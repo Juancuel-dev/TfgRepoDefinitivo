@@ -18,7 +18,21 @@ class GameDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.network(game.imageUrl, fit: BoxFit.cover, width: double.infinity),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: 200, // Máximo de 200px de altura
+                maxWidth: 200, // Máximo de 200px de ancho
+              ),
+              child: AspectRatio(
+                aspectRatio: 1, // Proporción 1:1 para mantener la imagen cuadrada
+                child: Image.network(
+                  game.imageUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
+              ),
+            ),
             SizedBox(height: 10),
             Text('Nombre: ${game.name}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             SizedBox(height: 10),

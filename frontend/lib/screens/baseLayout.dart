@@ -13,46 +13,96 @@ class BaseLayout extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: showBackButton,
-        title: const Text('Tienda de Videojuegos'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-            child: const Text(
-              'Login',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/register');
-            },
-            child: const Text(
-              'Registrarse',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.shopping_cart),
-            onPressed: () {
-              Navigator.pushNamed(context, '/cart');
-            },
-          ),
-        ],
+        backgroundColor: Colors.grey[900],
+        actions: [],
       ),
       body: Column(
         children: [
-          Expanded(child: child),
+          // Categories Bar
           Container(
-            color: Colors.blue,
-            padding: const EdgeInsets.all(16.0),
-            child: const Text(
-              'Footer de la Tienda de Videojuegos',
-              style: TextStyle(color: Colors.white),
+            color: Colors.grey[900],
+            padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), // Reducir el padding vertical
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0), // Agregar padding a la izquierda
+                  child: Text(
+                    'LevelUp Shop',
+                    style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold), // Reducir el tamaño del texto
+                  ),
+                ),
+                Spacer(),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildCategoryChip('PC'),
+                          _buildCategoryChip('XBOX'),
+                          _buildCategoryChip('PS5'),
+                          _buildCategoryChip('NINTENDO SWITCH'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Spacer(),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(context, '/login');
+                      },
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(context, '/register');
+                      },
+                      child: const Text(
+                        'Registrarse',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.shopping_cart, color: Colors.white),
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/cart');
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
+          Expanded(child: child),
         ],
+      ),
+      bottomNavigationBar: Container(
+        color: Colors.grey[900],
+        padding: const EdgeInsets.all(16.0),
+        child: const Text(
+          '© 2025 Tienda de Videojuegos',
+          style: TextStyle(color: Colors.white),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      backgroundColor: Colors.black, // Aseguramos que el fondo sea negro
+    );
+  }
+
+  Widget _buildCategoryChip(String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Chip(
+        label: Text(label, style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.grey[800],
       ),
     );
   }

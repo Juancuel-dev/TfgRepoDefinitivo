@@ -1,26 +1,41 @@
-import 'package:flutter_auth_app/models/userDTO.dart';
-import 'package:flutter_auth_app/models/userList.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class AuthService {
-  final UserList _userList = UserList();
+  final String apiUrl = 'http://localhost:8080/gateway';
 
-  Future<bool> login(String username, String password) async {
-    await Future.delayed(Duration(seconds: 1)); // Simulate network delay
-    for (var user in _userList.users) {
-      if (user.username == username && user.password == password) {
-        return true;
-      }
+  Future<String?> login(String username, String password) async {
+    final response = await http.post(
+      Uri.parse('$apiUrl/login'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'username': username,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseBody = jsonDecode(response.body);
+      return responseBody['token']; // Assuming the JWT is returned in the 'token' field
+    } else {
+      return null;
     }
-    return false;
   }
 
   Future<bool> register(String username, String password) async {
-    await Future.delayed(Duration(seconds: 1)); // Simulate network delay
-    if (_userList.userExists(username)) {
-      return false; // User already exists
-    } else {
-      _userList.addUser(UserDTO(username: username, password: password));
-      return true;
-    }
+    final response = await http.post(
+      Uri.parse('$apiUrl/register'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'username': username,
+        'password': password,
+      }),
+    );
+
+    return response.statusCode == 201; // Assuming 201 Created is returned on successful registration
   }
 }

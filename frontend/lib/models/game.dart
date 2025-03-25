@@ -19,7 +19,7 @@ class Game {
       precio: json['precio'].toDouble(),
       metacritic: json['metacritic'],
       consola: json['consola'],
-      imageUrl: json['imageUrl'],
+      imageUrl: json['imagen'],
     );
   }
 }

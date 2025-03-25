@@ -38,4 +38,7 @@ public class Game {
     @Field("consola")
     private String consola;
 
+    @Field("imagen")
+    private String imagen;
+
 }
