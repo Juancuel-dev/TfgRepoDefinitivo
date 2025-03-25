@@ -1,16 +1,19 @@
 package com.model;
 
-import lombok.Data;
+import lombok.*;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
-@Document(collection = "games")  // Indica que la clase Game corresponde a la colección "games" en MongoDB
+@Document(collection = "games")
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class Game {
 
-    private static int cuantosId = 0;
     @Id
     private String id;  // En MongoDB, el ID es típicamente de tipo String, no Long.
 
@@ -35,44 +38,4 @@ public class Game {
     @Field("consola")
     private String consola;
 
-    // Constructor parametrizado
-    public Game(String name, String description, String creator, Float precio, Integer stock, Integer metacritic, String consola) {
-
-        cuantosId++;
-        this.id = cuantosId + "";
-        this.name = name;
-        this.description = description;
-        this.creator = creator;
-        this.precio = precio;
-        this.stock = stock;
-        this.metacritic = metacritic;
-        this.consola = consola;
-    }
-
-    // Constructor por defecto
-    public Game() {
-        cuantosId++;
-        this.id = cuantosId + "";
-        this.name = "";
-        this.description = "";
-        this.creator = "";
-        this.precio = -1F;
-        this.stock = -1;
-        this.metacritic = -1;
-        this.consola = "";
-    }
-
-    // Constructor de copia
-    public Game(Game game) {
-
-        cuantosId++;
-        this.id = cuantosId + "";
-        this.name = game.getName();
-        this.description = game.description;
-        this.creator = game.creator;
-        this.precio = game.precio;
-        this.stock = game.stock;
-        this.metacritic = game.metacritic;
-        this.consola = game.consola;
-    }
 }

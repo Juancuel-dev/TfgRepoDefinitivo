@@ -10,56 +10,60 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class JwtService {
 
     private final RestTemplate restTemplate;
-    private final String baseUrl = "http://localhost:8084/auth";
+    private final String baseUrl = "http://microservice-auth/auth";
 
-    public Mono<Boolean> isTokenValid(String token) {
-        return Mono.fromCallable(() -> callAuthMicroServiceBoolean(token))
-                .subscribeOn(Schedulers.boundedElastic());
+    public Boolean isTokenValid(String token) {
+        HttpHeaders headers = new HttpHeaders();
+        String cleanToken = token.replace("Bearer ", "");
+        headers.set(HttpHeaders.AUTHORIZATION, cleanToken);
+        HttpEntity<String> entity = new HttpEntity<>("", headers);
+
+        return restTemplate.exchange(
+                baseUrl + "/validate-token",
+                HttpMethod.POST,
+                entity,
+                Boolean.class
+        ).getBody();
     }
 
-    public Mono<Authentication> getAuthentication(String token) {
-        return Mono.fromCallable(() -> {
-                    AuthenticationResponse auth = callAuthMicroServiceAuth(token);
-                    if (auth != null) {
-                        return (Authentication) new UsernamePasswordAuthenticationToken(
-                                auth.getUsername(),
-                                null,
-                                auth.getAuthorities().stream()
-                                        .map(SimpleGrantedAuthority::new)
-                                        .toList());
-                    }
-                    return null;
-                })
-                .subscribeOn(Schedulers.boundedElastic());
+    public Authentication getAuthentication(String token) {
+        AuthenticationResponse auth = callAuthMicroServiceAuth(token);
+        if (auth != null) {
+            return new UsernamePasswordAuthenticationToken(
+                    auth.getUsername(),
+                    null,
+                    auth.getAuthorities().stream()
+                            .map(SimpleGrantedAuthority::new)
+                            .collect(Collectors.toList())
+            );
+        }
+        return null;
     }
 
-    public Mono<String> getUsernameFromToken(String token) {
-        return Mono.fromCallable(() -> callAuthMicroServiceAuth(token))
-                .map(AuthenticationResponse::getUsername)
-                .subscribeOn(Schedulers.boundedElastic());
+    public String getUsernameFromToken(String token) {
+        AuthenticationResponse auth = callAuthMicroServiceAuth(token);
+        return auth != null ? auth.getUsername() : null;
     }
 
-    public Mono<String> getIdFromToken(String token) {
-        return Mono.fromCallable(() -> callAuthMicroServiceAuth(token))
-                .map(AuthenticationResponse::getClientId)
-                .subscribeOn(Schedulers.boundedElastic());
+    public String getIdFromToken(String token) {
+        AuthenticationResponse auth = callAuthMicroServiceAuth(token);
+        return auth != null ? auth.getClientId() : null;
     }
 
-    public Mono<SimpleGrantedAuthority> getRoleFromToken(String token) {
-        return Mono.fromCallable(() -> callAuthMicroServiceAuth(token))
-                .flatMap(auth -> Mono.justOrEmpty(auth.getAuthorities().stream().findFirst()))
-                .map(SimpleGrantedAuthority::new)
-                .switchIfEmpty(Mono.error(new RuntimeException("No authorities found in token")))
-                .subscribeOn(Schedulers.boundedElastic());
+    public SimpleGrantedAuthority getRoleFromToken(String token) {
+        AuthenticationResponse auth = callAuthMicroServiceAuth(token);
+        if (auth != null && !auth.getAuthorities().isEmpty()) {
+            return new SimpleGrantedAuthority(auth.getAuthorities().get(0));
+        }
+        throw new RuntimeException("No authorities found in token");
     }
 
     private AuthenticationResponse callAuthMicroServiceAuth(String token) {
@@ -67,24 +71,12 @@ public class JwtService {
         String cleanToken = token.replace("Bearer ", "");
         headers.set(HttpHeaders.AUTHORIZATION, cleanToken);
         HttpEntity<String> entity = new HttpEntity<>("", headers);
+
         return restTemplate.exchange(
                 baseUrl + "/token-info",
                 HttpMethod.GET,
                 entity,
                 AuthenticationResponse.class
-        ).getBody();
-    }
-
-    private Boolean callAuthMicroServiceBoolean(String token) {
-        HttpHeaders headers = new HttpHeaders();
-        String cleanToken = token.replace("Bearer ", "");
-        headers.set(HttpHeaders.AUTHORIZATION, cleanToken);
-        HttpEntity<String> entity = new HttpEntity<>("", headers);
-        return restTemplate.exchange(
-                baseUrl + "/validate-token",
-                HttpMethod.POST,
-                entity,
-                Boolean.class
         ).getBody();
     }
 }

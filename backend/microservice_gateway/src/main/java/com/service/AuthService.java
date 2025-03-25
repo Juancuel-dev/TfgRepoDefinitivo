@@ -1,151 +1,154 @@
 package com.service;
 
+import com.model.LoginRequest;
+import com.model.register.RegisterUsersRequest;
+import com.model.register.RegisterAuthRequest;
+import com.util.RegisterRequestMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import reactor.core.publisher.Mono;
-import org.springframework.web.server.ServerWebExchange;
-import reactor.core.scheduler.Schedulers;
-import com.model.LoginRequest;
-import com.model.register.RegisterUsersRequest;
-import com.util.RegisterRequestMapper;
-import com.model.User;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    // Nombres de los servicios registrados en Eureka (en lugar de URLs)
-    private static final String AUTH_SERVICE = "auth-service"; // Nombre en Eureka
-    private static final String USER_SERVICE = "user-service";
-    private static final String GAME_SERVICE = "game-service";
-    private static final String CART_SERVICE = "cart-service";
+    private static final String AUTH_SERVICE = "microservice-auth";
+    private static final String USER_SERVICE = "microservice-users";
 
-    // Usa RestTemplate con balanceo de carga
+    @LoadBalanced
     private final RestTemplate restTemplate;
 
-    // === Métodos de autenticación ===
-    public Mono<ResponseEntity<String>> login(LoginRequest loginRequest) {
-        return Mono.fromCallable(() -> {
-            try {
-                ResponseEntity<String> response = restTemplate.postForEntity(
-                        "http://" + AUTH_SERVICE + "/login", // Usa el nombre de Eureka
-                        loginRequest,
-                        String.class
-                );
+    public ResponseEntity<String> login(LoginRequest loginRequest) {
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    "http://" + AUTH_SERVICE + "/auth/login",
+                    loginRequest,
+                    String.class
+            );
+            return ResponseEntity.status(response.getStatusCode())
+                    .headers(response.getHeaders())
+                    .body(response.getBody());
+        } catch (HttpClientErrorException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(e.getResponseHeaders())
+                    .body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Error during login", e);
+            return ResponseEntity.internalServerError()
+                    .body("Error en el servidor: " + e.getMessage());
+        }
+    }
 
-                return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
-            } catch (HttpClientErrorException e) {
-                return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
-            } catch (Exception e) {
-                return ResponseEntity.internalServerError()
-                        .body("Error en el servidor: " + e.getMessage());
+    public ResponseEntity<String> register(RegisterUsersRequest registerRequest) {
+        registerRequest.setId(UUID.randomUUID().toString());
+        RegisterAuthRequest authRequest = RegisterRequestMapper.INSTANCE.toRegisterAuthRequest(registerRequest);
+
+        try {
+            // Llamada a auth-service
+            ResponseEntity<String> authResponse = restTemplate.postForEntity(
+                    "http://" + AUTH_SERVICE + "/auth/register",
+                    authRequest,
+                    String.class
+            );
+
+            // Llamada a user-service
+            ResponseEntity<String> userResponse = restTemplate.postForEntity(
+                    "http://" + USER_SERVICE + "/users/register",
+                    registerRequest,
+                    String.class
+            );
+
+            if (authResponse.getStatusCode() == HttpStatus.CREATED &&
+                    userResponse.getStatusCode() == HttpStatus.CREATED) {
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body("Usuario registrado con éxito");
+            } else {
+                return ResponseEntity.badRequest()
+                        .body("Error al registrar usuario");
             }
-        }).subscribeOn(Schedulers.boundedElastic());
+        } catch (HttpClientErrorException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(e.getResponseHeaders())
+                    .body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Error during registration", e);
+            return ResponseEntity.internalServerError()
+                    .body("Error interno del servidor: " + e.getMessage());
+        }
     }
 
-    public Mono<ResponseEntity<String>> register(RegisterUsersRequest register) {
-        return Mono.fromCallable(() -> {
-            register.setId(UUID.randomUUID().toString());
-            try {
-                // Llama a auth-service usando Eureka
-                ResponseEntity<String> responseAuth = restTemplate.postForEntity(
-                        "http://" + AUTH_SERVICE + "/register",
-                        RegisterRequestMapper.INSTANCE.toRegisterAuthRequest(register),
-                        String.class
-                );
+    public ResponseEntity<Object> proxyRequest(String serviceName, HttpServletRequest request) {
+        try {
+            String micro = serviceName.substring(13); //Me quito 'microservice-' (Todas las urls del controller de cada micro empieza o por /users, /games, /auth)
+            String path = request.getRequestURI().replace("/gateway", "");
+            String url = "http://" + serviceName + path;
 
-                // Llama a user-service usando Eureka
-                ResponseEntity<String> responseUsers = restTemplate.postForEntity(
-                        "http://" + USER_SERVICE + "/register",
-                        register,
-                        String.class
-                );
+            HttpMethod method = HttpMethod.valueOf(request.getMethod());
+            HttpHeaders headers = new HttpHeaders();
+            Collections.list(request.getHeaderNames())
+                    .forEach(headerName -> headers.addAll(headerName,
+                            Collections.list(request.getHeaders(headerName))));
 
-                if (responseAuth.getStatusCode() == HttpStatus.CREATED &&
-                        responseUsers.getStatusCode() == HttpStatus.CREATED) {
-                    return ResponseEntity.status(HttpStatus.CREATED)
-                            .body("Usuario registrado con éxito");
-                } else {
-                    return ResponseEntity.badRequest().body("Error al registrar usuario");
-                }
-            } catch (HttpClientErrorException e) {
-                return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
-            } catch (Exception e) {
-                return ResponseEntity.internalServerError()
-                        .body("Error interno del servidor: " + e.getMessage());
-            }
-        }).subscribeOn(Schedulers.boundedElastic());
+            String body = request.getReader().lines().collect(Collectors.joining());
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    method,
+                    new HttpEntity<>(body.isEmpty() ? null : body, headers),
+                    String.class
+            );
+
+            return ResponseEntity.status(response.getStatusCode())
+                    .headers(response.getHeaders())
+                    .body(response.getBody());
+        } catch (HttpClientErrorException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(e.getResponseHeaders())
+                    .body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Error during proxy request", e);
+            return ResponseEntity.internalServerError()
+                    .body("Error en el gateway: " + e.getMessage());
+        }
     }
 
-    // === Métodos de proxy (simplificados con Eureka) ===
-    public Mono<ResponseEntity<?>> proxyRequest(String serviceName, ServerWebExchange exchange) {
-        return Mono.fromCallable(() -> {
-            try {
-                String path = exchange.getRequest().getPath().toString()
-                        .replace("/gateway", "");
-                String method = exchange.getRequest().getMethod().name();
-                String query = exchange.getRequest().getURI().getQuery();
-                String targetUrl = "http://" + serviceName + path + (query != null ? "?" + query : "");
+    public ResponseEntity<Object> myself(String token) {
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Token de autorización requerido");
+        }
 
-                HttpHeaders headers = new HttpHeaders();
-                exchange.getRequest().getHeaders().forEach(headers::addAll);
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.AUTHORIZATION, token);
 
-                String body = exchange.getAttributeOrDefault("cachedRequestBody", "");
+            ResponseEntity<Object> response = restTemplate.exchange(
+                    "http://" + USER_SERVICE + "/users/me",
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    Object.class
+            );
 
-                ResponseEntity<?> response = restTemplate.exchange(
-                        targetUrl,
-                        HttpMethod.valueOf(method),
-                        new HttpEntity<>(body.isEmpty() ? null : body, headers),
-                        Object.class
-                );
-
-                return ResponseEntity.status(response.getStatusCode())
-                        .headers(response.getHeaders())
-                        .body(response.getBody());
-            } catch (HttpClientErrorException e) {
-                return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
-            } catch (Exception e) {
-                return ResponseEntity.internalServerError()
-                        .body("Error en el gateway: " + e.getMessage());
-            }
-        }).subscribeOn(Schedulers.boundedElastic());
-    }
-
-    public Mono<ResponseEntity<?>> proxyUsersRequest(ServerWebExchange exchange) {
-        return proxyRequest(USER_SERVICE, exchange);
-    }
-
-    public Mono<ResponseEntity<?>> proxyGamesRequest(ServerWebExchange exchange) {
-        return proxyRequest(GAME_SERVICE, exchange);
-    }
-
-    public Mono<ResponseEntity<?>> proxyCartRequest(ServerWebExchange exchange) {
-        return proxyRequest(CART_SERVICE, exchange);
-    }
-
-    public Mono<ResponseEntity<?>> myself(String token) {
-        return Mono.fromCallable(() -> {
-            try {
-                HttpHeaders headers = new HttpHeaders();
-                headers.set("Authorization", token);
-
-                ResponseEntity<User> response = restTemplate.exchange(
-                        "http://" + USER_SERVICE + "/me",
-                        HttpMethod.GET,
-                        new HttpEntity<>(headers),
-                        User.class
-                );
-
-                return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
-            } catch (Exception e) {
-                return ResponseEntity.internalServerError()
-                        .body("Error al obtener información del usuario");
-            }
-        }).subscribeOn(Schedulers.boundedElastic());
+            return ResponseEntity.status(response.getStatusCode())
+                    .headers(response.getHeaders())
+                    .body(response.getBody());
+        } catch (HttpClientErrorException e) {
+            log.warn("Client error getting user info: {}", e.getMessage());
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Objects.requireNonNullElse(e.getMessage(), "Error de autenticación"));
+        } catch (Exception e) {
+            log.error("Error getting user info", e);
+            return ResponseEntity.internalServerError()
+                    .body("Error interno del servidor");
+        }
     }
 }

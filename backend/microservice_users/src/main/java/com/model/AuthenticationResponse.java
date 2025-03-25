@@ -1,17 +1,16 @@
 package com.model;
 
 import lombok.*;
+
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class UserDTO {
-
+public class AuthenticationResponse {
     private String username;
-    private String password;
-    private String email;
-    private String nombre;
-
+    private List<String> authorities;
 
 }

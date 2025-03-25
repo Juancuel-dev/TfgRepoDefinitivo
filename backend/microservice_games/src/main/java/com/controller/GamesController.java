@@ -1,95 +1,83 @@
 package com.controller;
 
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import com.model.Game;
-import com.model.GameDTO;
-import com.service.GamesServiceCmdImpl;
-import com.util.GameMapper;
+import com.service.GamesService;
+import com.util.exception.GameNotFoundException;
+import com.util.exception.UnauthorizedException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/games")
+@RequiredArgsConstructor
 public class GamesController {
 
-    private final GamesServiceCmdImpl gamesService;
+    private final GamesService gamesService;
 
-    // Constructor de inyección de dependencias
-    public GamesController(GamesServiceCmdImpl gamesService) {
-        this.gamesService = gamesService;
-    }
-
-    // Obtener todos los juegos
     @GetMapping
-    public ResponseEntity<List<GameDTO>> findAll() {
-        return ResponseEntity.ok(gamesService.findAll().stream().map(GameMapper.INSTANCE::gameToGameDTO).collect(Collectors.toList()));
+    public ResponseEntity<List<Game>> findAll() {
+            return ResponseEntity.ok(gamesService.findAll());
     }
 
-    // Obtener un juego por id
     @GetMapping("/{id}")
-    public ResponseEntity<Game> findById(@PathVariable String id) throws EntityNotFoundException {
-        return ResponseEntity.ok(gamesService.findById(id));
+    public ResponseEntity<Game> findById(@PathVariable String id) {
+        try{
+            return ResponseEntity.ok(gamesService.findById(id));
+        }catch(GameNotFoundException gnfe){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
-    // Crear un nuevo juego
-    @PreAuthorize("hasRole('ADMIN') ")
+    @PostMapping("/update")
+    public ResponseEntity<Game> updateGame(@AuthenticationPrincipal Jwt jwt,Game Game){
+        try{
+            return ResponseEntity.ok(gamesService.edit(jwt,Game));
+        }catch(UnauthorizedException ue){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }catch(GameNotFoundException gnfe){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
     @PostMapping
-    public ResponseEntity<Game> save(@RequestBody Game game) {
-        Game savedGame = gamesService.save(game);
-        // Retornar 201 Created con la URL del nuevo recurso
-        if (savedGame.getId() == null) {
-            throw new RuntimeException("No se pudo obtener la URL del recurso creado");
-        }
-        URI uri = UriComponentsBuilder.fromPath("/games/{id}")
-                .buildAndExpand(savedGame.getId())
-                .toUri();
-        return ResponseEntity.created(uri).body(savedGame); // Idealmente, deberías incluir la URL del recurso creado.
-    }
+    public ResponseEntity<Game> save(@AuthenticationPrincipal Jwt jwt,@RequestBody Game Game) {
+        try{
+            Game savedGame = gamesService.save(jwt,Game);
+        return ResponseEntity.created(URI.create("/Games/" + savedGame.getId()))
+                .body(savedGame);
 
-    // Crear un nuevo juego
-    @PreAuthorize("hasRole('ADMIN') ")
-    @PostMapping("/all")
-    public ResponseEntity<List<Game>> saveAll(@RequestBody List<Game> games) {
-        List<Game> savedGames = gamesService.saveAll(games);
-        // Retornar 201 Created con la URL del nuevo recurso
-        if (savedGames.get(1).getId() == null) {
-            throw new RuntimeException("No se pudo obtener la URL del recurso creado");
-        }
-        URI uri = UriComponentsBuilder.fromPath("/games/{id}")
-                .buildAndExpand(savedGames.hashCode())
-                .toUri();
-        return ResponseEntity.created(uri).body(savedGames); // Idealmente, deberías incluir la URL del recurso creado.
-    }
-
-    // Actualizar un juego existente
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') ")
-    public ResponseEntity<Game> update(@PathVariable String id, @RequestBody Game game) {
-        game.setId(id);  // Aseguramos que el ID del juego está presente en la solicitud
-        try {
-            Game updatedGame = gamesService.update(game);
-            return ResponseEntity.ok(updatedGame);  // Retornamos el juego actualizado
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();  // Retornamos 404 Not Found si el juego no existe
+        }catch(UnauthorizedException ue){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
-    // Eliminar un juego
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') ")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        try {
-            gamesService.deleteById(id);  // Llamamos al servicio para eliminar el juego
+    public ResponseEntity<Void> deleteById(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
+        try{
+            gamesService.deleteById(jwt,id);
             return ResponseEntity.noContent().build();
-        } catch (EntityNotFoundException nfe) {
-            return ResponseEntity.notFound().build();
+        }catch(UnauthorizedException ue){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }catch(GameNotFoundException gnfe){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+    }
+
+    @GetMapping("/game-info")
+    public String getGameInfo(@AuthenticationPrincipal Jwt jwt) {
+        String Gamename = jwt.getClaim("Gamename"); // "sub" en JWT
+        String role = jwt.getClaim("role"); // Claims personalizados
+        String email = jwt.getClaim("email");
+
+        return "Usuario: " + Gamename + " | Rol: " + role + " | Email: " + email;
     }
 }

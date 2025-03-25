@@ -3,12 +3,14 @@ package com.service;
 import com.model.User;
 import com.repository.UserRepository;
 import com.util.Role;
+import com.util.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,58 +22,67 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // Obtener todos los usuarios
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public List<User> findAll(Jwt jwt) throws UnauthorizedException {
+        if (jwt.getClaim("role").equals("ADMIN")) {
+            return userRepository.findAll();
+        } else {
+            throw new UnauthorizedException("No estas autorizado para realizar esta accion");
+        }
     }
 
-    // Buscar un usuario por su ID
-    public User findById(String id) throws UsernameNotFoundException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || !authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()))) {
-            throw new RuntimeException("No estás autenticado");
+    public User findById(Jwt jwt,String id) throws UnauthorizedException,UsernameNotFoundException {
+        if (jwt.getClaim("role").equals("ADMIN")) {
+            return userRepository.findById(id).orElseThrow(()->new UsernameNotFoundException("Usuario no encontrado."));
+        } else {
+            throw new UnauthorizedException("No estas autorizado para realizar esta accion");
         }
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException(id));
     }
 
-    public User findByUsername(String username) throws UsernameNotFoundException {
+    public User findByUsername(String username) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || !authentication.getPrincipal().equals(username)
-                || !authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()))) {
-            throw new RuntimeException("No estás autenticado");
+
+        // Solo permite al usuario acceder a su propia información o a los administradores
+        if (!authentication.getName().equals(username) &&
+                !authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()))) {
+            throw new RuntimeException("No autorizado para acceder a este recurso");
         }
+
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
     }
 
-    // Guardar un usuario (crear o actualizar)
-    public User save(User user) throws Exception {
+    public User save(User user){
         String encryptedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encryptedPassword);
         return userRepository.save(user);
     }
 
-    // Comprobar si un usuario existe por su ID
-    public boolean existsById(String id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || !authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()))) {
-            throw new RuntimeException("No estás autenticado");
+    public User edit(Jwt jwt,User user) throws UnauthorizedException {
+        if(userRepository.existsById(user.getId())){
+
+            if(jwt.getClaim("role").equals("ADMIN") || jwt.getClaim("username").equals(user.getUsername())) {
+
+                String encryptedPassword = passwordEncoder.encode(user.getPassword());
+                user.setPassword(encryptedPassword);
+                return userRepository.save(user);
+            }else{
+                throw new UnauthorizedException("No estas autorizado para realizar esta accion");
+            }
+        }else{
+            throw new UsernameNotFoundException("Usuario no encontrado");
         }
-        return userRepository.existsById(id);
     }
 
-    // Eliminar un usuario por su ID
-    public void deleteById(String id) throws UsernameNotFoundException {
+    public void deleteById(Jwt jwt, String id) throws UnauthorizedException, UsernameNotFoundException {
         if (!userRepository.existsById(id)) {
             throw new UsernameNotFoundException("Usuario con id " + id + " no encontrado");
         }
-        userRepository.deleteById(id);
+        if(jwt.getClaim("role").equals("ADMIN")|| jwt.getClaim("clientId").equals(id)) {
+
+            userRepository.deleteById(id);
+        }else{
+            throw new UnauthorizedException("No estas autorizado para realizar esta accion");
+        }
     }
+
 }
