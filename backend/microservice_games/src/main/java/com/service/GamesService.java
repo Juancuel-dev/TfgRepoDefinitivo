@@ -24,6 +24,11 @@ public class GamesService{
     // Obtener todos los juegos
     public List<Game> findAll() {
             return gamesRepository.findAll();
+
+
+        }// Obtener todos los juegos por categoria
+    public List<Game> findAllByConsola(String consola) {
+            return gamesRepository.findAllByConsola(consola);
         }
 
 

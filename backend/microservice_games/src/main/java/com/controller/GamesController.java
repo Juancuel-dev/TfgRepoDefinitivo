@@ -27,6 +27,10 @@ public class GamesController {
     public ResponseEntity<List<Game>> findAll() {
             return ResponseEntity.ok(gamesService.findAll());
     }
+    @GetMapping("/consola/{consola}")
+    public ResponseEntity<List<Game>> findAllByConsola(@PathVariable String consola) {
+            return ResponseEntity.ok(gamesService.findAllByConsola(consola));
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Game> findById(@PathVariable String id) {
