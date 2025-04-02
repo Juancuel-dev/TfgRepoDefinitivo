@@ -7,7 +7,7 @@ class RegisterPage extends StatefulWidget {
   final Cart cart;
   final Function(String) onRegister;
 
-  RegisterPage({required this.cart, required this.onRegister});
+  const RegisterPage({super.key, required this.cart, required this.onRegister});
 
   @override
   _RegisterPageState createState() => _RegisterPageState();
@@ -44,46 +44,94 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return BaseLayout(
       cart: widget.cart,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(labelText: 'Usuario'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingresa tu usuario';
-                  }
-                  return null;
-                },
+      child: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Título
+                  const Text(
+                    'Registro',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Campo de usuario
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: TextFormField(
+                      controller: _usernameController,
+                      decoration: InputDecoration(
+                        labelText: 'Usuario',
+                        border: const OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.grey[800],
+                        labelStyle: const TextStyle(color: Colors.white70),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, ingresa tu usuario';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Campo de contraseña
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: TextFormField(
+                      controller: _passwordController,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña',
+                        border: const OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.grey[800],
+                        labelStyle: const TextStyle(color: Colors.white70),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, ingresa tu contraseña';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Botón de registro
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: ElevatedButton(
+                      onPressed: _register,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.greenAccent,
+                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      child: const Text('Registrarse'),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Mensaje de respuesta
+                  Text(
+                    _responseMessage,
+                    style: TextStyle(
+                      color: _responseMessage.contains('Error') ? Colors.red : Colors.green,
+                    ),
+                  ),
+                ],
               ),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingresa tu contraseña';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _register,
-                child: const Text('Registrarse'),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                _responseMessage,
-                style: TextStyle(
-                  color: _responseMessage.contains('Error') ? Colors.red : Colors.green,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

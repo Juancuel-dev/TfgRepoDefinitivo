@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/screens/login.dart';
 import 'package:flutter_auth_app/screens/register.dart';
 import 'package:flutter_auth_app/models/cart.dart';
+import 'package:flutter_auth_app/screens/baseLayout.dart';
 
 class WelcomePage extends StatelessWidget {
   final Cart cart;
   final Function(String) onLogin;
 
-  WelcomePage({required this.cart, required this.onLogin});
+  const WelcomePage({super.key, required this.cart, required this.onLogin});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Bienvenido'),
-      ),
-      body: Center(
+    return BaseLayout(
+      cart: cart,
+      showBackButton: false,
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

@@ -1,65 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/models/game.dart';
-import 'package:flutter_auth_app/screens/categorypage.dart';
-import 'package:flutter_auth_app/screens/details.dart';
 import 'package:flutter_auth_app/services/gamesService.dart';
 import 'package:flutter_auth_app/models/cart.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
-import 'package:flutter_auth_app/screens/login.dart';
-import 'package:flutter_auth_app/screens/adminPanel.dart'; // Página de administración
-import 'package:jwt_decoder/jwt_decoder.dart'; // Para decodificar el token
 
-class HomePage extends StatefulWidget {
+class CategoryPage extends StatefulWidget {
+  final String category;
   final Cart cart;
-  final String? token; // Token será null si el usuario no está autenticado
 
-  const HomePage({super.key, required this.cart, this.token});
+  const CategoryPage({super.key, required this.category, required this.cart});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  _CategoryPageState createState() => _CategoryPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _CategoryPageState extends State<CategoryPage> {
   late Future<List<Game>> futureGames;
-  String? token;
-  bool isAdmin = false; // Variable para verificar si el usuario es admin
 
   @override
   void initState() {
     super.initState();
-    token = widget.token; // Inicializar el token con el valor del widget
-    futureGames = GamesService().fetchGames();
-
-    // Verificar si el token es válido
-    if (token != null && token!.isNotEmpty) {
-      try {
-        Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
-        if (decodedToken['role'] == 'admin') {
-          setState(() {
-            isAdmin = true;
-          });
-        }
-      } catch (e) {
-        // Manejar el caso de un token inválido
-        print('Error al decodificar el token: $e');
-        token = null; // Invalidar el token
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => LoginPage(
-                cart: widget.cart,
-                onLogin: (newToken) {
-                  setState(() {
-                    token = newToken;
-                  });
-                },
-              ),
-            ),
-          );
-        });
-      }
-    }
+    // Llamar al backend para obtener los juegos filtrados por categoría
+    futureGames = GamesService().fetchGamesByCategory(widget.category);
   }
 
   @override
@@ -70,37 +32,19 @@ class _HomePageState extends State<HomePage> {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Row de categorías
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildCategoryChip('PC'),
-                  _buildCategoryChip('XBOX'),
-                  _buildCategoryChip('PS5'),
-                  _buildCategoryChip('NINTENDO SWITCH'),
-                ],
+              // Título de la categoría
+              Text(
+                'Categoría: ${widget.category}',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 16),
-              // Mostrar botón de administración si el usuario es admin
-              if (isAdmin)
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AdminPanel(cart: widget.cart),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  ),
-                  child: const Text('Panel de Administración'),
-                ),
-              const SizedBox(height: 16),
-              // Lista de juegos
+              // Lista de juegos filtrados
               Expanded(
                 child: FutureBuilder<List<Game>>(
                   future: futureGames,
@@ -117,7 +61,7 @@ class _HomePageState extends State<HomePage> {
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(
                         child: Text(
-                          'No se encontraron juegos',
+                          'No se encontraron juegos para esta categoría',
                           style: TextStyle(color: Colors.white),
                         ),
                       );
@@ -147,12 +91,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 child: InkWell(
                                   onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => GameDetailPage(game: game, cart: widget.cart),
-                                      ),
-                                    );
+                                    // Navegar a los detalles del juego
                                   },
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,31 +153,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  // Método para construir un botón de categoría
-  Widget _buildCategoryChip(String category) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CategoryPage(category: category, cart: widget.cart),
-            ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blueGrey,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        ),
-        child: Text(
-          category,
-          style: const TextStyle(color: Colors.white),
         ),
       ),
     );

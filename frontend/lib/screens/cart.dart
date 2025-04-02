@@ -7,12 +7,12 @@ class CartPage extends StatelessWidget {
   final Cart cart;
   final String token;
 
-  CartPage({required this.cart, required this.token});
+  const CartPage({super.key, required this.cart, required this.token});
 
   void _purchase(BuildContext context) {
     cart.clear();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Compra realizada con éxito')),
+      const SnackBar(content: Text('Compra realizada con éxito')),
     );
     Navigator.pushReplacement(
       context,
@@ -29,26 +29,96 @@ class CartPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Carrito de Compras', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: cart.items.length,
-                itemBuilder: (context, index) {
-                  final item = cart.items[index];
-                  return ListTile(
-                    title: Text(item.game.name),
-                    subtitle: Text('Cantidad: ${item.quantity}'),
-                    trailing: Text('Precio: \$${(item.game.precio * item.quantity).toStringAsFixed(2)}'),
-                  );
-                },
-              ),
+            // Título del carrito
+            const Text(
+              'Carrito de Compras',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
             ),
-            SizedBox(height: 20),
-            Text('Total: \$${cart.totalPrice.toStringAsFixed(2)}', style: TextStyle(fontSize: 18)),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
+            // Lista de elementos del carrito
+            Expanded(
+              child: cart.items.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Tu carrito está vacío',
+                        style: TextStyle(fontSize: 18, color: Colors.white70),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: cart.items.length,
+                      itemBuilder: (context, index) {
+                        final item = cart.items[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16.0),
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[850],
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Row(
+                            children: [
+                              // Imagen del juego
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 80,
+                                  maxHeight: 80,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  child: Image.network(
+                                    item.game.imageUrl,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              // Detalles del juego
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.game.name,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Cantidad: ${item.quantity}',
+                                      style: const TextStyle(fontSize: 16, color: Colors.white70),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Precio: \$${(item.game.precio * item.quantity).toStringAsFixed(2)}',
+                                      style: const TextStyle(fontSize: 16, color: Colors.greenAccent),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            const SizedBox(height: 20),
+            // Total del carrito
+            Text(
+              'Total: \$${cart.totalPrice.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 20),
+            // Botón de compra
             ElevatedButton(
               onPressed: () => _purchase(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.greenAccent,
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               child: const Text('Comprar'),
             ),
           ],

@@ -6,7 +6,7 @@ class BaseLayout extends StatelessWidget {
   final bool showBackButton;
   final Cart cart;
 
-  BaseLayout({required this.child, required this.cart, this.showBackButton = true});
+  const BaseLayout({super.key, required this.child, required this.cart, this.showBackButton = true});
 
   @override
   Widget build(BuildContext context) {
@@ -14,71 +14,74 @@ class BaseLayout extends StatelessWidget {
       appBar: AppBar(
         automaticallyImplyLeading: showBackButton,
         backgroundColor: Colors.grey[900],
-        actions: [],
+        actions: const [],
       ),
       body: Column(
         children: [
-          // Categories Bar
+          // Responsive Header
           Container(
             color: Colors.grey[900],
-            padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), // Reducir el padding vertical
-            child: Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0), // Agregar padding a la izquierda
-                  child: Text(
-                    'LevelUp Shop',
-                    style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold), // Reducir el tamaño del texto
-                  ),
-                ),
-                Spacer(),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildCategoryChip('PC'),
-                          _buildCategoryChip('XBOX'),
-                          _buildCategoryChip('PS5'),
-                          _buildCategoryChip('NINTENDO SWITCH'),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Spacer(),
-                Row(
+            padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isSmallScreen = constraints.maxWidth < 600;
+
+                return Row(
                   children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(color: Colors.white),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Text(
+                        'LevelUp Shop',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isSmallScreen ? 24 : 40, // Ajustar tamaño del texto
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/register');
-                      },
-                      child: const Text(
-                        'Registrarse',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.shopping_cart, color: Colors.white),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/cart');
-                      },
+                    const Spacer(),
+                    
+                    const Spacer(),
+                    Row(
+                      children: [
+                        if (isSmallScreen)
+                          IconButton(
+                            icon: const Icon(Icons.menu, color: Colors.white),
+                            onPressed: () {
+                              _showMenu(context);
+                            },
+                          )
+                        else ...[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushReplacementNamed(context, '/login');
+                            },
+                            child: const Text(
+                              'Login',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushReplacementNamed(context, '/register');
+                            },
+                            child: const Text(
+                              'Registrarse',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.shopping_cart, color: Colors.white),
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/cart');
+                            },
+                          ),
+                        ],
+                      ],
                     ),
                   ],
-                ),
-              ],
+                );
+              },
             ),
           ),
           Expanded(child: child),
@@ -93,17 +96,41 @@ class BaseLayout extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
       ),
-      backgroundColor: Colors.black, // Aseguramos que el fondo sea negro
+      backgroundColor: Colors.black,
     );
   }
 
-  Widget _buildCategoryChip(String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Chip(
-        label: Text(label, style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.grey[800],
-      ),
+  void _showMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          color: Colors.grey[900],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Login', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pushReplacementNamed(context, '/login');
+                },
+              ),
+              ListTile(
+                title: const Text('Registrarse', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pushReplacementNamed(context, '/register');
+                },
+              ),
+              ListTile(
+                title: const Text('Carrito', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pushNamed(context, '/cart');
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

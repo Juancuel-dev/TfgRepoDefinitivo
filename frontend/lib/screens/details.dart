@@ -7,53 +7,109 @@ class GameDetailPage extends StatelessWidget {
   final Game game;
   final Cart cart;
 
-  GameDetailPage({required this.game, required this.cart});
+  const GameDetailPage({super.key, required this.game, required this.cart});
 
   @override
   Widget build(BuildContext context) {
     return BaseLayout(
       cart: cart,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: 200, // Máximo de 200px de altura
-                maxWidth: 200, // Máximo de 200px de ancho
-              ),
-              child: AspectRatio(
-                aspectRatio: 1, // Proporción 1:1 para mantener la imagen cuadrada
-                child: Image.network(
-                  game.imageUrl,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Imagen del juego
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: 300, // Máximo de 300px de altura
+                  maxWidth: 600, // Máximo de 600px de ancho
+                ),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9, // Proporción 16:9 para una imagen amplia
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16.0),
+                    child: Image.network(
+                      game.imageUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 10),
-            Text('Nombre: ${game.name}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Text('Precio: \$${game.precio.toStringAsFixed(2)}', style: TextStyle(fontSize: 18)),
-            SizedBox(height: 10),
-            Text('Metacritic: ${game.metacritic}', style: TextStyle(fontSize: 18)),
-            SizedBox(height: 10),
-            Text('Consola: ${game.consola}', style: TextStyle(fontSize: 18)),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                cart.addItem(game);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${game.name} añadido al carrito')),
-                );
-              },
-              child: const Text('Añadir al Carrito'),
-            ),
-          ],
+              const SizedBox(height: 20),
+              // Nombre del juego
+              Text(
+                game.name,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              // Precio del juego
+              Text(
+                '\$${game.precio.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.greenAccent,
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Metacritic y consola
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildDetailChip('Metacritic: ${game.metacritic}', Colors.orange),
+                  const SizedBox(width: 10),
+                  _buildDetailChip('Consola: ${game.consola}', Colors.blueAccent),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Descripción del juego (opcional)
+              Text(
+                'Este es un juego increíble que no te puedes perder. Disfruta de horas de diversión en tu consola favorita.',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.white70,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              // Botón para añadir al carrito
+              ElevatedButton(
+                onPressed: () {
+                  cart.addItem(game);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${game.name} añadido al carrito')),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.greenAccent,
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                child: const Text('Añadir al Carrito'),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  // Widget para mostrar detalles como chips
+  Widget _buildDetailChip(String label, Color color) {
+    return Chip(
+      label: Text(
+        label,
+        style: const TextStyle(color: Colors.white),
+      ),
+      backgroundColor: color,
     );
   }
 }
