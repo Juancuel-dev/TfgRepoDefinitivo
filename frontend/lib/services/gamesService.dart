@@ -5,9 +5,9 @@ import 'package:flutter_auth_app/models/game.dart';
 class GamesService {
   final String apiUrl = 'http://localhost:8080/gateway/games';
 
-  Future<List<Game>> fetchGames() async {
+  Future<List<Game>> fetchGames({required int page}) async {
     final response = await http.get(
-      Uri.parse(apiUrl),
+      Uri.parse('$apiUrl?page=$page'), // Agregar el número de página a la URL
       headers: {
         'Content-Type': 'application/json',
       },
@@ -22,9 +22,9 @@ class GamesService {
     }
   }
 
-  Future<List<Game>> fetchGamesByCategory(String category) async {
+  Future<List<Game>> fetchGamesByCategory(String consola) async {
     final response = await http.get(
-      Uri.parse('$apiUrl/category/$category'),
+      Uri.parse('$apiUrl/consola/$consola'),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -35,7 +35,7 @@ class GamesService {
       List<Game> games = body.map((dynamic item) => Game.fromJson(item)).toList();
       return games;
     } else {
-      throw Exception('Failed to load games for category $category');
+      throw Exception('Failed to load games for category $consola');
     }
   }
 }

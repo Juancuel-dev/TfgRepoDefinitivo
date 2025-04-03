@@ -1,25 +1,29 @@
 package com.service;
 
+import com.model.GameDTO;
 import com.util.exception.GameNotFoundException;
 import com.util.exception.UnauthorizedException;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import com.model.Game;
 import com.repository.GamesRepository;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class GamesService{
 
     private final GamesRepository gamesRepository;
 
-    // Constructor de inyección de dependencias
-    public GamesService(GamesRepository gamesRepository) {
-        this.gamesRepository = gamesRepository;
-    }
+    private final FetchGamesService fetchGamesService;
 
     // Obtener todos los juegos
     public List<Game> findAll() {
@@ -36,6 +40,11 @@ public class GamesService{
     public Game findById(String id) throws GameNotFoundException {
         return gamesRepository.findById(id)
                 .orElseThrow(EntityNotFoundException::new);
+    }
+
+    public List<Game> fetchGamesAPI(String page) {
+
+        return gamesRepository.saveAll(fetchGamesService.fetchGamesAPI(page));
     }
 
     // Guardar un juego (crear)

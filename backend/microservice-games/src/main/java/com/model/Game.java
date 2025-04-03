@@ -26,7 +26,7 @@ public class Game {
     @Field("creator")
     private String creator;
 
-    @Field("price")
+    @Field("precio")
     private Float precio;
 
     @Field("stock")

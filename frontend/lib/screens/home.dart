@@ -20,7 +20,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late Future<List<Game>> futureGames;
+  List<Game> games = [];
+  int currentPage = 1;
+  int totalPages = 10; // Cambia esto según el número total de páginas disponibles en tu backend
+  bool isLoading = false;
   String? token;
   bool isAdmin = false; // Variable para verificar si el usuario es admin
 
@@ -28,7 +31,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     token = widget.token; // Inicializar el token con el valor del widget
-    futureGames = GamesService().fetchGames();
+    _loadGames(currentPage);
 
     // Verificar si el token es válido
     if (token != null && token!.isNotEmpty) {
@@ -62,6 +65,26 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _loadGames(int page) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final newGames = await GamesService().fetchGames(page: page);
+      setState(() {
+        games = newGames;
+        currentPage = page;
+      });
+    } catch (e) {
+      print('Error al cargar juegos: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,7 +101,7 @@ class _HomePageState extends State<HomePage> {
                   _buildCategoryChip('PC'),
                   _buildCategoryChip('XBOX'),
                   _buildCategoryChip('PS5'),
-                  _buildCategoryChip('NINTENDO SWITCH'),
+                  _buildCategoryChip('SWITCH'),
                 ],
               ),
               const SizedBox(height: 16),
@@ -102,44 +125,25 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 16),
               // Lista de juegos
               Expanded(
-                child: FutureBuilder<List<Game>>(
-                  future: futureGames,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(
-                        child: Text(
-                          'Error: ${snapshot.error}',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      );
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No se encontraron juegos',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      );
-                    } else {
-                      return LayoutBuilder(
-                        builder: (context, constraints) {
-                          final crossAxisCount = constraints.maxWidth < 600
-                              ? 2
-                              : constraints.maxWidth < 900
-                                  ? 3
-                                  : 5;
-
-                          return GridView.builder(
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxisCount,
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : games.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No se encontraron juegos',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )
+                        : GridView.builder(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
                               crossAxisSpacing: 16.0,
                               mainAxisSpacing: 16.0,
                               childAspectRatio: 0.75,
                             ),
-                            itemCount: snapshot.data!.length,
+                            itemCount: games.length,
                             itemBuilder: (context, index) {
-                              final game = snapshot.data![index];
+                              final game = games[index];
                               return Container(
                                 decoration: BoxDecoration(
                                   color: Colors.grey[850],
@@ -165,6 +169,11 @@ class _HomePageState extends State<HomePage> {
                                             game.imageUrl,
                                             fit: BoxFit.cover,
                                             width: double.infinity,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return const Center(
+                                                child: Icon(Icons.error, color: Colors.red, size: 50),
+                                              );
+                                            },
                                           ),
                                         ),
                                       ),
@@ -205,12 +214,32 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               );
                             },
-                          );
-                        },
-                      );
-                    }
-                  },
-                ),
+                          ),
+              ),
+              const SizedBox(height: 16),
+              // Control de paginación
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(totalPages, (index) {
+                  final page = index + 1;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: ElevatedButton(
+                      onPressed: currentPage == page
+                          ? null
+                          : () {
+                              _loadGames(page);
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: currentPage == page ? Colors.blueGrey : Colors.grey,
+                      ),
+                      child: Text(
+                        '$page',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  );
+                }),
               ),
             ],
           ),

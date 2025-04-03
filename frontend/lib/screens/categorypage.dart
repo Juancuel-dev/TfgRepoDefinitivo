@@ -3,6 +3,7 @@ import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/services/gamesService.dart';
 import 'package:flutter_auth_app/models/cart.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
+import 'package:flutter_auth_app/screens/details.dart'; // Importar la página de detalles
 
 class CategoryPage extends StatefulWidget {
   final String category;
@@ -91,7 +92,16 @@ class _CategoryPageState extends State<CategoryPage> {
                                 ),
                                 child: InkWell(
                                   onTap: () {
-                                    // Navegar a los detalles del juego
+                                    // Navegar a la página de detalles del juego
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => GameDetailPage(
+                                          game: game,
+                                          cart: widget.cart,
+                                        ),
+                                      ),
+                                    );
                                   },
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
