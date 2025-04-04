@@ -28,7 +28,7 @@ public class FetchGamesService {
         for (Map<String, Object> result : results) {
             Game game = new Game();
             game.setName((String) result.get("name"));
-            game.setPrecio(59.99f); // Valor predeterminado, ya que no está en la respuesta
+            game.setPrecio((float) (Math.random()*59+1)); // Valor predeterminado, ya que no está en la respuesta
             game.setMetacritic((Integer) result.get("metacritic"));
             game.setImagen((String) result.get("background_image"));
 

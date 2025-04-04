@@ -1,6 +1,7 @@
 package com.repository;
 
 import com.model.PedidoEntry;
+import com.util.exception.UserIdNotFoundException;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,11 +10,11 @@ import java.util.Optional;
 
 @Repository
 public interface PedidoEntryRepository extends MongoRepository<PedidoEntry, String> {
-    List<PedidoEntry> findAllByUserId(String userId);
+    Optional<List<PedidoEntry>> findAllByClientId(String clientId) throws UserIdNotFoundException;
 
-    List<PedidoEntry> findAllByGameId(String gameId);
+    Optional<List<PedidoEntry>> findAllByGameId(String gameId);
 
-    List<PedidoEntry> findAllByOrderId(String orderId);
+    Optional<List<PedidoEntry>> findAllByOrderId(String orderId);
 
     void deleteAllByOrderId(String orderId);
 

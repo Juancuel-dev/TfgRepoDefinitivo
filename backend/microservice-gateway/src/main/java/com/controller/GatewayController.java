@@ -63,7 +63,7 @@ public class GatewayController {
     }
 
     @RequestMapping(
-            value = "/order/**",
+            value = "/orders/**",
             method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH}
     )
     public ResponseEntity<Object> cartProxy(HttpServletRequest request) {
