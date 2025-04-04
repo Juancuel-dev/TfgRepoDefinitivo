@@ -7,7 +7,7 @@ class GamesService {
 
   Future<List<Game>> fetchGames() async {
     final response = await http.get(
-      Uri.parse('$apiUrl'), // Agregar el número de página a la URL
+      Uri.parse(apiUrl), // Agregar el número de página a la URL
       headers: {
         'Content-Type': 'application/json',
       },

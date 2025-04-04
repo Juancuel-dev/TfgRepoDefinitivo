@@ -8,12 +8,14 @@ import 'package:flutter_auth_app/screens/register.dart';
 import 'package:flutter_auth_app/screens/cart.dart';
 import 'package:flutter_auth_app/services/cartProvider.dart';
 import 'package:flutter_auth_app/services/authService.dart';
+import 'package:flutter_auth_app/services/authProvider.dart'; // Importa el AuthProvider
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()), // Proveedor global para el carrito
+        ChangeNotifierProvider(create: (_) => AuthProvider()), // Proveedor global para el token JWT
       ],
       child: const MyApp(),
     ),
@@ -44,6 +46,7 @@ class _MyAppState extends State<MyApp> {
         '/login': (context) => LoginPage(onLogin: (String newToken) {
           setState(() {
             token = newToken;
+            Provider.of<AuthProvider>(context, listen: false).setToken(newToken); // Establece el token en el AuthProvider
           });
           Navigator.pushReplacementNamed(context, '/home', arguments: token);
         }),
@@ -54,10 +57,11 @@ class _MyAppState extends State<MyApp> {
         '/register': (context) => RegisterPage(onRegister: (String newToken) {
           setState(() {
             token = newToken;
+            Provider.of<AuthProvider>(context, listen: false).setToken(newToken); // Establece el token en el AuthProvider
           });
           Navigator.pushReplacementNamed(context, '/home', arguments: token);
         }),
-        '/cart': (context) => const CartPage(token: ""), // El carrito se obtiene desde el Provider
+        '/cart': (context) => const CartPage(), // El carrito y el token se obtienen desde los Providers
       },
     );
   }

@@ -2,17 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_auth_app/services/cartProvider.dart';
 import 'package:flutter_auth_app/services/cartService.dart';
+import 'package:flutter_auth_app/services/authProvider.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
 import 'package:flutter_auth_app/screens/home.dart';
 
 class CartPage extends StatelessWidget {
-  final String? token;
-
-  const CartPage({super.key, this.token});
+  const CartPage({super.key});
 
   Future<void> _purchase(BuildContext context) async {
-    final cart = Provider.of<CartProvider>(context, listen: false).cart;
-    final cartService = CartService(baseUrl: 'http://localhost:8080'); // Cambia la URL base según tu backend
+    final cartItems = Provider.of<CartProvider>(context, listen: false).items; // Cambiado de `cart` a `items`
+    final jwtToken = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+    final cartService = CartService(baseUrl: 'http://localhost:8080');
+
+    if (jwtToken == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No estás autenticado. Inicia sesión para continuar.')),
+      );
+      return;
+    }
 
     // Mostrar indicador de carga
     showDialog(
@@ -22,19 +29,18 @@ class CartPage extends StatelessWidget {
     );
 
     try {
-      // Iterar sobre los elementos del carrito y realizar pedidos
-      for (final item in cart.items) {
+      for (final item in cartItems) {
         final success = await cartService.createOrder(
-          orderId: DateTime.now().millisecondsSinceEpoch.toString(), // Generar un ID único
-          userId: token ?? 'guest', // Usar el token o un valor predeterminado
+          orderId: DateTime.now().millisecondsSinceEpoch.toString(),
+          userId: 'user123', // Cambia esto según tu lógica
           gameId: item.game.id,
-          precio: (item.game.precio * item.quantity).toStringAsFixed(2),
+          precio: item.game.precio.toStringAsFixed(2), // Usar el precio original del juego
           fecha: DateTime.now(),
+          jwtToken: jwtToken, // Pasar el token JWT
         );
 
         if (!success) {
-          // Si falla algún pedido, mostrar error y no vaciar el carrito
-          Navigator.pop(context); // Cerrar el indicador de carga
+          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Error al realizar el pedido. Inténtalo de nuevo.')),
           );
@@ -42,19 +48,17 @@ class CartPage extends StatelessWidget {
         }
       }
 
-      // Si todos los pedidos se realizan con éxito
-      cart.clear();
-      Navigator.pop(context); // Cerrar el indicador de carga
+      Provider.of<CartProvider>(context, listen: false).clear(); // Vaciar el carrito
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Compra realizada con éxito')),
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomePage(token: token)),
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } catch (e) {
-      // Manejo de errores de red u otros
-      Navigator.pop(context); // Cerrar el indicador de carga
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al realizar el pedido: $e')),
       );
@@ -63,7 +67,7 @@ class CartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<CartProvider>(context).cart;
+    final cartItems = Provider.of<CartProvider>(context).items; // Cambiado de `cart` a `items`
 
     return BaseLayout(
       child: Padding(
@@ -71,15 +75,13 @@ class CartPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Título del carrito
             const Text(
               'Carrito de Compras',
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 20),
-            // Lista de elementos del carrito
             Expanded(
-              child: cart.items.isEmpty
+              child: cartItems.isEmpty
                   ? const Center(
                       child: Text(
                         'Tu carrito está vacío',
@@ -87,11 +89,11 @@ class CartPage extends StatelessWidget {
                       ),
                     )
                   : ListView.builder(
-                      itemCount: cart.items.length,
+                      itemCount: cartItems.length,
                       itemBuilder: (context, index) {
-                        final item = cart.items[index];
+                        final item = cartItems[index];
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 16.0),
+                          margin: const EdgeInsets.symmetric(vertical: 8.0),
                           padding: const EdgeInsets.all(12.0),
                           decoration: BoxDecoration(
                             color: Colors.grey[850],
@@ -99,20 +101,17 @@ class CartPage extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              // Imagen del juego
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 80,
-                                  maxHeight: 80,
-                                ),
-                                child: ClipRRect(
+                              // Imagen del juego (si está disponible)
+                              if (item.game.imageUrl != null)
+                                ClipRRect(
                                   borderRadius: BorderRadius.circular(8.0),
                                   child: Image.network(
-                                    item.game.imageUrl,
+                                    item.game.imageUrl!,
+                                    width: 80,
+                                    height: 80,
                                     fit: BoxFit.cover,
                                   ),
                                 ),
-                              ),
                               const SizedBox(width: 16),
                               // Detalles del juego
                               Expanded(
@@ -134,8 +133,13 @@ class CartPage extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Precio: \$${(item.game.precio * item.quantity).toStringAsFixed(2)}',
+                                      'Precio: \$${item.game.precio.toStringAsFixed(2)}',
                                       style: const TextStyle(fontSize: 16, color: Colors.greenAccent),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Subtotal: \$${(item.game.precio * item.quantity).toStringAsFixed(2)}',
+                                      style: const TextStyle(fontSize: 16, color: Colors.white),
                                     ),
                                   ],
                                 ),
@@ -149,11 +153,10 @@ class CartPage extends StatelessWidget {
             const SizedBox(height: 20),
             // Total del carrito
             Text(
-              'Total: \$${cart.totalPrice.toStringAsFixed(2)}',
+              'Total: \$${Provider.of<CartProvider>(context).totalPrice.toStringAsFixed(2)}',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 20),
-            // Botón de compra
             ElevatedButton(
               onPressed: () => _purchase(context),
               style: ElevatedButton.styleFrom(
@@ -164,8 +167,4 @@ class CartPage extends StatelessWidget {
               child: const Text('Comprar'),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
+        ),      ),    );  }}

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_auth_app/models/game.dart';
-import 'package:flutter_auth_app/models/cart.dart';
 import 'package:flutter_auth_app/services/cartProvider.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
 
@@ -12,8 +11,6 @@ class GameDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<CartProvider>(context).cart;
-
     return BaseLayout(
       child: SingleChildScrollView(
         child: Padding(
@@ -73,9 +70,9 @@ class GameDetailPage extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               // Descripción del juego (opcional)
-              Text(
+              const Text(
                 'Este es un juego increíble que no te puedes perder. Disfruta de horas de diversión en tu consola favorita.',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   color: Colors.white70,
                 ),
@@ -85,7 +82,8 @@ class GameDetailPage extends StatelessWidget {
               // Botón para añadir al carrito
               ElevatedButton(
                 onPressed: () {
-                  cart.addItem(CartItem(game: game, quantity: 1));
+                  // Usar el método addToCart del CartProvider
+                  Provider.of<CartProvider>(context, listen: false).addToCart(game);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('${game.name} añadido al carrito')),
                   );

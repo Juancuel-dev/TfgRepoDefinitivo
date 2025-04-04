@@ -1,24 +1,47 @@
 // filepath: /lib/models/cart_provider.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/models/cart.dart';
+import 'package:flutter_auth_app/models/game.dart';
 
-class CartProvider extends ChangeNotifier {
-  final Cart _cart = Cart();
+class CartProvider with ChangeNotifier {
+  final List<CartItem> _items = [];
 
-  Cart get cart => _cart;
+  /// Getter para obtener los elementos del carrito
+  List<CartItem> get items => List.unmodifiable(_items);
 
-  void addItem(item) {
-    _cart.addItem(item);
+  /// Getter para calcular el precio total del carrito
+  double get totalPrice =>
+      _items.fold(0, (total, item) => total + (item.game.precio * item.quantity));
+
+  /// Agrega un juego al carrito
+  void addToCart(Game game) {
+    // Verificar si el juego ya está en el carrito
+    final existingItemIndex = _items.indexWhere((item) => item.game.id == game.id);
+
+    if (existingItemIndex != -1) {
+      // Si el juego ya está en el carrito, aumentar la cantidad
+      _items[existingItemIndex] =
+          CartItem(game: _items[existingItemIndex].game, quantity: _items[existingItemIndex].quantity + 1);
+    } else {
+      // Si el juego no está en el carrito, agregarlo como una nueva entrada
+      _items.add(CartItem(game: game, quantity: 1));
+    }
+
     notifyListeners();
   }
 
-  void removeItem(item) {
-    _cart.removeItem(item);
+  /// Elimina un juego del carrito
+  void removeFromCart(Game game) {
+    _items.removeWhere((item) => item.game.id == game.id);
     notifyListeners();
   }
 
-  void clearCart() {
-    _cart.clear();
+  /// Vacía el carrito
+  void clear() {
+    _items.clear();
     notifyListeners();
   }
+
+  /// Obtiene la cantidad total de artículos en el carrito
+  int get totalItems => _items.fold(0, (total, item) => total + item.quantity);
 }

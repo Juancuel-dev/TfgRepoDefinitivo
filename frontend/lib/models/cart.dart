@@ -2,7 +2,7 @@ import 'package:flutter_auth_app/models/game.dart';
 
 class CartItem {
   final Game game;
-  final int quantity;
+  int quantity;
 
   CartItem({required this.game, required this.quantity});
 }

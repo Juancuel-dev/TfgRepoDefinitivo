@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_auth_app/models/cart.dart';
 import 'package:http/http.dart' as http;
 
 class CartService {
@@ -13,6 +14,7 @@ class CartService {
     required String gameId,
     required String precio,
     required DateTime fecha,
+    required String jwtToken, // Token JWT para autenticación
   }) async {
     final url = Uri.parse('$baseUrl/gateway/orders');
 
@@ -29,6 +31,7 @@ class CartService {
         url,
         headers: {
           "Content-Type": "application/json",
+          "Authorization": "Bearer $jwtToken", // Agregar el token JWT al encabezado
         },
         body: jsonEncode(body),
       );
@@ -37,7 +40,7 @@ class CartService {
         // Pedido creado exitosamente
         return true;
       } else {
-        // Error al crear el pedido
+        // Manejo de errores
         print('Error al crear el pedido: ${response.body}');
         return false;
       }
@@ -46,5 +49,28 @@ class CartService {
       print('Error de red al crear el pedido: $e');
       return false;
     }
+  }
+
+  /// Desglosa la lista de juegos y envía una petición por cada uno
+  Future<bool> createOrders({
+    required String userId,
+    required List<CartItem> items,
+    required String jwtToken,
+  }) async {
+    for (final item in items) {
+      final success = await createOrder(
+        orderId: DateTime.now().millisecondsSinceEpoch.toString(),
+        userId: userId,
+        gameId: item.game.id,
+        precio: item.game.precio.toStringAsFixed(2), // Usar el precio original del juego
+        fecha: DateTime.now(),
+        jwtToken: jwtToken,
+      );
+
+      if (!success) {
+        return false; // Detener si algún pedido falla
+      }
+    }
+    return true; // Todos los pedidos fueron exitosos
   }
 }

@@ -36,7 +36,25 @@ public class FetchGamesService {
             List<Map<String, Object>> platforms = (List<Map<String, Object>>) result.get("platforms");
             if (platforms != null && !platforms.isEmpty()) {
                 Map<String, Object> platform = (Map<String, Object>) platforms.get(0).get("platform");
-                game.setConsola((String) platform.get("name"));
+
+                switch((String) platform.get("name")){
+                    case "PlayStation 4","PlayStation 5":
+                        game.setConsola("PS5");
+                        break;
+
+                    case "Xbox One","Xbox 360","Xbox Series S/X":
+                        game.setConsola("XBOX");
+                        break;
+
+                    case "Nintendo Switch":
+                        game.setConsola("SWITCH");
+                        break;
+
+                    default:
+                        game.setConsola("PC");
+                        break;
+
+                }
             } else {
                 game.setConsola("Desconocida");
             }

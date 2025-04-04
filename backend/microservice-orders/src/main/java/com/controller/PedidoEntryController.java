@@ -35,7 +35,7 @@ public class PedidoEntryController {
     @PostMapping
     public ResponseEntity<PedidoEntry> save(@AuthenticationPrincipal Jwt jwt, @RequestBody PedidoEntry entry) {
         try {
-            return ResponseEntity.ok(service.save(jwt, entry));
+            return ResponseEntity.status(HttpStatus.CREATED).body(service.save(jwt, entry));
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
