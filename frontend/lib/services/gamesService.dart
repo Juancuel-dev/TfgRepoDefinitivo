@@ -5,9 +5,9 @@ import 'package:flutter_auth_app/models/game.dart';
 class GamesService {
   final String apiUrl = 'http://localhost:8080/gateway/games';
 
-  Future<List<Game>> fetchGames({required int page}) async {
+  Future<List<Game>> fetchGames() async {
     final response = await http.get(
-      Uri.parse('$apiUrl?page=$page'), // Agregar el número de página a la URL
+      Uri.parse('$apiUrl'), // Agregar el número de página a la URL
       headers: {
         'Content-Type': 'application/json',
       },

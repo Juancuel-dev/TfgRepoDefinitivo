@@ -2,9 +2,9 @@ import 'package:flutter_auth_app/models/game.dart';
 
 class CartItem {
   final Game game;
-  int quantity;
+  final int quantity;
 
-  CartItem({required this.game, this.quantity = 1});
+  CartItem({required this.game, required this.quantity});
 }
 
 class Cart {
@@ -12,21 +12,23 @@ class Cart {
 
   List<CartItem> get items => _items;
 
-  void addItem(Game game) {
-    for (var item in _items) {
-      if (item.game.name == game.name) {
-        item.quantity++;
-        return;
-      }
-    }
-    _items.add(CartItem(game: game));
+  void addItem(CartItem item) {
+    // Lógica para agregar un elemento al carrito
+    _items.add(item);
+  }
+
+  void removeItem(CartItem item) {
+    // Lógica para eliminar un elemento del carrito
+    _items.remove(item);
   }
 
   void clear() {
+    // Lógica para vaciar el carrito
     _items.clear();
   }
 
   double get totalPrice {
-    return _items.fold(0, (total, item) => total + item.game.precio * item.quantity);
+    // Calcular el precio total del carrito
+    return _items.fold(0, (total, item) => total + (item.game.precio * item.quantity));
   }
 }

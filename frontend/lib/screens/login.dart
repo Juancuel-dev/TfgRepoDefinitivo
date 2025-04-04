@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_auth_app/models/cart.dart';
 import 'package:flutter_auth_app/services/authService.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
 
 class LoginPage extends StatefulWidget {
-  final Cart cart;
   final Function(String) onLogin;
 
-  const LoginPage({super.key, required this.cart, required this.onLogin});
+  const LoginPage({super.key, required this.onLogin});
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -23,8 +21,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+
     return BaseLayout(
-      cart: widget.cart,
       child: Center(
         child: SingleChildScrollView(
           child: Padding(

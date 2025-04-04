@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/screens/login.dart';
 import 'package:flutter_auth_app/screens/home.dart';
 import 'package:flutter_auth_app/screens/details.dart';
 import 'package:flutter_auth_app/screens/register.dart';
 import 'package:flutter_auth_app/screens/cart.dart';
-import 'package:flutter_auth_app/models/cart.dart';
+import 'package:flutter_auth_app/services/cartProvider.dart';
 import 'package:flutter_auth_app/services/authService.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartProvider()), // Proveedor global para el carrito
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -20,7 +28,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final Cart cart = Cart();
   final AuthService authService = AuthService();
   String? token;
 
@@ -33,22 +40,24 @@ class _MyAppState extends State<MyApp> {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => HomePage(cart: cart, token: token ?? ''),
-        '/login': (context) => LoginPage(cart: cart, onLogin: (String newToken) {
+        '/': (context) => HomePage(token: token ?? ''),
+        '/login': (context) => LoginPage(onLogin: (String newToken) {
           setState(() {
             token = newToken;
           });
           Navigator.pushReplacementNamed(context, '/home', arguments: token);
         }),
-        '/home': (context) => HomePage(cart: cart, token: token ?? ''),
-        '/details': (context) => GameDetailPage(cart: cart, game: ModalRoute.of(context)!.settings.arguments as Game),
-        '/register': (context) => RegisterPage(cart: cart, onRegister: (String newToken) {
+        '/home': (context) => HomePage(token: token ?? ''),
+        '/details': (context) => GameDetailPage(
+              game: ModalRoute.of(context)!.settings.arguments as Game,
+            ),
+        '/register': (context) => RegisterPage(onRegister: (String newToken) {
           setState(() {
             token = newToken;
           });
           Navigator.pushReplacementNamed(context, '/home', arguments: token);
         }),
-        '/cart': (context) => CartPage(cart: cart, token: token ?? ''),
+        '/cart': (context) => const CartPage(token: ""), // El carrito se obtiene desde el Provider
       },
     );
   }

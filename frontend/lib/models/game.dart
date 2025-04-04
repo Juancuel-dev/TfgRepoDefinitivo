@@ -1,4 +1,5 @@
 class Game {
+  final String id;
   final String name;
   final double precio;
   final int? metacritic; // Cambiar a nullable (int?)
@@ -6,6 +7,7 @@ class Game {
   final String imageUrl;
 
   Game({
+    required this.id,
     required this.name,
     required this.precio,
     this.metacritic, // Permitir que sea null
@@ -15,6 +17,7 @@ class Game {
 
   factory Game.fromJson(Map<String, dynamic> json) {
     return Game(
+      id: json['id'] ?? '', // Valor predeterminado si el id es null
       name: json['name'] ?? 'Sin nombre', // Valor predeterminado si el nombre es null
       precio: (json['precio'] != null) ? json['precio'].toDouble() : 0.0, // Manejar null en precio
       metacritic: json['metacritic'] != null ? json['metacritic'] as int : null, // Manejar null en metacritic

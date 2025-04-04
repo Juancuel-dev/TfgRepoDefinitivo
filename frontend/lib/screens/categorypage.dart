@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/services/gamesService.dart';
-import 'package:flutter_auth_app/models/cart.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
 import 'package:flutter_auth_app/screens/details.dart'; // Importar la página de detalles
 
 class CategoryPage extends StatefulWidget {
   final String category;
-  final Cart cart;
 
-  const CategoryPage({super.key, required this.category, required this.cart});
+  const CategoryPage({super.key, required this.category});
 
   @override
   _CategoryPageState createState() => _CategoryPageState();
@@ -29,7 +27,6 @@ class _CategoryPageState extends State<CategoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BaseLayout(
-        cart: widget.cart,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -98,7 +95,6 @@ class _CategoryPageState extends State<CategoryPage> {
                                       MaterialPageRoute(
                                         builder: (context) => GameDetailPage(
                                           game: game,
-                                          cart: widget.cart,
                                         ),
                                       ),
                                     );

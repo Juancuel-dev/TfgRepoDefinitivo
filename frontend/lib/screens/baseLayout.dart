@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_auth_app/models/cart.dart';
 
 class BaseLayout extends StatelessWidget {
   final Widget child;
   final bool showBackButton;
-  final Cart cart;
 
-  const BaseLayout({super.key, required this.child, required this.cart, this.showBackButton = true});
+  const BaseLayout({super.key, required this.child, this.showBackButton = true});
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +28,20 @@ class BaseLayout extends StatelessWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
-                      child: Text(
-                        'LevelUp Shop',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: isSmallScreen ? 24 : 40, // Ajustar tamaño del texto
-                          fontWeight: FontWeight.bold,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/home');
+                        },
+                        child: Text(
+                          'LevelUp Shop',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: isSmallScreen ? 24 : 40, // Ajustar tamaño del texto
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                    const Spacer(),
-                    
                     const Spacer(),
                     Row(
                       children: [

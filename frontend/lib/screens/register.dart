@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
 import 'package:flutter_auth_app/services/authService.dart';
-import 'package:flutter_auth_app/models/cart.dart';
 
 class RegisterPage extends StatefulWidget {
-  final Cart cart;
   final Function(String) onRegister;
 
-  const RegisterPage({super.key, required this.cart, required this.onRegister});
+  const RegisterPage({super.key, required this.onRegister});
 
   @override
   _RegisterPageState createState() => _RegisterPageState();
@@ -43,7 +41,6 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return BaseLayout(
-      cart: widget.cart,
       child: Center(
         child: SingleChildScrollView(
           child: Padding(

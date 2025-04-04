@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
-import 'package:flutter_auth_app/models/cart.dart';
 
 class AdminPanel extends StatefulWidget {
-  final Cart cart;
 
-  const AdminPanel({super.key, required this.cart});
+  const AdminPanel({super.key});
 
   @override
   _AdminPanelState createState() => _AdminPanelState();
@@ -45,7 +43,6 @@ class _AdminPanelState extends State<AdminPanel> {
   @override
   Widget build(BuildContext context) {
     return BaseLayout(
-      cart: widget.cart,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
