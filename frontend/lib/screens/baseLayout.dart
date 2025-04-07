@@ -46,6 +46,13 @@ class BaseLayout extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
+                    // Botón de búsqueda
+                    IconButton(
+                      icon: const Icon(Icons.search, color: Colors.white),
+                      onPressed: () {
+                        _showSearchDialog(context); // Mostrar el cuadro de búsqueda
+                      },
+                    ),
                     Consumer<AuthProvider>(
                       builder: (context, authProvider, _) {
                         final isLoggedIn = authProvider.isLoggedIn;
@@ -122,6 +129,56 @@ class BaseLayout extends StatelessWidget {
       backgroundColor: Colors.black,
     );
   }
+
+  void _showSearchDialog(BuildContext context) {
+    final TextEditingController searchController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Buscar Juegos',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: TextField(
+            controller: searchController,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Introduce el nombre del juego',
+              hintStyle: TextStyle(color: Colors.white70),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el cuadro de diálogo
+              },
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () {
+                final searchQuery = searchController.text.trim();
+                if (searchQuery.isNotEmpty) {
+                  Navigator.of(context).pop(); // Cerrar el cuadro de diálogo
+                  context.go('/search/$searchQuery'); // Navegar a la página de búsqueda
+                }
+              },
+              child: const Text('Buscar', style: TextStyle(color: Colors.blue)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   void _showMenu(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);

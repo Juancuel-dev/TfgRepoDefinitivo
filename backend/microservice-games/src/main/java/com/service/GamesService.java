@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.model.Game;
 import com.repository.GamesRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -38,6 +39,9 @@ public class GamesService{
     }
 
     public List<Game> searchGamesByName(String name) {
+        if(name == null || name.isEmpty()){
+            return new ArrayList<>();
+        }
         // Crear una expresión regular para buscar nombres que contengan el término (insensible a mayúsculas)
         String regex = "(?i).*" + name + ".*"; // (?i) hace que la búsqueda sea insensible a mayúsculas
         return gamesRepository.findByNameRegex(regex);
@@ -66,16 +70,6 @@ public class GamesService{
             }throw new GameNotFoundException("El juego no existe");
         }
         throw new UnauthorizedException("No estas autorizado para realizar esta accion.");
-    }
-
-    // Guardar un juego (crear o actualizar)
-    public List<Game> saveAll(Jwt jwt,List<Game> games) throws UnauthorizedException {
-        if(jwt.getClaim("role").equals("ADMIN")) {
-
-            return gamesRepository.saveAll(games);
-        }
-        throw new UnauthorizedException("No estas autorizado para realizar esta accion.");
-
     }
 
     // Eliminar un juego por su ID

@@ -15,22 +15,13 @@ import org.springframework.data.mongodb.core.mapping.Field;
 public class Game {
 
     @Id
-    private String id;  // En MongoDB, el ID es típicamente de tipo String, no Long.
+    private String id;
 
     @Field("name")
     private String name;
 
-    @Field("description")
-    private String description;
-
-    @Field("creator")
-    private String creator;
-
     @Field("precio")
     private Float precio;
-
-    @Field("stock")
-    private Integer stock;
 
     @Field("metacritic")
     private Integer metacritic;

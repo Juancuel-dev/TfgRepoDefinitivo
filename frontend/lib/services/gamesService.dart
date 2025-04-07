@@ -38,4 +38,16 @@ class GamesService {
       throw Exception('Failed to load games for category $consola');
     }
   }
+
+  Future<List<Game>> searchGames(String query) async {
+    final url = Uri.parse('http://localhost:8080/gateway/games/search?name=$query');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Game.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al buscar juegos');
+    }
+  }
 }

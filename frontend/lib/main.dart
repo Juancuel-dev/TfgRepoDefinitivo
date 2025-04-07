@@ -3,6 +3,7 @@ import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/screens/adminPanel.dart';
 import 'package:flutter_auth_app/screens/categorypage.dart';
 import 'package:flutter_auth_app/screens/main_screen.dart'; // Importar MainScreen
+import 'package:flutter_auth_app/screens/searchpage.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/screens/login.dart';
@@ -39,6 +40,13 @@ class MyApp extends StatelessWidget {
         GoRoute(
           path: '/',
           builder: (context, state) => const MainScreen(), // Página principal actualizada
+        ),
+        GoRoute(
+          path: '/search/:query',
+          builder: (context, state) {
+            final query = state.pathParameters['query']!;
+            return SearchPage(searchQuery: query);
+          },
         ),
         GoRoute(
           path: '/login',

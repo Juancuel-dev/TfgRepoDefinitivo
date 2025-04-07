@@ -12,6 +12,5 @@ public interface GamesRepository extends MongoRepository<Game,String> {
 
     List<Game> findAllByConsola(String consola);
 
-
     List<Game> findByNameRegex(String name);
 }
