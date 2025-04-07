@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
 import 'package:flutter_auth_app/services/authService.dart';
+import 'package:go_router/go_router.dart'; // Importar GoRouter para la navegación
 
 class RegisterPage extends StatefulWidget {
   final Function(String) onRegister;
@@ -30,7 +31,7 @@ class _RegisterPageState extends State<RegisterPage> {
           _responseMessage = 'Registro exitoso';
           String token = 'your-jwt-token'; // Simular obtención del token
           widget.onRegister(token);
-          Navigator.pushReplacementNamed(context, '/home');
+          context.go('/'); // Navegación con GoRouter
         } else {
           _responseMessage = 'Error: El usuario ya existe';
         }

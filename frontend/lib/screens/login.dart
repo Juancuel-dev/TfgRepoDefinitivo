@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/services/authService.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
+import 'package:go_router/go_router.dart'; // Importar GoRouter para la navegación
 
 class LoginPage extends StatefulWidget {
   final Function(String) onLogin;
@@ -21,7 +22,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return BaseLayout(
       child: Center(
         child: SingleChildScrollView(
@@ -108,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                                 });
                                 if (token != null) {
                                   widget.onLogin(token);
-                                  Navigator.pushReplacementNamed(context, '/home', arguments: token);
+                                  context.go('/'); // Navegación con GoRouter
                                 } else {
                                   setState(() {
                                     _errorMessage = 'Error al iniciar sesión. Por favor, inténtelo de nuevo.';

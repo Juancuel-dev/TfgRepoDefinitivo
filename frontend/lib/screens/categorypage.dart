@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/services/gamesService.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
-import 'package:flutter_auth_app/screens/details.dart'; // Importar la página de detalles
+import 'package:go_router/go_router.dart'; // Importar GoRouter para la navegación
 
 class CategoryPage extends StatefulWidget {
   final String category;
@@ -89,14 +89,10 @@ class _CategoryPageState extends State<CategoryPage> {
                                 ),
                                 child: InkWell(
                                   onTap: () {
-                                    // Navegar a la página de detalles del juego
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => GameDetailPage(
-                                          game: game,
-                                        ),
-                                      ),
+                                    // Navegar a la página de detalles del juego usando GoRouter
+                                    context.go(
+                                      '/details',
+                                      extra: game, // Pasar el objeto Game como argumento
                                     );
                                   },
                                   child: Column(

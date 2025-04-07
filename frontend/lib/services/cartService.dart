@@ -10,20 +10,20 @@ class CartService {
   /// Realiza un pedido enviando los datos al backend
   Future<bool> createOrder({
     required String orderId,
-    required String userId,
     required String gameId,
     required String precio,
     required DateTime fecha,
     required String jwtToken, // Token JWT para autenticación
+    required String clientId, // Agregar clientId como parámetro requerido
   }) async {
     final url = Uri.parse('$baseUrl/gateway/orders');
 
     final body = {
       "orderId": orderId,
-      "userId": userId,
       "gameId": gameId,
       "precio": precio,
       "fecha": fecha.toIso8601String(),
+      "clientId": clientId, // Incluir clientId en el cuerpo de la petición
     };
 
     try {
@@ -53,22 +53,30 @@ class CartService {
 
   /// Desglosa la lista de juegos y envía una petición por cada uno
   Future<bool> createOrders({
-    required String userId,
     required List<CartItem> items,
     required String jwtToken,
+    required String clientId, // Agregar clientId como parámetro requerido
   }) async {
-    for (final item in items) {
-      final success = await createOrder(
-        orderId: DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: userId,
-        gameId: item.game.id,
-        precio: item.game.precio.toStringAsFixed(2), // Usar el precio original del juego
-        fecha: DateTime.now(),
-        jwtToken: jwtToken,
-      );
+    // Generar un único orderId para toda la orden
+    final orderId = '${DateTime.now().millisecondsSinceEpoch}';
 
-      if (!success) {
-        return false; // Detener si algún pedido falla
+    for (final item in items) {
+      for (int i = 0; i < item.quantity; i++) { // Iterar según la cantidad de unidades
+        final success = await createOrder(
+          orderId: orderId,
+          gameId: item.game.id,
+          precio: item.game.precio.toStringAsFixed(2), // Usar el precio original del juego
+          fecha: DateTime.now(),
+          jwtToken: jwtToken,
+          clientId: clientId, // Enviar el clientId
+        );
+
+        if (!success) {
+          return false; // Detener si algún pedido falla
+        }
+
+        // Agregar un pequeño retraso para evitar problemas de concurrencia
+        await Future.delayed(const Duration(milliseconds: 10));
       }
     }
     return true; // Todos los pedidos fueron exitosos

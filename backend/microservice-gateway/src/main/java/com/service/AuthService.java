@@ -53,7 +53,7 @@ public class AuthService {
         RegisterAuthRequest authRequest = RegisterRequestMapper.INSTANCE.toRegisterAuthRequest(registerRequest);
 
         try {
-            // Llamada a auth-service
+            // Llamada auth-service
             ResponseEntity<String> authResponse = restTemplate.postForEntity(
                     "http://" + AUTH_SERVICE + "/auth/register",
                     authRequest,
@@ -88,9 +88,16 @@ public class AuthService {
 
     public ResponseEntity<Object> proxyRequest(String serviceName, HttpServletRequest request) {
         try {
-            String micro = serviceName.substring(13); //Me quito 'microservice-' (Todas las urls del controller de cada micro empieza o por /users, /games, /auth)
+            //Me quito 'microservice-' (Todas las urls del controller de cada micro empieza o por /users, /games, /auth)
+            String micro = serviceName.substring(13);
             String path = request.getRequestURI().replace("/gateway", "");
+            String queryString = request.getQueryString(); // Obtener los parámetros de consulta
             String url = "http://" + serviceName + path;
+
+            // Agregar los parámetros de consulta a la URL si existen
+            if (queryString != null && !queryString.isEmpty()) {
+                url += "?" + queryString;
+            }
 
             HttpMethod method = HttpMethod.valueOf(request.getMethod());
             HttpHeaders headers = new HttpHeaders();

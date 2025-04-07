@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_auth_app/screens/login.dart';
-import 'package:flutter_auth_app/screens/register.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
+import 'package:go_router/go_router.dart'; // Importar GoRouter para la navegación
 
 class WelcomePage extends StatelessWidget {
   final Function(String) onLogin;
@@ -18,21 +17,25 @@ class WelcomePage extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginPage(onLogin: onLogin)),
-                );
+                context.go('/login'); // Navegación con GoRouter a la pantalla de login
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               child: const Text('Login'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => RegisterPage(onRegister: onLogin)),
-                );
+                context.go('/register'); // Navegación con GoRouter a la pantalla de registro
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.greenAccent,
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               child: const Text('Registrarse'),
             ),
           ],

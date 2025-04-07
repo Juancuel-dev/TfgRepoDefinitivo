@@ -1,6 +1,5 @@
 package com.service;
 
-import com.model.GameDTO;
 import com.util.exception.GameNotFoundException;
 import com.util.exception.UnauthorizedException;
 import jakarta.persistence.EntityNotFoundException;
@@ -10,12 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.model.Game;
 import com.repository.GamesRepository;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +35,12 @@ public class GamesService{
     public Game findById(String id) throws GameNotFoundException {
         return gamesRepository.findById(id)
                 .orElseThrow(EntityNotFoundException::new);
+    }
+
+    public List<Game> searchGamesByName(String name) {
+        // Crear una expresión regular para buscar nombres que contengan el término (insensible a mayúsculas)
+        String regex = ".*" + name + ".*";
+        return gamesRepository.findByNameRegex(regex);
     }
 
     public List<Game> fetchGamesAPI(String page) {

@@ -45,6 +45,11 @@ public class GamesController {
         }
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<Game>> search(@RequestParam String name) {
+        return ResponseEntity.ok(gamesService.searchGamesByName(name));
+    }
+
     @PostMapping("/update")
     public ResponseEntity<Game> updateGame(@AuthenticationPrincipal Jwt jwt,Game Game){
         try{

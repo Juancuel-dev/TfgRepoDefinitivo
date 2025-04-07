@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_auth_app/services/authProvider.dart';
 
 class BaseLayout extends StatelessWidget {
   final Widget child;
@@ -30,7 +33,7 @@ class BaseLayout extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 8.0),
                       child: TextButton(
                         onPressed: () {
-                          Navigator.pushReplacementNamed(context, '/home');
+                          context.go('/'); // Navegación con GoRouter
                         },
                         child: Text(
                           'LevelUp Shop',
@@ -43,42 +46,61 @@ class BaseLayout extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    Row(
-                      children: [
-                        if (isSmallScreen)
-                          IconButton(
-                            icon: const Icon(Icons.menu, color: Colors.white),
-                            onPressed: () {
-                              _showMenu(context);
-                            },
-                          )
-                        else ...[
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pushReplacementNamed(context, '/login');
-                            },
-                            child: const Text(
-                              'Login',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pushReplacementNamed(context, '/register');
-                            },
-                            child: const Text(
-                              'Registrarse',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.shopping_cart, color: Colors.white),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/cart');
-                            },
-                          ),
-                        ],
-                      ],
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        final isLoggedIn = authProvider.isLoggedIn;
+
+                        return Row(
+                          children: [
+                            if (isSmallScreen)
+                              IconButton(
+                                icon: const Icon(Icons.menu, color: Colors.white),
+                                onPressed: () {
+                                  _showMenu(context);
+                                },
+                              )
+                            else ...[
+                              if (!isLoggedIn) ...[
+                                TextButton(
+                                  onPressed: () {
+                                    context.go('/login'); // Navegación con GoRouter
+                                  },
+                                  child: const Text(
+                                    'Login',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    context.go('/register'); // Navegación con GoRouter
+                                  },
+                                  child: const Text(
+                                    'Registrarse',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ] else ...[
+                                TextButton(
+                                  onPressed: () {
+                                    authProvider.logout(); // Llamar al método de logout
+                                    context.go('/login'); // Navegación con GoRouter
+                                  },
+                                  child: const Text(
+                                    'Logout',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                              IconButton(
+                                icon: const Icon(Icons.shopping_cart, color: Colors.white),
+                                onPressed: () {
+                                  context.go('/cart'); // Navegación con GoRouter
+                                },
+                              ),
+                            ],
+                          ],
+                        );
+                      },
                     ),
                   ],
                 );
@@ -92,7 +114,7 @@ class BaseLayout extends StatelessWidget {
         color: Colors.grey[900],
         padding: const EdgeInsets.all(16.0),
         child: const Text(
-          '© 2025 Tienda de Videojuegos',
+          '© 2025 LevelUp Shop. Todos los derechos reservados.',
           style: TextStyle(color: Colors.white),
           textAlign: TextAlign.center,
         ),
@@ -102,6 +124,9 @@ class BaseLayout extends StatelessWidget {
   }
 
   void _showMenu(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isLoggedIn = authProvider.isLoggedIn;
+
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -110,22 +135,32 @@ class BaseLayout extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                title: const Text('Login', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.pushReplacementNamed(context, '/login');
-                },
-              ),
-              ListTile(
-                title: const Text('Registrarse', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.pushReplacementNamed(context, '/register');
-                },
-              ),
+              if (!isLoggedIn) ...[
+                ListTile(
+                  title: const Text('Login', style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    context.go('/login'); // Navegación con GoRouter
+                  },
+                ),
+                ListTile(
+                  title: const Text('Registrarse', style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    context.go('/register'); // Navegación con GoRouter
+                  },
+                ),
+              ] else ...[
+                ListTile(
+                  title: const Text('Logout', style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    authProvider.logout(); // Llamar al método de logout
+                    context.go('/login'); // Navegación con GoRouter
+                  },
+                ),
+              ],
               ListTile(
                 title: const Text('Carrito', style: TextStyle(color: Colors.white)),
                 onTap: () {
-                  Navigator.pushNamed(context, '/cart');
+                  context.go('/cart'); // Navegación con GoRouter
                 },
               ),
             ],

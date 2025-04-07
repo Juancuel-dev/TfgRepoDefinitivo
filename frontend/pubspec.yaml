@@ -14,6 +14,7 @@ dependencies:
     sdk: flutter
   http: ^1.1.0 # Para hacer solicitudes HTTP
   jwt_decoder: ^2.0.1
+  go_router: ^7.0.0
 
 dev_dependencies:
   flutter_test:

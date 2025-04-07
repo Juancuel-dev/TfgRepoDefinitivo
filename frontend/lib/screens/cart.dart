@@ -1,22 +1,68 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/services/cartProvider.dart';
 import 'package:flutter_auth_app/services/cartService.dart';
 import 'package:flutter_auth_app/services/authProvider.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
-import 'package:flutter_auth_app/screens/home.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
 
+  /// Decodifica el JWT y extrae el clientId
+  String _extractClientId(String jwtToken) {
+    final parts = jwtToken.split('.');
+    if (parts.length != 3) {
+      throw Exception('Token JWT inválido');
+    }
+
+    final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+    final payloadMap = json.decode(payload) as Map<String, dynamic>;
+
+    if (!payloadMap.containsKey('clientId')) {
+      throw Exception('El token JWT no contiene clientId');
+    }
+
+    return payloadMap['clientId'];
+  }
+
   Future<void> _purchase(BuildContext context) async {
-    final cartItems = Provider.of<CartProvider>(context, listen: false).items; // Cambiado de `cart` a `items`
+    final cartItems = Provider.of<CartProvider>(context, listen: false).items;
     final jwtToken = Provider.of<AuthProvider>(context, listen: false).jwtToken;
     final cartService = CartService(baseUrl: 'http://localhost:8080');
 
+    // Verificar si el carrito está vacío
+    if (cartItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El carrito está vacío. Añade productos antes de realizar un pedido.'),
+          duration: Duration(seconds: 1), // Duración ajustada a 1 segundo
+        ),
+      );
+      return;
+    }
+
     if (jwtToken == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No estás autenticado. Inicia sesión para continuar.')),
+        const SnackBar(
+          content: Text('No estás autenticado. Inicia sesión para continuar.'),
+          duration: Duration(seconds: 1), // Duración ajustada a 1 segundo
+        ),
+      );
+      return;
+    }
+
+    // Extraer el clientId del JWT
+    late String clientId;
+    try {
+      clientId = _extractClientId(jwtToken);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al extraer clientId: $e'),
+          duration: const Duration(seconds: 1), // Duración ajustada a 1 segundo
+        ),
       );
       return;
     }
@@ -29,45 +75,46 @@ class CartPage extends StatelessWidget {
     );
 
     try {
-      for (final item in cartItems) {
-        final success = await cartService.createOrder(
-          orderId: DateTime.now().millisecondsSinceEpoch.toString(),
-          userId: 'user123', // Cambia esto según tu lógica
-          gameId: item.game.id,
-          precio: item.game.precio.toStringAsFixed(2), // Usar el precio original del juego
-          fecha: DateTime.now(),
-          jwtToken: jwtToken, // Pasar el token JWT
-        );
+      final success = await cartService.createOrders(
+        items: cartItems,
+        jwtToken: jwtToken,
+        clientId: clientId, // Pasar el clientId extraído
+      );
 
-        if (!success) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error al realizar el pedido. Inténtalo de nuevo.')),
-          );
-          return;
-        }
+      Navigator.pop(context);
+
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al realizar el pedido. Inténtalo de nuevo.'),
+            duration: Duration(seconds: 1), // Duración ajustada a 1 segundo
+          ),
+        );
+        return;
       }
 
       Provider.of<CartProvider>(context, listen: false).clear(); // Vaciar el carrito
-      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Compra realizada con éxito')),
+        const SnackBar(
+          content: Text('Compra realizada con éxito'),
+          duration: Duration(seconds: 1), // Duración ajustada a 1 segundo
+        ),
       );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
-      );
+      context.go('/'); // Navegación con GoRouter
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al realizar el pedido: $e')),
+        SnackBar(
+          content: Text('Error al realizar el pedido: $e'),
+          duration: const Duration(seconds: 1), // Duración ajustada a 1 segundo
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final cartItems = Provider.of<CartProvider>(context).items; // Cambiado de `cart` a `items`
+    final cartItems = Provider.of<CartProvider>(context).items;
 
     return BaseLayout(
       child: Padding(
@@ -101,19 +148,16 @@ class CartPage extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              // Imagen del juego (si está disponible)
-                              if (item.game.imageUrl != null)
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  child: Image.network(
-                                    item.game.imageUrl!,
-                                    width: 80,
-                                    height: 80,
-                                    fit: BoxFit.cover,
-                                  ),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: Image.network(
+                                  item.game.imageUrl,
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
                                 ),
+                              ),
                               const SizedBox(width: 16),
-                              // Detalles del juego
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +195,6 @@ class CartPage extends StatelessWidget {
                     ),
             ),
             const SizedBox(height: 20),
-            // Total del carrito
             Text(
               'Total: \$${Provider.of<CartProvider>(context).totalPrice.toStringAsFixed(2)}',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
@@ -167,4 +210,8 @@ class CartPage extends StatelessWidget {
               child: const Text('Comprar'),
             ),
           ],
-        ),      ),    );  }}
+        ),
+      ),
+    );
+  }
+}

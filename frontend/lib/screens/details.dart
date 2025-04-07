@@ -85,7 +85,10 @@ class GameDetailPage extends StatelessWidget {
                   // Usar el método addToCart del CartProvider
                   Provider.of<CartProvider>(context, listen: false).addToCart(game);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${game.name} añadido al carrito')),
+                    SnackBar(
+                      content: Text('${game.name} añadido al carrito'),
+                      duration: const Duration(seconds: 1), // Duración ajustada a 1 segundo
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(

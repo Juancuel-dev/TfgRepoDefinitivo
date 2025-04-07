@@ -26,7 +26,10 @@ class _AdminPanelState extends State<AdminPanel> {
       _gameNameController.clear();
       _gamePriceController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Juego añadido con éxito')),
+        const SnackBar(
+          content: Text('Juego añadido con éxito'),
+          duration: Duration(seconds: 1), // Duración ajustada a 1 segundo
+        ),
       );
     }
   }
@@ -36,7 +39,10 @@ class _AdminPanelState extends State<AdminPanel> {
       games.removeAt(index);
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Juego eliminado con éxito')),
+      const SnackBar(
+        content: Text('Juego eliminado con éxito'),
+        duration: Duration(seconds: 1), // Duración ajustada a 1 segundo
+      ),
     );
   }
 

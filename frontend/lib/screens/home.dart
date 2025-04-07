@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/models/game.dart';
-import 'package:flutter_auth_app/screens/categorypage.dart';
-import 'package:flutter_auth_app/screens/login.dart';
 import 'package:flutter_auth_app/services/gamesService.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
-import 'package:flutter_auth_app/screens/details.dart';
-import 'package:flutter_auth_app/screens/adminPanel.dart';
+import 'package:go_router/go_router.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
 class HomePage extends StatefulWidget {
@@ -40,18 +37,7 @@ class _HomePageState extends State<HomePage> {
         print('Error al decodificar el token: $e');
         token = null;
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => LoginPage(
-                onLogin: (newToken) {
-                  setState(() {
-                    token = newToken;
-                  });
-                },
-              ),
-            ),
-          );
+          context.go('/login'); // Redirigir a la pantalla de login
         });
       }
     }
@@ -85,12 +71,7 @@ class _HomePageState extends State<HomePage> {
                 if (isAdmin)
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AdminPanel(),
-                        ),
-                      );
+                      context.go('/admin'); // Navegación con GoRouter
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.redAccent,
@@ -147,13 +128,9 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   child: InkWell(
                                     onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => GameDetailPage(
-                                            game: game,
-                                          ),
-                                        ),
+                                      context.go(
+                                        '/details',
+                                        extra: game, // Pasar el objeto Game como argumento
                                       );
                                     },
                                     child: Column(
@@ -241,12 +218,8 @@ class _HomePageState extends State<HomePage> {
       ),
       child: ElevatedButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CategoryPage(category: category),
-            ),
-          );
+          // Navegar a la categoría con el parámetro dinámico
+          context.go('/category/$category'); // Incluir el parámetro dinámico en la URL
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blueGrey,
