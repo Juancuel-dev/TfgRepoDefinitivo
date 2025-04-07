@@ -39,7 +39,7 @@ public class GamesService{
 
     public List<Game> searchGamesByName(String name) {
         // Crear una expresión regular para buscar nombres que contengan el término (insensible a mayúsculas)
-        String regex = ".*" + name + ".*";
+        String regex = "(?i).*" + name + ".*"; // (?i) hace que la búsqueda sea insensible a mayúsculas
         return gamesRepository.findByNameRegex(regex);
     }
 
