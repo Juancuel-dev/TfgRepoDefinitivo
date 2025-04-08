@@ -19,6 +19,7 @@ public class GatewayController {
     private static final String USER_SERVICE = "microservice-users";
     private static final String GAME_SERVICE = "microservice-games";
     private static final String CART_SERVICE = "microservice-orders";
+    private static final String MAIL_SERVICE = "microservice-mail";
 
     private final AuthService authService;
 
@@ -69,6 +70,15 @@ public class GatewayController {
     public ResponseEntity<Object> cartProxy(HttpServletRequest request) {
         log.debug("Proxying cart request to path: {}", request.getRequestURI());
         return authService.proxyRequest(CART_SERVICE, request);
+    }
+
+    @RequestMapping(
+            value = "/mail/**",
+            method = {RequestMethod.POST}
+    )
+    public ResponseEntity<Object> mailProxy(HttpServletRequest request) {
+        log.debug("Proxying mail request to path: {}", request.getRequestURI());
+        return authService.proxyRequest(MAIL_SERVICE, request);
     }
 
     @GetMapping("/me")

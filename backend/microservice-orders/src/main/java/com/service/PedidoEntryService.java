@@ -1,14 +1,21 @@
 package com.service;
 
+import com.model.GameDTO;
+import com.model.MasVendido;
 import com.model.PedidoEntry;
 import com.repository.PedidoEntryRepository;
 import com.util.exception.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -16,6 +23,11 @@ import java.util.List;
 public class PedidoEntryService {
 
     private final PedidoEntryRepository repository;
+    private final RestTemplate restTemplate;
+
+    @Value("${ruta.gateway}")
+    private String rutaGateway;
+
 
     public List<PedidoEntry> findAll(Jwt jwt) throws UnauthorizedException {
         if (jwt.getClaim("role").equals("ADMIN")) {
@@ -41,13 +53,10 @@ public class PedidoEntryService {
         }
     }
 
-    public List<PedidoEntry> findAllByGameId(Jwt jwt, String gameId) throws GameIdNotFoundException, UnauthorizedException {
-        if (jwt.getClaim("role").equals("ADMIN")) {
-            return repository.findAllByGameId(gameId).orElseThrow(() -> new GameIdNotFoundException("Pedido no encontrado."));
-        } else {
-            throw new UnauthorizedException("No estas autorizado para realizar esta accion");
-        }
+    public List<GameDTO> getJuegosFromOrder(Jwt jwt,String orderId) throws PedidoEntryNotFoundException {
+        return repository.findById(orderId).orElseThrow(()-> new PedidoEntryNotFoundException("Pedido no encontrado")).getJuegos();
     }
+
     public List<PedidoEntry> findAllByOrderId(Jwt jwt, String orderId) throws OrderIdNotFoundException, UnauthorizedException {
         List<PedidoEntry> pedidoEntry = repository.findAllByOrderId(orderId).orElseThrow(() -> new OrderIdNotFoundException("Pedido no encontrado."));
         if (isAuthorized(jwt, pedidoEntry)) {
@@ -70,12 +79,21 @@ public class PedidoEntryService {
         }
 
 
-    public PedidoEntry save(Jwt jwt, PedidoEntry pedidoEntry) throws DataIntegrityViolationException {
-        return repository.save(pedidoEntry);
+    public PedidoEntry save(Jwt jwt, PedidoEntry pedidoEntry) throws DataIntegrityViolationException, UnauthorizedException {
+        if(jwt.getClaim("clientId").equals(pedidoEntry.getClientId())) {
+            restTemplate.postForObject(rutaGateway, pedidoEntry, ResponseEntity.class);
+            return repository.save(pedidoEntry);
+        }else{
+            throw new UnauthorizedException("No estas autorizado a realizar esta accion");
+        }
     }
 
-    public List<PedidoEntry> saveAll(Jwt jwt, List<PedidoEntry> pedidoEntry) {
-        return repository.saveAll(pedidoEntry);
+    public List<PedidoEntry> saveAll(Jwt jwt, List<PedidoEntry> pedidoEntry) throws UnauthorizedException {
+        if(jwt.getClaim("role").equals("ADMIN")) {
+            return repository.saveAll(pedidoEntry);
+        }else{
+            throw new UnauthorizedException("No estas autorizado para realizar esta accion");
+        }
     }
 
     public void deleteAllByOrderId(Jwt jwt, String orderId) throws UnauthorizedException {
@@ -91,6 +109,30 @@ public class PedidoEntryService {
 
             return repository.existsByOrderId(orderId);
         } else {
+            throw new UnauthorizedException("No estas autorizado para realizar esta accion");
+        }
+    }
+
+    public List<MasVendido> mostPurchasedGames(Jwt jwt, int cuantos) throws UnauthorizedException {
+        if (jwt.getClaim("role").equals("ADMIN")) {
+            List<PedidoEntry> entries = findAll(jwt);
+            Map<GameDTO,Long> frecuencia = entries.stream()
+                    .flatMap(entry -> entry.getJuegos().stream())
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+            return frecuencia.entrySet().stream()
+                    .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+                    .limit(cuantos)
+                    .map(entry -> {
+                        MasVendido masVendido = new MasVendido();
+                        masVendido.setCantidad(entry.getValue().intValue());
+                        masVendido.setGame(entry.getKey());
+                        return masVendido;
+                    })
+                    .collect(Collectors.toList());
+
+
+        }else{
             throw new UnauthorizedException("No estas autorizado para realizar esta accion");
         }
     }

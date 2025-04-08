@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Document("orders")
 @Data
@@ -26,11 +27,11 @@ public class PedidoEntry {
     private String clientId;
 
     @Field
-    private String gameId;
-
-    @Field
     private Float precio;
 
     @Field
     private LocalDate fecha;
+
+    @Field
+    private List<GameDTO> juegos;
 }

@@ -2,7 +2,6 @@ package com.service;
 
 import com.util.exception.GameNotFoundException;
 import com.util.exception.UnauthorizedException;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -35,7 +34,7 @@ public class GamesService{
     // Buscar un juego por su ID
     public Game findById(String id) throws GameNotFoundException {
         return gamesRepository.findById(id)
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(()->new GameNotFoundException("Juego " + id + " no encontrado"));
     }
 
     public List<Game> searchGamesByName(String name) {

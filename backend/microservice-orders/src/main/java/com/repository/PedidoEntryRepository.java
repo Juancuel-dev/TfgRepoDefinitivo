@@ -12,8 +12,6 @@ import java.util.Optional;
 public interface PedidoEntryRepository extends MongoRepository<PedidoEntry, String> {
     Optional<List<PedidoEntry>> findAllByClientId(String clientId) throws UserIdNotFoundException;
 
-    Optional<List<PedidoEntry>> findAllByGameId(String gameId);
-
     Optional<List<PedidoEntry>> findAllByOrderId(String orderId);
 
     void deleteAllByOrderId(String orderId);

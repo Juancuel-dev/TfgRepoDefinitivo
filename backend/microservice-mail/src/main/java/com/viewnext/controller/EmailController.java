@@ -1,8 +1,10 @@
 package com.viewnext.controller;
 
 import com.viewnext.model.MailRequest;
+import com.viewnext.model.MailResponse;
 import com.viewnext.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,15 +15,11 @@ public class EmailController {
     private final EmailService emailService;
 
     @PostMapping
-    public void email(@RequestBody MailRequest mailRequest) {
+    public ResponseEntity<MailResponse> email(@RequestBody MailRequest mailRequest) {
         try{
-            emailService.send(mailRequest);
+            return ResponseEntity.ok(emailService.send(mailRequest));
         }catch (Exception e){
-            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
     }
-
-
-
-
 }

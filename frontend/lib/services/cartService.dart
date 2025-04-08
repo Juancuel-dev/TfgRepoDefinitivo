@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_auth_app/models/cart.dart';
+import 'package:flutter_auth_app/models/game.dart';
 import 'package:http/http.dart' as http;
 
 class CartService {
@@ -10,7 +11,7 @@ class CartService {
   /// Realiza un pedido enviando los datos al backend
   Future<bool> createOrder({
     required String orderId,
-    required String gameId,
+    required Map<Game,int> games,
     required String precio,
     required DateTime fecha,
     required String jwtToken, // Token JWT para autenticación
@@ -20,9 +21,9 @@ class CartService {
 
     final body = {
       "orderId": orderId,
-      "gameId": gameId,
+      "games": games,
       "precio": precio,
-      "fecha": fecha.toIso8601String(),
+      "fecha": fecha.toLocal(),
       "clientId": clientId, // Incluir clientId en el cuerpo de la petición
     };
 
@@ -60,24 +61,14 @@ class CartService {
     // Generar un único orderId para toda la orden
     final orderId = '${DateTime.now().millisecondsSinceEpoch}';
 
-    for (final item in items) {
       for (int i = 0; i < item.quantity; i++) { // Iterar según la cantidad de unidades
         final success = await createOrder(
           orderId: orderId,
-          gameId: item.game.id,
           precio: item.game.precio.toStringAsFixed(2), // Usar el precio original del juego
           fecha: DateTime.now(),
           jwtToken: jwtToken,
           clientId: clientId, // Enviar el clientId
         );
-
-        if (!success) {
-          return false; // Detener si algún pedido falla
-        }
-
-        // Agregar un pequeño retraso para evitar problemas de concurrencia
-        await Future.delayed(const Duration(milliseconds: 10));
-      }
     }
     return true; // Todos los pedidos fueron exitosos
   }

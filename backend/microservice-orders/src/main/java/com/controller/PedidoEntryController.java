@@ -1,11 +1,10 @@
 package com.controller;
 
+import com.model.GameDTO;
+import com.model.MasVendido;
 import com.model.PedidoEntry;
 import com.service.PedidoEntryService;
-import com.util.exception.GameIdNotFoundException;
-import com.util.exception.OrderIdNotFoundException;
-import com.util.exception.UnauthorizedException;
-import com.util.exception.UserIdNotFoundException;
+import com.util.exception.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -32,12 +31,23 @@ public class PedidoEntryController {
         }
     }
 
+    @GetMapping("/games/{orderId}")
+    public ResponseEntity<List<GameDTO>> findGamesFromOrder(@AuthenticationPrincipal Jwt jwt, @PathVariable String orderId) {
+        try{
+            return ResponseEntity.ok(service.getJuegosFromOrder(jwt,orderId));
+        }catch(PedidoEntryNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
     @PostMapping
     public ResponseEntity<PedidoEntry> save(@AuthenticationPrincipal Jwt jwt, @RequestBody PedidoEntry entry) {
         try {
             return ResponseEntity.status(HttpStatus.CREATED).body(service.save(jwt, entry));
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
@@ -46,17 +56,6 @@ public class PedidoEntryController {
         try {
             return ResponseEntity.ok(service.findAllByOrderId(jwt, orderId));
         } catch (OrderIdNotFoundException oinfe) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (UnauthorizedException ue) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-    }
-
-    @GetMapping("/game/{gameId}")
-    public ResponseEntity<List<PedidoEntry>> findByGameId(@AuthenticationPrincipal Jwt jwt, @PathVariable String gameId) {
-        try {
-            return ResponseEntity.ok(service.findAllByGameId(jwt, gameId));
-        } catch (GameIdNotFoundException oinfe) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (UnauthorizedException ue) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -91,7 +90,17 @@ public class PedidoEntryController {
             return ResponseEntity.ok(service.saveAll(jwt, entry));
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
+    @GetMapping("/most-purchased")
+    public ResponseEntity<List<MasVendido>> mostPurchasedGames(@AuthenticationPrincipal Jwt jwt) {
+        try{
+            return ResponseEntity.ok(service.mostPurchasedGames(jwt,5));
+        }catch (UnauthorizedException ue){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
 }
