@@ -1,13 +1,17 @@
 package com.service;
 
-import com.model.GameDTO;
-import com.model.MasVendido;
+import com.model.AuthenticationResponse;
+import com.model.CartItem;
 import com.model.PedidoEntry;
+import com.model.PurchaseMailRequest;
 import com.repository.PedidoEntryRepository;
 import com.util.exception.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -25,8 +29,11 @@ public class PedidoEntryService {
     private final PedidoEntryRepository repository;
     private final RestTemplate restTemplate;
 
-    @Value("${ruta.gateway}")
+    @Value("${ruta.gateway}/purchase")
     private String rutaGateway;
+
+    @Value("${ruta.auth}/token-info")
+    private String rutaAuth;
 
 
     public List<PedidoEntry> findAll(Jwt jwt) throws UnauthorizedException {
@@ -53,8 +60,8 @@ public class PedidoEntryService {
         }
     }
 
-    public List<GameDTO> getJuegosFromOrder(Jwt jwt,String orderId) throws PedidoEntryNotFoundException {
-        return repository.findById(orderId).orElseThrow(()-> new PedidoEntryNotFoundException("Pedido no encontrado")).getJuegos();
+    public List<CartItem> getJuegosFromOrder(Jwt jwt, String orderId) throws PedidoEntryNotFoundException {
+        return repository.findById(orderId).orElseThrow(()-> new PedidoEntryNotFoundException("Pedido no encontrado")).getGames();
     }
 
     public List<PedidoEntry> findAllByOrderId(Jwt jwt, String orderId) throws OrderIdNotFoundException, UnauthorizedException {
@@ -81,7 +88,15 @@ public class PedidoEntryService {
 
     public PedidoEntry save(Jwt jwt, PedidoEntry pedidoEntry) throws DataIntegrityViolationException, UnauthorizedException {
         if(jwt.getClaim("clientId").equals(pedidoEntry.getClientId())) {
-            restTemplate.postForObject(rutaGateway, pedidoEntry, ResponseEntity.class);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Authorization", jwt.getTokenValue());
+
+            HttpEntity<String> entity = new HttpEntity<>(null, headers); // <--- Cambia aquí
+
+            ResponseEntity<AuthenticationResponse> a = restTemplate.exchange(rutaAuth, HttpMethod.GET, entity, AuthenticationResponse.class);
+            String email = Objects.requireNonNull(a.getBody()).getEmail();
+            restTemplate.postForObject(rutaGateway, new PurchaseMailRequest(email,pedidoEntry.getOrderId()), ResponseEntity.class);
             return repository.save(pedidoEntry);
         }else{
             throw new UnauthorizedException("No estas autorizado a realizar esta accion");
@@ -113,20 +128,20 @@ public class PedidoEntryService {
         }
     }
 
-    public List<MasVendido> mostPurchasedGames(Jwt jwt, int cuantos) throws UnauthorizedException {
+    public List<CartItem> mostPurchasedGames(Jwt jwt, int cuantos) throws UnauthorizedException {
         if (jwt.getClaim("role").equals("ADMIN")) {
             List<PedidoEntry> entries = findAll(jwt);
-            Map<GameDTO,Long> frecuencia = entries.stream()
-                    .flatMap(entry -> entry.getJuegos().stream())
+            Map<CartItem,Long> frecuencia = entries.stream()
+                    .flatMap(entry -> entry.getGames().stream())
                     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
             return frecuencia.entrySet().stream()
                     .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
                     .limit(cuantos)
                     .map(entry -> {
-                        MasVendido masVendido = new MasVendido();
-                        masVendido.setCantidad(entry.getValue().intValue());
-                        masVendido.setGame(entry.getKey());
+                        CartItem masVendido = new CartItem();
+                        masVendido.setQuantity(entry.getValue().intValue());
+                        masVendido.setGame(entry.getKey().getGame());
                         return masVendido;
                     })
                     .collect(Collectors.toList());

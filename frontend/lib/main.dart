@@ -112,7 +112,6 @@ class MyApp extends StatelessWidget {
       ],
       redirect: (context, state) {
         final loggedIn = authProvider.isLoggedIn;
-        final goingToLoginOrRegister = state.location == '/login' || state.location == '/register';
 
         // Permitir acceso público a las rutas no protegidas
         if (state.location == '/' || state.location.startsWith('/details')) {

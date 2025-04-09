@@ -22,4 +22,12 @@ public class EmailController {
             return ResponseEntity.badRequest().build();
         }
     }
+    @PostMapping("/purchase")
+    public ResponseEntity<MailResponse> purchaseMail(@RequestBody String receiver, @RequestBody String orderId) {
+        try{
+            return ResponseEntity.ok(emailService.send(new MailRequest(receiver,"Purchase from product " + orderId,"inscription")));
+        }catch (Exception e){
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

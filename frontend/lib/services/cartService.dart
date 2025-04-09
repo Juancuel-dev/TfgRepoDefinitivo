@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter_auth_app/models/cart.dart';
-import 'package:flutter_auth_app/models/game.dart';
 import 'package:http/http.dart' as http;
 
 class CartService {
@@ -11,20 +10,30 @@ class CartService {
   /// Realiza un pedido enviando los datos al backend
   Future<bool> createOrder({
     required String orderId,
-    required Map<Game,int> games,
-    required String precio,
+    required List<CartItem> games,
+    required double precio,
     required DateTime fecha,
-    required String jwtToken, // Token JWT para autenticación
-    required String clientId, // Agregar clientId como parámetro requerido
+    required String jwtToken,
+    required String clientId,
   }) async {
     final url = Uri.parse('$baseUrl/gateway/orders');
 
+    // Convertir los juegos a un formato que se pueda serializar
+    final gamesJson = games.map((item) => {
+      'gameId': item.game.id,
+      'quantity': item.quantity,
+      'precio': item.game.precio,
+    }).toList();
+
+    // Calcular el precio total basado en los items del carrito
+    final totalprecio = games.fold(0.0, (sum, item) => sum + (item.game.precio * item.quantity));
+
     final body = {
       "orderId": orderId,
-      "games": games,
-      "precio": precio,
-      "fecha": fecha.toLocal(),
-      "clientId": clientId, // Incluir clientId en el cuerpo de la petición
+      "games": gamesJson,
+      "precio": totalprecio,
+      "fecha": fecha.toIso8601String(),
+      "clientId": clientId,
     };
 
     try {
@@ -32,44 +41,41 @@ class CartService {
         url,
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer $jwtToken", // Agregar el token JWT al encabezado
+          "Authorization": "Bearer $jwtToken",
         },
         body: jsonEncode(body),
       );
 
       if (response.statusCode == 201) {
-        // Pedido creado exitosamente
         return true;
       } else {
-        // Manejo de errores
         print('Error al crear el pedido: ${response.body}');
         return false;
       }
     } catch (e) {
-      // Manejo de errores de red
       print('Error de red al crear el pedido: $e');
       return false;
     }
   }
 
-  /// Desglosa la lista de juegos y envía una petición por cada uno
+  /// Crea una orden con todos los items del carrito
   Future<bool> createOrders({
     required List<CartItem> items,
     required String jwtToken,
-    required String clientId, // Agregar clientId como parámetro requerido
+    required String clientId,
   }) async {
-    // Generar un único orderId para toda la orden
     final orderId = '${DateTime.now().millisecondsSinceEpoch}';
+    
+    // Calcular el precio total de todos los items
+    final totalprecio = items.fold(0.0, (sum, item) => sum + (item.game.precio * item.quantity));
 
-      for (int i = 0; i < item.quantity; i++) { // Iterar según la cantidad de unidades
-        final success = await createOrder(
-          orderId: orderId,
-          precio: item.game.precio.toStringAsFixed(2), // Usar el precio original del juego
-          fecha: DateTime.now(),
-          jwtToken: jwtToken,
-          clientId: clientId, // Enviar el clientId
-        );
-    }
-    return true; // Todos los pedidos fueron exitosos
+    return await createOrder(
+      orderId: orderId,
+      games: items,
+      precio: totalprecio,
+      fecha: DateTime.now(),
+      jwtToken: jwtToken,
+      clientId: clientId,
+    );
   }
 }

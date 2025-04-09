@@ -1,7 +1,6 @@
 package com.controller;
 
-import com.model.GameDTO;
-import com.model.MasVendido;
+import com.model.CartItem;
 import com.model.PedidoEntry;
 import com.service.PedidoEntryService;
 import com.util.exception.*;
@@ -32,7 +31,7 @@ public class PedidoEntryController {
     }
 
     @GetMapping("/games/{orderId}")
-    public ResponseEntity<List<GameDTO>> findGamesFromOrder(@AuthenticationPrincipal Jwt jwt, @PathVariable String orderId) {
+    public ResponseEntity<List<CartItem>> findGamesFromOrder(@AuthenticationPrincipal Jwt jwt, @PathVariable String orderId) {
         try{
             return ResponseEntity.ok(service.getJuegosFromOrder(jwt,orderId));
         }catch(PedidoEntryNotFoundException e){
@@ -96,7 +95,7 @@ public class PedidoEntryController {
     }
 
     @GetMapping("/most-purchased")
-    public ResponseEntity<List<MasVendido>> mostPurchasedGames(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<List<CartItem>> mostPurchasedGames(@AuthenticationPrincipal Jwt jwt) {
         try{
             return ResponseEntity.ok(service.mostPurchasedGames(jwt,5));
         }catch (UnauthorizedException ue){

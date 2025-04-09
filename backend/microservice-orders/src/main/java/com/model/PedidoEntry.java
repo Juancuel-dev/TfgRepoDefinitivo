@@ -33,5 +33,5 @@ public class PedidoEntry {
     private LocalDate fecha;
 
     @Field
-    private List<GameDTO> juegos;
+    private List<CartItem> games;
 }

@@ -70,6 +70,9 @@ public class AuthController {
     @GetMapping("/token-info")
     public ResponseEntity<AuthenticationResponse> getTokenInfo(@RequestHeader("Authorization") String token) throws ClienteNotFoundException {
 
+        if(token.contains("Bearer")){
+            token = token.substring(7);
+        }
             UserDTO client = authenticationService.loadByClientId(jwtService.extractClientId(token));
             List<String> authorities = jwtService.extractAuthorities(token);
             return ResponseEntity.ok(new AuthenticationResponse(client.getUsername(), authorities, client.getClientId(), client.getEmail()));

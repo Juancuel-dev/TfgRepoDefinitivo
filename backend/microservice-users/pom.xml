@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.3</version>
+        <version>3.4.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -21,7 +21,7 @@
         <jjwt.version>0.12.6</jjwt.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <lombok.version>1.18.36</lombok.version>
-        <spring-cloud.version>2023.0.4</spring-cloud.version>
+        <spring-cloud.version>2024.0.1</spring-cloud.version>
 
         <!-- Encoding and build properties -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
