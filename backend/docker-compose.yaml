@@ -1,0 +1,49 @@
+services:
+  eureka-server:
+    image: repo/eureka-server
+    container_name: eureka-server
+    restart: always
+
+  microservice-users:
+    image: repo/microservice-users
+    container_name: microservice-users
+    restart: always
+    depends_on:
+      - eureka-server
+
+  microservice-gateway:
+    image: repo/microservice-gateway
+    container_name: microservice-gateway
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      - eureka-server
+
+  microservice-games:
+    image: repo/microservice-games
+    container_name: microservice-games
+    restart: always
+    depends_on:
+      - eureka-server
+
+  microservice-auth:
+    image: repo/microservice-auth
+    container_name: microservice-auth
+    restart: always
+    depends_on:
+      - eureka-server
+
+  microservice-orders:
+    image: repo/microservice-orders
+    container_name: microservice-orders
+    restart: always
+    depends_on:
+      - eureka-server
+
+  microservice-mail:
+    image: repo/microservice-mail
+    container_name: microservice-mail
+    restart: always
+    depends_on:
+      - eureka-server
