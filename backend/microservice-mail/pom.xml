@@ -11,8 +11,8 @@
     <groupId>com.viewnext</groupId>
     <artifactId>microservice-mail</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>microservice_mail</name>
-    <description>microservice_mail</description>
+    <name>microservice-mail</name>
+    <description>microservice-mail</description>
     <url/>
     <licenses>
         <license/>
@@ -48,6 +48,13 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-netflix-eureka-client -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <version>4.2.1</version>
         </dependency>
     </dependencies>
 

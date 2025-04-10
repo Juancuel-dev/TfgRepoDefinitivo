@@ -90,13 +90,15 @@ public class PedidoEntryService {
         if(jwt.getClaim("clientId").equals(pedidoEntry.getClientId())) {
 
             HttpHeaders headers = new HttpHeaders();
-            headers.add("Authorization", jwt.getTokenValue());
+            headers.add("Authorization", "Bearer " + jwt.getTokenValue());
 
             HttpEntity<String> entity = new HttpEntity<>(null, headers); // <--- Cambia aquí
 
             ResponseEntity<AuthenticationResponse> a = restTemplate.exchange(rutaAuth, HttpMethod.GET, entity, AuthenticationResponse.class);
             String email = Objects.requireNonNull(a.getBody()).getEmail();
-            restTemplate.postForObject(rutaGateway, new PurchaseMailRequest(email,pedidoEntry.getOrderId()), ResponseEntity.class);
+
+            HttpEntity<PurchaseMailRequest> entityMail = new HttpEntity<>(new PurchaseMailRequest(email,pedidoEntry.getOrderId()), headers);
+            restTemplate.postForEntity(rutaGateway, entityMail, String.class);
             return repository.save(pedidoEntry);
         }else{
             throw new UnauthorizedException("No estas autorizado a realizar esta accion");
