@@ -1,4 +1,4 @@
-FROM ghcr.io/cirruslabs/flutter:stable AS build
+FROM ghcr.io/cirruslabs/flutter:3.13.9 AS build
 
 ENV FLUTTER_ALLOW_ROOT=true
 
