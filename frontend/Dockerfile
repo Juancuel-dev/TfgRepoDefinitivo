@@ -1,5 +1,6 @@
 # Etapa 1: Build de la app Flutter Web
 FROM cirrusci/flutter:latest AS build
+ENV FLUTTER_ALLOW_ROOT=true
 
 WORKDIR /app
 COPY . .
