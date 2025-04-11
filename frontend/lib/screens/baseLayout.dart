@@ -28,23 +28,37 @@ class BaseLayout extends StatelessWidget {
                 final isSmallScreen = constraints.maxWidth < 600;
 
                 return Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: TextButton(
-                        onPressed: () {
-                          context.go('/'); // Navegación con GoRouter
-                        },
-                        child: Text(
-                          'LevelUp Shop',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: isSmallScreen ? 24 : 40, // Ajustar tamaño del texto
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
+  children: [
+    Padding(
+      padding: const EdgeInsets.only(left: 8.0),
+      child: TextButton(
+        onPressed: () {
+          context.go('/'); // Navegación con GoRouter
+        },
+        child: Stack(
+          children: [
+            Image.asset(
+              'logo.png', // Ruta a la imagen del logo
+              scale: 1.0, // Ajustar el tamaño de la imagen
+            ),
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Text(
+                'LevelUp Shop',
+                style: TextStyle(
+                  color: Colors.transparent, // Texto transparente
+                  fontSize: isSmallScreen ? 24 : 40, // Ajustar tamaño del texto
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
                     const Spacer(),
                     // Botón de búsqueda
                     IconButton(
