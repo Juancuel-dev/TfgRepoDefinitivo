@@ -22,43 +22,63 @@ class BaseLayout extends StatelessWidget {
           // Responsive Header
           Container(
             color: Colors.grey[900],
-            padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0), // Aumentar el padding vertical
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isSmallScreen = constraints.maxWidth < 600;
 
                 return Row(
-  children: [
-    Padding(
-      padding: const EdgeInsets.only(left: 8.0),
-      child: TextButton(
-        onPressed: () {
-          context.go('/'); // Navegación con GoRouter
-        },
-        child: Stack(
-          children: [
-            Image.asset(
-              'logo.png', // Ruta a la imagen del logo
-              scale: 1.0, // Ajustar el tamaño de la imagen
-            ),
-            Positioned(
-              top: 0,
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Text(
-                'LevelUp Shop',
-                style: TextStyle(
-                  color: Colors.transparent, // Texto transparente
-                  fontSize: isSmallScreen ? 24 : 40, // Ajustar tamaño del texto
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
+                  crossAxisAlignment: CrossAxisAlignment.center, // Centrar verticalmente los elementos
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          context.go('/'); // Navegación con GoRouter
+                        },
+                        child: Hero(
+                          tag: 'logo', // Hero tag para animaciones entre pantallas
+                          child: TweenAnimationBuilder<double>(
+                            duration: const Duration(seconds: 2),
+                            tween: Tween(begin: 1.0, end: 1.1),
+                            curve: Curves.easeInOut,
+                            builder: (context, scale, child) {
+                              return Transform.scale(
+                                scale: scale,
+                                child: Container(
+                                  padding: const EdgeInsets.all(12.0), // Aumentar el padding del logo
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Colors.blue, Colors.purple],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16.0), // Bordes más redondeados
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.blue.withOpacity(0.6),
+                                        blurRadius: 30.0, // Aumentar el blur para un efecto más suave
+                                        spreadRadius: 3.0,
+                                      ),
+                                    ],
+                                  ),
+                                  constraints: BoxConstraints(
+                                    maxHeight: isSmallScreen ? 100 : 140, // Aumentar el tamaño del logo
+                                    maxWidth: isSmallScreen ? 100 : 140,
+                                  ),
+                                  child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: Image.asset(
+                                      'logo.png', // Ruta al logo
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
                     const Spacer(),
                     // Botón de búsqueda
                     IconButton(
@@ -192,7 +212,6 @@ class BaseLayout extends StatelessWidget {
       },
     );
   }
-
 
   void _showMenu(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
