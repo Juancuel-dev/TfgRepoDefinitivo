@@ -12,142 +12,89 @@ class BaseLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: showBackButton,
-        backgroundColor: Colors.grey[900],
-        actions: const [],
-      ),
-      body: Column(
-        children: [
-          // Responsive Header
-          Container(
-            color: Colors.grey[900],
-            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0), // Aumentar el padding vertical
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isSmallScreen = constraints.maxWidth < 600;
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80), // Altura personalizada del AppBar
+        child: AppBar(
+          automaticallyImplyLeading: showBackButton,
+          backgroundColor: Colors.grey[900],
+          title: Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  context.go('/'); // Navegación al inicio
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16.0), // Espacio solo en la parte superior
+                  child: Image.asset(
+                    'logo.png', // Ruta al logo
+                    height: 60, // Tamaño del logo acorde al header
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const Spacer(), // Empujar los elementos hacia la derecha
+            ],
+          ),
+          centerTitle: false, // Desactivar centrado del título
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.white),
+              onPressed: () {
+                _showSearchDialog(context); // Mostrar el cuadro de búsqueda
+              },
+            ),
+            Consumer<AuthProvider>(
+              builder: (context, authProvider, _) {
+                final isLoggedIn = authProvider.isLoggedIn;
 
                 return Row(
-                  crossAxisAlignment: CrossAxisAlignment.center, // Centrar verticalmente los elementos
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: GestureDetector(
-                        onTap: () {
-                          context.go('/'); // Navegación con GoRouter
+                    if (!isLoggedIn) ...[
+                      TextButton(
+                        onPressed: () {
+                          context.go('/login'); // Navegación al login
                         },
-                        child: Hero(
-                          tag: 'logo', // Hero tag para animaciones entre pantallas
-                          child: TweenAnimationBuilder<double>(
-                            duration: const Duration(seconds: 2),
-                            tween: Tween(begin: 1.0, end: 1.1),
-                            curve: Curves.easeInOut,
-                            builder: (context, scale, child) {
-                              return Transform.scale(
-                                scale: scale,
-                                child: Container(
-                                  padding: const EdgeInsets.all(12.0), // Aumentar el padding del logo
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Colors.blue, Colors.purple],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(16.0), // Bordes más redondeados
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.blue.withOpacity(0.6),
-                                        blurRadius: 30.0, // Aumentar el blur para un efecto más suave
-                                        spreadRadius: 3.0,
-                                      ),
-                                    ],
-                                  ),
-                                  constraints: BoxConstraints(
-                                    maxHeight: isSmallScreen ? 100 : 140, // Aumentar el tamaño del logo
-                                    maxWidth: isSmallScreen ? 100 : 140,
-                                  ),
-                                  child: FittedBox(
-                                    fit: BoxFit.contain,
-                                    child: Image.asset(
-                                      'logo.png', // Ruta al logo
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
-                    ),
-                    const Spacer(),
-                    // Botón de búsqueda
+                      TextButton(
+                        onPressed: () {
+                          context.go('/register'); // Navegación al registro
+                        },
+                        child: const Text(
+                          'Registrarse',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ] else ...[
+                      TextButton(
+                        onPressed: () {
+                          authProvider.logout(); // Llamar al método de logout
+                          context.go('/login'); // Navegación al login
+                        },
+                        child: const Text(
+                          'Logout',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
                     IconButton(
-                      icon: const Icon(Icons.search, color: Colors.white),
+                      icon: const Icon(Icons.shopping_cart, color: Colors.white),
                       onPressed: () {
-                        _showSearchDialog(context); // Mostrar el cuadro de búsqueda
-                      },
-                    ),
-                    Consumer<AuthProvider>(
-                      builder: (context, authProvider, _) {
-                        final isLoggedIn = authProvider.isLoggedIn;
-
-                        return Row(
-                          children: [
-                            if (isSmallScreen)
-                              IconButton(
-                                icon: const Icon(Icons.menu, color: Colors.white),
-                                onPressed: () {
-                                  _showMenu(context);
-                                },
-                              )
-                            else ...[
-                              if (!isLoggedIn) ...[
-                                TextButton(
-                                  onPressed: () {
-                                    context.go('/login'); // Navegación con GoRouter
-                                  },
-                                  child: const Text(
-                                    'Login',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    context.go('/register'); // Navegación con GoRouter
-                                  },
-                                  child: const Text(
-                                    'Registrarse',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ] else ...[
-                                TextButton(
-                                  onPressed: () {
-                                    authProvider.logout(); // Llamar al método de logout
-                                    context.go('/login'); // Navegación con GoRouter
-                                  },
-                                  child: const Text(
-                                    'Logout',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                              IconButton(
-                                icon: const Icon(Icons.shopping_cart, color: Colors.white),
-                                onPressed: () {
-                                  context.go('/cart'); // Navegación con GoRouter
-                                },
-                              ),
-                            ],
-                          ],
-                        );
+                        context.go('/cart'); // Navegación al carrito
                       },
                     ),
                   ],
                 );
               },
             ),
-          ),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
           Expanded(child: child),
         ],
       ),
@@ -208,53 +155,6 @@ class BaseLayout extends StatelessWidget {
               child: const Text('Buscar', style: TextStyle(color: Colors.blue)),
             ),
           ],
-        );
-      },
-    );
-  }
-
-  void _showMenu(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isLoggedIn = authProvider.isLoggedIn;
-
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          color: Colors.grey[900],
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!isLoggedIn) ...[
-                ListTile(
-                  title: const Text('Login', style: TextStyle(color: Colors.white)),
-                  onTap: () {
-                    context.go('/login'); // Navegación con GoRouter
-                  },
-                ),
-                ListTile(
-                  title: const Text('Registrarse', style: TextStyle(color: Colors.white)),
-                  onTap: () {
-                    context.go('/register'); // Navegación con GoRouter
-                  },
-                ),
-              ] else ...[
-                ListTile(
-                  title: const Text('Logout', style: TextStyle(color: Colors.white)),
-                  onTap: () {
-                    authProvider.logout(); // Llamar al método de logout
-                    context.go('/login'); // Navegación con GoRouter
-                  },
-                ),
-              ],
-              ListTile(
-                title: const Text('Carrito', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  context.go('/cart'); // Navegación con GoRouter
-                },
-              ),
-            ],
-          ),
         );
       },
     );

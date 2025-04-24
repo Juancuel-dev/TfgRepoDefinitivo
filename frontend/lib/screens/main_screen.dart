@@ -20,11 +20,11 @@ class MainScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, // Alinear contenido a la izquierda
             children: [
-              // Categorías principales (centradas y justo debajo del header)
+              // Categorías principales
               Center(
                 child: Wrap(
-                  spacing: 8.0, // Espaciado horizontal entre los botones
-                  runSpacing: 8.0, // Espaciado vertical entre filas
+                  spacing: 8.0,
+                  runSpacing: 8.0,
                   alignment: WrapAlignment.center,
                   children: [
                     _buildResponsiveCategoryChip(context, 'PC', screenWidth),
@@ -45,7 +45,7 @@ class MainScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
-                textAlign: TextAlign.center, // Centrar el texto
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               const Text(
@@ -54,7 +54,7 @@ class MainScreen extends StatelessWidget {
                   fontSize: 18,
                   color: Colors.white70,
                 ),
-                textAlign: TextAlign.center, // Centrar el texto
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
 
@@ -65,10 +65,24 @@ class MainScreen extends StatelessWidget {
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                ), // Alineado a la izquierda
+                ),
               ),
               const SizedBox(height: 16),
               _buildPopularProductsSection(context),
+
+              const SizedBox(height: 32),
+
+              // Juegos en oferta
+              const Text(
+                'Juegos en Oferta',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildDiscountedGamesSection(context),
 
               const SizedBox(height: 32),
             ],
@@ -80,18 +94,16 @@ class MainScreen extends StatelessWidget {
 
   // Método para construir un botón de categoría responsivo
   Widget _buildResponsiveCategoryChip(BuildContext context, String category, double screenWidth) {
-    // Ajustar el ancho del botón según el tamaño de la pantalla
     final buttonWidth = screenWidth < 400 ? (screenWidth / 2) - 24 : 120;
 
     return ConstrainedBox(
       constraints: BoxConstraints(
-        minWidth: buttonWidth.toDouble(), // Ancho mínimo del botón
-        maxWidth: buttonWidth.toDouble(), // Ancho máximo del botón
+        minWidth: buttonWidth.toDouble(),
+        maxWidth: buttonWidth.toDouble(),
       ),
       child: ElevatedButton(
         onPressed: () {
-          // Navegar a la categoría con el parámetro dinámico
-          context.go('/category/$category'); // Incluir el parámetro dinámico en la URL
+          context.go('/category/$category');
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blueGrey,
@@ -100,7 +112,7 @@ class MainScreen extends StatelessWidget {
         child: Text(
           category,
           style: const TextStyle(color: Colors.white),
-          textAlign: TextAlign.center, // Centrar el texto
+          textAlign: TextAlign.center,
         ),
       ),
     );
@@ -109,7 +121,7 @@ class MainScreen extends StatelessWidget {
   // Sección de productos populares
   Widget _buildPopularProductsSection(BuildContext context) {
     return FutureBuilder<List<Game>>(
-      future: GamesService().fetchGames(), // Obtener todos los juegos
+      future: GamesService().fetchGames(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -128,78 +140,211 @@ class MainScreen extends StatelessWidget {
             ),
           );
         } else {
-          // Seleccionar 5 juegos aleatorios
           final random = Random();
           final popularGames = (snapshot.data!..shuffle(random)).take(5).toList();
 
           return Center(
             child: SizedBox(
-              height: 300, // Altura fija para la lista horizontal
+              height: 300,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: popularGames.length,
                 itemBuilder: (context, index) {
                   final game = popularGames[index];
-                  return Container(
-                    width: 200,
-                    margin: const EdgeInsets.symmetric(horizontal: 8.0), // Espaciado horizontal
-                    decoration: BoxDecoration(
-                      color: Colors.grey[850],
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center, // Centrar contenido horizontalmente
-                      children: [
-                        AspectRatio(
-                          aspectRatio: 1.5,
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
-                            child: Image.network(
-                              game.imageUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Center(
-                                  child: Icon(Icons.error, color: Colors.red, size: 50),
-                                );
-                              },
+                  return InkWell(
+                    onTap: () {
+                      context.go(
+                        '/details',
+                        extra: game, // Pasar el objeto Game como argumento
+                      );
+                    },
+                    child: Container(
+                      width: 200,
+                      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[850],
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          AspectRatio(
+                            aspectRatio: 1.5,
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
+                              child: Image.network(
+                                game.imageUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(Icons.error, color: Colors.red, size: 50),
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center, // Centrar contenido horizontalmente
-                            children: [
-                              Text(
-                                game.name,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  game.name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  textAlign: TextAlign.center,
                                 ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                textAlign: TextAlign.center, // Centrar texto
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '\$${game.precio.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  color: Colors.greenAccent,
-                                  fontSize: 14,
+                                const SizedBox(height: 4),
+                                Text(
+                                  '\$${game.precio.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    color: Colors.greenAccent,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                                textAlign: TextAlign.center, // Centrar texto
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
               ),
             ),
+          );
+        }
+      },
+    );
+  }
+
+  // Método para construir la sección de juegos en oferta
+  Widget _buildDiscountedGamesSection(BuildContext context) {
+    return FutureBuilder<List<Game>>(
+      future: GamesService().fetchDiscountedGames(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text(
+              'No hay juegos en oferta.',
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        } else {
+          // Limitar la lista de juegos a un máximo de 20
+          final games = snapshot.data!.take(20).toList();
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              // Calcular dinámicamente el número de columnas según el ancho disponible
+              final crossAxisCount = constraints.maxWidth ~/ 200; // Cada tarjeta ocupa 200px de ancho
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount, // Número de columnas dinámico
+                  crossAxisSpacing: 16.0,
+                  mainAxisSpacing: 16.0,
+                  childAspectRatio: 0.75, // Proporción de las tarjetas
+                ),
+                itemCount: games.length,
+                itemBuilder: (context, index) {
+                  final game = games[index];
+                  final originalPrice = (game.precio / (1 - (15 + Random().nextInt(36)) / 100)).toStringAsFixed(2);
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[850],
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        context.go(
+                          '/details',
+                          extra: game,
+                        );
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AspectRatio(
+                            aspectRatio: 1.5,
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
+                              child: Image.network(
+                                game.imageUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(Icons.error, color: Colors.red, size: 50),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  game.name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '\$$originalPrice',
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 12,
+                                        decoration: TextDecoration.lineThrough,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '\$${game.precio.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        color: Colors.greenAccent,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           );
         }
       },

@@ -138,6 +138,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       routerConfig: router, // Configuración de GoRouter
+      debugShowCheckedModeBanner: false, // Ocultar el banner de modo debug
     );
   }
 }

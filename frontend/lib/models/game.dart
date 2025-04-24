@@ -1,7 +1,7 @@
 class Game {
   final String id;
   final String name;
-  final double precio;
+  double precio;
   final int? metacritic; // Cambiar a nullable (int?)
   final String consola;
   final String imageUrl;

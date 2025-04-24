@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:flutter_auth_app/models/game.dart';
 
@@ -48,6 +49,35 @@ class GamesService {
       return data.map((json) => Game.fromJson(json)).toList();
     } else {
       throw Exception('Error al buscar juegos');
+    }
+  }
+
+  Future<List<Game>> fetchDiscountedGames() async {
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> body = jsonDecode(response.body);
+      List<Game> games = body.map((dynamic item) {
+        Game game = Game.fromJson(item);
+        // Generar un descuento aleatorio entre 15% y 50%
+        final random = Random();
+        final discountPercentage = 15 + random.nextInt(36); // 15% a 50%
+        game.precio = (game.precio * (1 - discountPercentage / 100)).toDouble();
+        return game;
+      }).toList();
+
+      // Mezclar los juegos en un orden aleatorio
+      games.shuffle(Random());
+
+      // Tomar los primeros 20 juegos
+      return games.take(20).toList();
+    } else {
+      throw Exception('Failed to load discounted games');
     }
   }
 }
