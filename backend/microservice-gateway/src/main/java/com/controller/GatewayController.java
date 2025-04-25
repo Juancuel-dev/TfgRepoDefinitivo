@@ -1,13 +1,15 @@
 package com.controller;
 
 import com.model.LoginRequest;
+import com.model.UserDTO;
 import com.model.register.RegisterUsersRequest;
 import com.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -91,11 +93,9 @@ public class GatewayController {
         return authService.proxyRequest(AUTH_SERVICE, request);
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<Object> myself(@RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
-        log.debug("Fetching user info");
-        ResponseEntity<Object> response = authService.myself(token);
-        log.debug("User info status: {}", response.getStatusCode());
-        return response;
+    @RequestMapping("/me")
+    public ResponseEntity<UserDTO> getMySelf(@AuthenticationPrincipal Jwt jwt){
+        log.info("El username desde el que se hace la peticion es: " + jwt.getClaim("username"));
+        return authService.myself(jwt);
     }
 }

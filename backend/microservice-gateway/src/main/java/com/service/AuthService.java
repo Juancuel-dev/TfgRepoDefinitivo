@@ -1,6 +1,7 @@
 package com.service;
 
 import com.model.LoginRequest;
+import com.model.UserDTO;
 import com.model.register.RegisterUsersRequest;
 import com.model.register.RegisterAuthRequest;
 import com.util.RegisterRequestMapper;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.*;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -128,34 +130,35 @@ public class AuthService {
         }
     }
 
-    public ResponseEntity<Object> myself(String token) {
-        if (token == null || token.isBlank()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Token de autorización requerido");
+    public ResponseEntity<UserDTO> myself(Jwt jwt) {
+        if (jwt == null) {
+            log.error("JWT is null");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+        String tokenValue = "Bearer " + jwt.getTokenValue();
 
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.set(HttpHeaders.AUTHORIZATION, token);
+            headers.set("Authorization", tokenValue);
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
-            ResponseEntity<Object> response = restTemplate.exchange(
+            // Directly expect UserDTO
+
+            return restTemplate.exchange(
                     "http://" + USER_SERVICE + "/users/me",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
-                    Object.class
+                    UserDTO.class  // Directly expect UserDTO
             );
-
-            return ResponseEntity.status(response.getStatusCode())
-                    .headers(response.getHeaders())
-                    .body(response.getBody());
         } catch (HttpClientErrorException e) {
-            log.warn("Client error getting user info: {}", e.getMessage());
-            return ResponseEntity.status(e.getStatusCode())
-                    .body(Objects.requireNonNullElse(e.getMessage(), "Error de autenticación"));
+            log.error("Client error during request to user service: {}", e.getMessage());
+            return ResponseEntity.status(e.getStatusCode()).build();
         } catch (Exception e) {
-            log.error("Error getting user info", e);
-            return ResponseEntity.internalServerError()
-                    .body("Error interno del servidor");
+            log.error("Error during proxy request to get user info: ", e);
+            return ResponseEntity.internalServerError().build();
         }
     }
+
+
 }

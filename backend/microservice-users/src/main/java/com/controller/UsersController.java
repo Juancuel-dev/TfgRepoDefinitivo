@@ -1,7 +1,9 @@
 package com.controller;
 
 import com.model.User;
+import com.model.UserDTO;
 import com.service.UserService;
+import com.util.UserMapper;
 import com.util.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,4 +78,21 @@ public class UsersController {
 
         return "Usuario: " + username + " | Rol: " + role + " | Email: " + email;
     }
+
+    @GetMapping("/me")
+    public UserDTO getMySelf(@AuthenticationPrincipal Jwt jwt) {
+        try {
+            String username = jwt.getClaim("username"); // Usa el claim correcto
+            if (username == null) {
+                throw new UnauthorizedException("Username not found in JWT");
+            }
+
+            UserDTO aux = UserMapper.INSTANCE.toUserDTO(userService.findByUsername(username));
+            log.info(aux.toString());
+            return aux;
+        } catch (UsernameNotFoundException | UnauthorizedException e){
+            return null;
+        }
+    }
+
 }
