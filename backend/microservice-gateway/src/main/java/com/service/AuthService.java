@@ -137,19 +137,21 @@ public class AuthService {
         }
 
         String tokenValue = "Bearer " + jwt.getTokenValue();
+        log.info("JWT Token: {}", tokenValue);
 
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", tokenValue);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            // Directly expect UserDTO
+            String url = "http://" + USER_SERVICE + "/users/me";
+            log.info("Sending request to URL: {}", url);
 
             return restTemplate.exchange(
-                    "http://" + USER_SERVICE + "/users/me",
+                    url,
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
-                    UserDTO.class  // Directly expect UserDTO
+                    UserDTO.class // Directly expect UserDTO
             );
         } catch (HttpClientErrorException e) {
             log.error("Client error during request to user service: {}", e.getMessage());

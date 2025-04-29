@@ -80,18 +80,23 @@ public class UsersController {
     }
 
     @GetMapping("/me")
-    public UserDTO getMySelf(@AuthenticationPrincipal Jwt jwt) {
+    public UserDTO getMySelf(@AuthenticationPrincipal Jwt jwt) throws UnauthorizedException {
+
+        log.info(jwt.getSubject());
         try {
-            String username = jwt.getClaim("username"); // Usa el claim correcto
+            // Obtén el claim "username" del token JWT
+            String username = jwt.getClaim("username");
             if (username == null) {
                 throw new UnauthorizedException("Username not found in JWT");
             }
 
+            // Busca al usuario por el username
             UserDTO aux = UserMapper.INSTANCE.toUserDTO(userService.findByUsername(username));
-            log.info(aux.toString());
+            log.info("User info: {}", aux);
             return aux;
-        } catch (UsernameNotFoundException | UnauthorizedException e){
-            return null;
+        } catch (UsernameNotFoundException | UnauthorizedException e) {
+            log.error("User not found: {}", e.getMessage());
+            throw new UnauthorizedException("User not found");
         }
     }
 
