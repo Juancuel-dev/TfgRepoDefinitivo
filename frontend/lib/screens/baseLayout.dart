@@ -200,8 +200,8 @@ class _BaseLayoutState extends State<BaseLayout> {
     final platforms = [
       {'name': 'PS5', 'icon': Icons.sports_esports, 'color': Colors.white},
       {'name': 'PC', 'icon': Icons.computer, 'color': Colors.white},
-      {'name': 'Xbox', 'icon': Icons.videogame_asset, 'color': Colors.white},
-      {'name': 'Nintendo', 'icon': Icons.gamepad, 'color': Colors.white},
+      {'name': 'XBOX', 'icon': Icons.videogame_asset, 'color': Colors.white},
+      {'name': 'SWITCH', 'icon': Icons.gamepad, 'color': Colors.white},
     ];
 
     return Wrap(

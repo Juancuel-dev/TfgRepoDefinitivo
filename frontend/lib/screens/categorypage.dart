@@ -19,8 +19,20 @@ class _CategoryPageState extends State<CategoryPage> {
   @override
   void initState() {
     super.initState();
-    // Llamar al backend para obtener los juegos filtrados por categoría
+    // Cargar los juegos de la categoría inicial
     futureGames = GamesService().fetchGamesByCategory(widget.category);
+  }
+
+  @override
+  void didUpdateWidget(covariant CategoryPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Verificar si la categoría ha cambiado
+    if (oldWidget.category != widget.category) {
+      setState(() {
+        // Recargar los juegos para la nueva categoría
+        futureGames = GamesService().fetchGamesByCategory(widget.category);
+      });
+    }
   }
 
   @override

@@ -116,8 +116,7 @@ class _SearchPageState extends State<SearchPage> {
                           final childAspectRatio = cardWidth / cardHeight;
 
                           return GridView.builder(
-                            shrinkWrap: true, // Permite que el GridView se ajuste al contenido
-                            physics: const NeverScrollableScrollPhysics(), // Desactiva el scroll interno del GridView
+                            padding: const EdgeInsets.only(top: 16), // Espaciado superior
                             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: crossAxisCount,
                               crossAxisSpacing: 16.0,
@@ -151,6 +150,11 @@ class _SearchPageState extends State<SearchPage> {
                                             game.imageUrl,
                                             fit: BoxFit.cover,
                                             width: double.infinity,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return const Center(
+                                                child: Icon(Icons.error, color: Colors.red, size: 50),
+                                              );
+                                            },
                                           ),
                                         ),
                                       ),
@@ -163,16 +167,19 @@ class _SearchPageState extends State<SearchPage> {
                                               game.name,
                                               style: const TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 18,
+                                                fontSize: 14,
                                                 fontWeight: FontWeight.bold,
                                               ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               '\$${game.precio.toStringAsFixed(2)}',
                                               style: const TextStyle(
                                                 color: Colors.greenAccent,
-                                                fontSize: 16,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                             const SizedBox(height: 4),
@@ -180,7 +187,7 @@ class _SearchPageState extends State<SearchPage> {
                                               'Metacritic: ${game.metacritic}',
                                               style: const TextStyle(
                                                 color: Colors.white70,
-                                                fontSize: 14,
+                                                fontSize: 12,
                                               ),
                                             ),
                                           ],
