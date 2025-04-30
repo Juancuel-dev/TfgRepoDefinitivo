@@ -3,6 +3,7 @@ import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/screens/adminPanel.dart';
 import 'package:flutter_auth_app/screens/categorypage.dart';
 import 'package:flutter_auth_app/screens/main_screen.dart'; // Importar MainScreen
+import 'package:flutter_auth_app/screens/myAccountPage.dart';
 import 'package:flutter_auth_app/screens/searchpage.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -108,6 +109,10 @@ class MyApp extends StatelessWidget {
             }
             return CategoryPage(category: categoryName); // Pasar la categoría a la página
           },
+        ),
+        GoRoute(
+          path: '/my-account',
+          builder: (context, state) => const MyAccountPage(), // Nueva ruta para "Mi Cuenta"
         ),
       ],
       redirect: (context, state) {

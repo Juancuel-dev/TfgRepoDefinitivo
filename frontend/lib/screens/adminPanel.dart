@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
 
 class AdminPanel extends StatefulWidget {
-
   const AdminPanel({super.key});
 
   @override
@@ -10,212 +9,170 @@ class AdminPanel extends StatefulWidget {
 }
 
 class _AdminPanelState extends State<AdminPanel> {
-  final _gameNameController = TextEditingController();
-  final _gamePriceController = TextEditingController();
-  final List<String> users = ['user1', 'user2', 'user3']; // Lista de usuarios de ejemplo
-  final List<Map<String, dynamic>> games = []; // Lista de juegos de ejemplo
-
-  void _addGame() {
-    final gameName = _gameNameController.text;
-    final gamePrice = _gamePriceController.text;
-
-    if (gameName.isNotEmpty && gamePrice.isNotEmpty) {
-      setState(() {
-        games.add({'name': gameName, 'price': double.tryParse(gamePrice) ?? 0.0});
-      });
-      _gameNameController.clear();
-      _gamePriceController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Juego añadido con éxito'),
-          duration: Duration(seconds: 1), // Duración ajustada a 1 segundo
-        ),
-      );
-    }
-  }
-
-  void _deleteGame(int index) {
-    setState(() {
-      games.removeAt(index);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Juego eliminado con éxito'),
-        duration: Duration(seconds: 1), // Duración ajustada a 1 segundo
-      ),
-    );
-  }
+  String selectedCategory = 'Operaciones de Usuario'; // Categoría seleccionada por defecto
+  bool isMenuVisible = false; // Controla si el menú está visible en móvil
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600; // Detectar si es móvil
+
     return BaseLayout(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        children: [
+          Row(
             children: [
-              const Text(
-                'Panel de Administración',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              if (!isMobile || isMenuVisible) _buildSidebar(), // Mostrar menú si es grande o está visible
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: _buildContent(), // Contenido dinámico según la categoría seleccionada
                 ),
-              ),
-              const SizedBox(height: 20),
-              // Sección para agregar un juego
-              const Text(
-                'Agregar Juego',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _gameNameController,
-                decoration: InputDecoration(
-                  labelText: 'Nombre del Juego',
-                  border: const OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.grey[800],
-                  labelStyle: const TextStyle(color: Colors.white70),
-                ),
-                style: const TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _gamePriceController,
-                decoration: InputDecoration(
-                  labelText: 'Precio del Juego',
-                  border: const OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.grey[800],
-                  labelStyle: const TextStyle(color: Colors.white70),
-                ),
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _addGame,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.greenAccent,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                ),
-                child: const Text('Añadir Juego'),
-              ),
-              const SizedBox(height: 20),
-              // Lista de juegos
-              const Text(
-                'Lista de Juegos',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 10),
-              games.isEmpty
-                  ? const Text(
-                      'No hay juegos añadidos.',
-                      style: TextStyle(color: Colors.white70),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: games.length,
-                      itemBuilder: (context, index) {
-                        final game = games[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[850],
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    game['name'],
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  Text(
-                                    '\$${game['price'].toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.greenAccent,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              ElevatedButton(
-                                onPressed: () => _deleteGame(index),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.redAccent,
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                ),
-                                child: const Text('Eliminar'),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-              const SizedBox(height: 20),
-              // Lista de usuarios
-              const Text(
-                'Lista de Usuarios',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 10),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: users.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[850],
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Text(
-                      users[index],
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                  );
-                },
               ),
             ],
           ),
-        ),
+          if (isMobile)
+            Positioned(
+              top: 0,
+              left: 0,
+              child: IconButton(
+                icon: Icon(
+                  isMenuVisible ? Icons.arrow_back : Icons.arrow_forward, // Cambiar ícono según el estado
+                  color: Colors.white,
+                  size: 28,
+                ),
+                onPressed: () {
+                  setState(() {
+                    isMenuVisible = !isMenuVisible; // Alternar visibilidad del menú
+                  });
+                },
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  @override
-  void dispose() {
-    _gameNameController.dispose();
-    _gamePriceController.dispose();
-    super.dispose();
+  Widget _buildSidebar() {
+    final categories = [
+      'Operaciones de Usuario',
+      'Operaciones de Productos',
+      'Operaciones de Pedidos',
+    ];
+
+    return Container(
+      width: 200,
+      color: Colors.grey[900],
+      child: ListView.builder(
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          final isSelected = category == selectedCategory;
+
+          return ListTile(
+            title: Text(
+              category,
+              style: TextStyle(
+                color: isSelected ? Colors.blue : Colors.white,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            onTap: () {
+              setState(() {
+                selectedCategory = category;
+                if (MediaQuery.of(context).size.width < 600) {
+                  isMenuVisible = false; // Ocultar el menú en móvil al seleccionar una categoría
+                }
+              });
+            },
+            selected: isSelected,
+            selectedTileColor: Colors.grey[800],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    switch (selectedCategory) {
+      case 'Operaciones de Usuario':
+        return _buildUserOperations();
+      case 'Operaciones de Productos':
+        return _buildProductOperations();
+      case 'Operaciones de Pedidos':
+        return _buildOrderOperations();
+      default:
+        return const Center(
+          child: Text(
+            'Selecciona una categoría',
+            style: TextStyle(color: Colors.white),
+          ),
+        );
+    }
+  }
+
+  Widget _buildUserOperations() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Operaciones de Usuario',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Aquí puedes gestionar usuarios.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        // TODO: Agregar contenido específico para operaciones de usuario
+      ],
+    );
+  }
+
+  Widget _buildProductOperations() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Operaciones de Productos',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Aquí puedes gestionar productos.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        // TODO: Agregar contenido específico para operaciones de productos
+      ],
+    );
+  }
+
+  Widget _buildOrderOperations() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Operaciones de Pedidos',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Aquí puedes gestionar pedidos.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        // TODO: Agregar contenido específico para operaciones de pedidos
+      ],
+    );
   }
 }
