@@ -124,7 +124,8 @@ class MyApp extends StatelessWidget {
         }
 
         // Redirigir a /login si el usuario no está autenticado y está intentando acceder a rutas protegidas
-        if (!loggedIn && (state.uri.path == '/cart' || state.uri.path == '/admin')) {
+        final protectedRoutes = ['/cart', '/admin', '/my-account'];
+        if (!loggedIn && protectedRoutes.contains(state.uri.path)) {
           return '/login';
         }
 

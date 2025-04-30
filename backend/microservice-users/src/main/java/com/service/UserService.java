@@ -39,11 +39,7 @@ public class UserService {
     }
 
     public User findByUsername(Jwt jwt) throws UnauthorizedException {
-        if (jwt.getClaim("role").equals("ADMIN")) {
             return userRepository.findByUsername(jwt.getClaim("username")).orElseThrow(()->new UsernameNotFoundException("Usuario no encontrado."));
-        } else {
-            throw new UnauthorizedException("No estas autorizado para realizar esta accion");
-        }
     }
 
     public User save(User user){
