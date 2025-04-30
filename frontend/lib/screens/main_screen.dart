@@ -10,52 +10,20 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return BaseLayout(
       showBackButton: false,
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, // Alinear contenido a la izquierda
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Categorías principales
-              Center(
-                child: Wrap(
-                  spacing: 8.0,
-                  runSpacing: 8.0,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    _buildResponsiveCategoryChip(context, 'PC', screenWidth),
-                    _buildResponsiveCategoryChip(context, 'XBOX', screenWidth),
-                    _buildResponsiveCategoryChip(context, 'PS5', screenWidth),
-                    _buildResponsiveCategoryChip(context, 'SWITCH', screenWidth),
-                  ],
-                ),
-              ),
+              
 
-              const SizedBox(height: 32),
 
-              // Encabezado
-              const Text(
-                'Bienvenido a LevelUp Shop',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Encuentra los mejores videojuegos y accesorios para todas las plataformas.',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white70,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              // Juego destacado
+              _buildFeaturedGameSection(context),
+
               const SizedBox(height: 32),
 
               // Productos populares
@@ -89,6 +57,179 @@ class MainScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  // Método para construir la sección de categorías de plataformas
+  Widget _buildPlatformCategoriesSection(BuildContext context) {
+    final platforms = [
+      {'name': 'PS5', 'icon': Icons.sports_esports, 'color': Colors.blueAccent},
+      {'name': 'PC', 'icon': Icons.computer, 'color': Colors.green},
+      {'name': 'Xbox', 'icon': Icons.videogame_asset, 'color': Colors.lightGreen},
+      {'name': 'Nintendo', 'icon': Icons.gamepad, 'color': Colors.redAccent},
+    ];
+
+    return Center(
+      child: Wrap(
+        spacing: 12.0, // Espacio horizontal entre elementos
+        runSpacing: 12.0, // Espacio vertical entre filas
+        alignment: WrapAlignment.center, // Centrar los elementos horizontalmente
+        children: platforms.map((platform) {
+          return GestureDetector(
+            onTap: () {
+              context.go('/platform/${platform['name']}'); // Navegar a la plataforma seleccionada
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(
+                  radius: 30, // Tamaño más pequeño del círculo
+                  backgroundColor: platform['color'] as Color,
+                  child: Icon(
+                    platform['icon'] as IconData,
+                    color: Colors.white,
+                    size: 24, // Tamaño más pequeño del ícono
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  platform['name'] as String,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12, // Tamaño de texto más pequeño
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // Método para construir la sección de juego destacado
+  Widget _buildFeaturedGameSection(BuildContext context) {
+    return FutureBuilder<List<Game>>(
+      future: GamesService().fetchDiscountedGames(), // Obtener juegos en oferta
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text(
+              'No se encontraron juegos en oferta.',
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        } else {
+          final random = Random();
+          final featuredGame = snapshot.data![random.nextInt(snapshot.data!.length)]; // Seleccionar un juego aleatorio
+          final originalPrice = (featuredGame.precio / (1 - (15 + random.nextInt(36)) / 100)).toStringAsFixed(2);
+
+          return Stack(
+            children: [
+              // Imagen de fondo
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Image.network(
+                  featuredGame.imageUrl,
+                  height: 350, // Ajustar la altura de la imagen
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(Icons.error, color: Colors.red, size: 50),
+                    );
+                  },
+                ),
+              ),
+              // Contenido superpuesto
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.black.withOpacity(0.6),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      featuredGame.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          '\$$originalPrice',
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 16,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '\$${featuredGame.precio.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.go(
+                          '/details',
+                          extra: featuredGame, // Pasar el objeto Game como argumento
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        'Ver Detalles',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+      },
     );
   }
 

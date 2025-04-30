@@ -24,15 +24,17 @@ class AuthService {
     }
   }
 
-  Future<bool> register(String username, String password) async {
+  Future<bool> register(String nombre,String username, String password,String email) async {
     final response = await http.post(
       Uri.parse('$apiUrl/register'),
       headers: {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'username': username,
+        'nombre': nombre,
         'password': password,
+        'username': username,
+        'email': email,
       }),
     );
 

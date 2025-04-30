@@ -3,174 +3,183 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/services/authProvider.dart';
 
-class BaseLayout extends StatelessWidget {
+class BaseLayout extends StatefulWidget {
   final Widget child;
   final bool showBackButton;
 
-  // GlobalKey para controlar el estado del Scaffold
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  const BaseLayout({super.key, required this.child, this.showBackButton = true});
 
-  BaseLayout({super.key, required this.child, this.showBackButton = true});
+  @override
+  State<BaseLayout> createState() => _BaseLayoutState();
+}
+
+class _BaseLayoutState extends State<BaseLayout> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _showCategories = false; // Controlar si el menú de categorías está visible
+  bool _showSearchBar = false; // Controlar si la barra de búsqueda está visible
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600; // Detectar si es móvil
 
     return Scaffold(
-      key: _scaffoldKey, // Asignar el GlobalKey al Scaffold
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80), // Altura personalizada del AppBar
-        child: AppBar(
-          toolbarHeight: 80, // Ajustar la altura exacta del AppBar
-          automaticallyImplyLeading: showBackButton,
-          backgroundColor: Colors.grey[900],
-          title: Row(
+      key: _scaffoldKey,
+      body: Stack(
+        children: [
+          Column(
             children: [
-              Flexible(
-                child: GestureDetector(
-                  onTap: () {
-                    context.go('/'); // Navegación al inicio
-                  },
-                  child: Container(
-                    height: 60, // Altura máxima del logo
-                    constraints: const BoxConstraints(
-                      maxWidth: 200, // Ancho máximo para evitar que ocupe demasiado espacio
-                    ),
-                    child: Image.asset(
-                      'logo.png', // Ruta al logo
-                      fit: BoxFit.contain, // Ajustar la imagen sin recortarla
-                    ),
-                  ),
-                ),
-              ),
-              const Spacer(), // Empujar los elementos hacia la derecha
-            ],
-          ),
-          centerTitle: false, // Desactivar centrado del título
-          actions: isMobile
-              ? [
-                  Builder(
-                    builder: (context) => IconButton(
-                      icon: const Icon(Icons.menu, color: Colors.white), // Ícono de menú hamburguesa
-                      onPressed: () {
-                        Scaffold.of(context).openEndDrawer(); // Abrir el Drawer
-                      },
-                    ),
-                  ),
-                ]
-              : [
-                  IconButton(
-                    icon: const Icon(Icons.search, color: Colors.white),
-                    onPressed: () {
-                      _showSearchDialog(context); // Mostrar el cuadro de búsqueda
-                    },
-                  ),
-                  Consumer<AuthProvider>(
-                    builder: (context, authProvider, _) {
-                      final isLoggedIn = authProvider.isLoggedIn;
+              PreferredSize(
+                preferredSize: const Size.fromHeight(80), // Altura personalizada del AppBar
+                child: AppBar(
+                  toolbarHeight: 80, // Ajustar la altura exacta del AppBar
+                  automaticallyImplyLeading: widget.showBackButton,
+                  backgroundColor: Colors.grey[900],
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribuir elementos uniformemente
+                    crossAxisAlignment: CrossAxisAlignment.center, // Centrar verticalmente
+                    children: [
+                      // Logo
+                      Flexible(
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click, // Cambiar el cursor al de una mano señalando
+                          child: GestureDetector(
+                            onTap: () {
+                              context.go('/'); // Navegación al inicio
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200), // Animación suave
+                              height: 60, // Altura máxima del logo
+                              constraints: const BoxConstraints(
+                                maxWidth: 200, // Ancho máximo para evitar que ocupe demasiado espacio
+                              ),
+                              decoration: const BoxDecoration(
+                                image: DecorationImage(
+                                  image: AssetImage('logo.png'), // Ruta al logo
+                                  fit: BoxFit.contain, // Ajustar la imagen sin recortarla
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
 
-                      return Row(
+                      // Categorías de plataformas
+                      if (!isMobile)
+                        Expanded(
+                          flex: 2,
+                          child: _buildPlatformCategories(context),
+                        )
+                      else
+                        IconButton(
+                          icon: const Icon(Icons.menu, color: Colors.white),
+                          onPressed: () {
+                            setState(() {
+                              _showCategories = !_showCategories; // Alternar visibilidad del menú
+                            });
+                          },
+                        ),
+
+                      // Acciones (como búsqueda, carrito, etc.)
+                      Row(
                         children: [
-                          if (!isLoggedIn) ...[
-                            TextButton(
-                              onPressed: () {
-                                context.go('/login'); // Navegación al login
-                              },
-                              child: const Text(
-                                'Login',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                context.go('/register'); // Navegación al registro
-                              },
-                              child: const Text(
-                                'Registrarse',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ] else ...[
-                            TextButton(
-                              onPressed: () {
-                                authProvider.logout(); // Llamar al método de logout
-                                context.go('/login'); // Navegación al login
-                              },
-                              child: const Text(
-                                'Logout',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
+                          IconButton(
+                            icon: const Icon(Icons.search, color: Colors.white),
+                            onPressed: () {
+                              setState(() {
+                                _showSearchBar = !_showSearchBar; // Alternar visibilidad de la barra de búsqueda
+                              });
+                            },
+                          ),
                           IconButton(
                             icon: const Icon(Icons.shopping_cart, color: Colors.white),
                             onPressed: () {
                               context.go('/cart'); // Navegación al carrito
                             },
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.person, color: Colors.white), // Ícono de persona
-                            onPressed: () {
-                              context.go('/my-account'); // Navegación a My Account
+                          Consumer<AuthProvider>(
+                            builder: (context, authProvider, _) {
+                              return IconButton(
+                                icon: const Icon(Icons.person, color: Colors.white), // Ícono de persona
+                                onPressed: () {
+                                  if (authProvider.isLoggedIn) {
+                                    context.go('/my-account'); // Navegar a My Account si está logueado
+                                  } else {
+                                    context.go('/login'); // Navegar al Login si no está logueado
+                                  }
+                                },
+                              );
                             },
                           ),
                         ],
-                      );
-                    },
+                      ),
+                    ],
                   ),
-                ],
-        ),
-      ),
-      endDrawer: isMobile
-          ? Drawer(
-              backgroundColor: Colors.grey[900],
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  DrawerHeader(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[800],
-                    ),
-                    child: const Text(
-                      'Menú',
-                      style: TextStyle(color: Colors.white, fontSize: 24),
-                    ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.login, color: Colors.white),
-                    title: const Text('Login', style: TextStyle(color: Colors.white)),
-                    onTap: () {
-                      context.go('/login'); // Navegación al login
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.app_registration, color: Colors.white),
-                    title: const Text('Registrarse', style: TextStyle(color: Colors.white)),
-                    onTap: () {
-                      context.go('/register'); // Navegación al registro
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.shopping_cart, color: Colors.white),
-                    title: const Text('Carrito', style: TextStyle(color: Colors.white)),
-                    onTap: () {
-                      context.go('/cart'); // Navegación al carrito
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.person, color: Colors.white),
-                    title: const Text('Mi Cuenta', style: TextStyle(color: Colors.white)),
-                    onTap: () {
-                      context.go('/my-account'); // Navegación a Mi Cuenta
-                    },
-                  ),
-                ],
+                  centerTitle: false, // Desactivar centrado del título
+                ),
               ),
-            )
-          : null,
-      body: Column(
-        children: [
-          Expanded(child: child),
+
+              // Barra de búsqueda deslizante
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300), // Animación suave
+                height: _showSearchBar ? 60 : 0, // Mostrar u ocultar la barra
+                color: Colors.grey[900], // Mismo color que el header
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8), // Agregar padding inferior
+                child: _showSearchBar
+                    ? Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              decoration: InputDecoration(
+                                hintText: 'Buscar juegos...',
+                                hintStyle: const TextStyle(color: Colors.white70, fontSize: 14),
+                                prefixIcon: const Icon(Icons.search, color: Colors.white70, size: 20),
+                                filled: true,
+                                fillColor: Colors.grey[850], // Fondo más oscuro para el campo
+                                contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8), // Bordes más pequeños
+                                  borderSide: BorderSide.none, // Sin borde
+                                ),
+                              ),
+                              style: const TextStyle(color: Colors.white, fontSize: 14),
+                              onSubmitted: (value) {
+                                if (value.trim().isNotEmpty) {
+                                  setState(() {
+                                    _showSearchBar = false; // Ocultar la barra después de buscar
+                                  });
+                                  context.go('/search/$value'); // Navegar a la página de búsqueda
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                            onPressed: () {
+                              setState(() {
+                                _showSearchBar = false; // Ocultar la barra de búsqueda
+                              });
+                            },
+                          ),
+                        ],
+                      )
+                    : null,
+              ),
+
+              Expanded(child: widget.child),
+            ],
+          ),
+
+          // Menú desplegable de categorías
+          if (_showCategories)
+            Positioned(
+              top: 80, // Justo debajo del header
+              left: 0,
+              right: 0,
+              child: _buildDropdownCategories(context),
+            ),
         ],
       ),
       bottomNavigationBar: Container(
@@ -186,52 +195,102 @@ class BaseLayout extends StatelessWidget {
     );
   }
 
-  void _showSearchDialog(BuildContext context) {
-    final TextEditingController searchController = TextEditingController();
+  // Método para construir las categorías de plataformas en pantallas grandes
+  Widget _buildPlatformCategories(BuildContext context) {
+    final platforms = [
+      {'name': 'PS5', 'icon': Icons.sports_esports, 'color': Colors.white},
+      {'name': 'PC', 'icon': Icons.computer, 'color': Colors.white},
+      {'name': 'Xbox', 'icon': Icons.videogame_asset, 'color': Colors.white},
+      {'name': 'Nintendo', 'icon': Icons.gamepad, 'color': Colors.white},
+    ];
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.grey[900],
-          title: const Text(
-            'Buscar Juegos',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: TextField(
-            controller: searchController,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              hintText: 'Introduce el nombre del juego',
-              hintStyle: TextStyle(color: Colors.white70),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.white),
+    return Wrap(
+      spacing: 16.0, // Espacio horizontal entre elementos
+      alignment: WrapAlignment.center, // Centrar los elementos horizontalmente
+      children: platforms.map((platform) {
+        return GestureDetector(
+          onTap: () {
+            context.go('/category/${platform['name']}'); // Navegar a la plataforma seleccionada
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 20, // Tamaño más pequeño del círculo
+                backgroundColor: Colors.grey[800], // Fondo gris oscuro
+                child: Icon(
+                  platform['icon'] as IconData,
+                  color: platform['color'] as Color, // Ícono en blanco
+                  size: 20, // Tamaño más pequeño del ícono
+                ),
               ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue),
+              const SizedBox(height: 4),
+              Text(
+                platform['name'] as String,
+                style: const TextStyle(
+                  color: Colors.white, // Texto en blanco
+                  fontSize: 12, // Tamaño de texto más pequeño
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el cuadro de diálogo
-              },
-              child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
-            ),
-            TextButton(
-              onPressed: () {
-                final searchQuery = searchController.text.trim();
-                if (searchQuery.isNotEmpty) {
-                  Navigator.of(context).pop(); // Cerrar el cuadro de diálogo
-                  context.go('/search/$searchQuery'); // Navegar a la página de búsqueda
-                }
-              },
-              child: const Text('Buscar', style: TextStyle(color: Colors.blue)),
-            ),
-          ],
         );
-      },
+      }).toList(),
+    );
+  }
+
+  // Método para construir el menú desplegable de categorías en móviles
+  Widget _buildDropdownCategories(BuildContext context) {
+    final platforms = [
+      {'name': 'PS5', 'icon': Icons.sports_esports},
+      {'name': 'PC', 'icon': Icons.computer},
+      {'name': 'Xbox', 'icon': Icons.videogame_asset},
+      {'name': 'Nintendo', 'icon': Icons.gamepad},
+    ];
+
+    return Container(
+      color: Colors.grey[900], // Mismo color que el header
+      padding: const EdgeInsets.all(8.0), // Reducir el padding
+      child: GridView.builder(
+        shrinkWrap: true, // Ajustar el tamaño al contenido
+        physics: const NeverScrollableScrollPhysics(), // Desactivar el scroll
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2, // Número de columnas
+          crossAxisSpacing: 8.0, // Espaciado horizontal reducido
+          mainAxisSpacing: 8.0, // Espaciado vertical reducido
+          childAspectRatio: 2.5, // Relación de aspecto ajustada para hacerlo más compacto
+        ),
+        itemCount: platforms.length,
+        itemBuilder: (context, index) {
+          final platform = platforms[index];
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _showCategories = false; // Ocultar el menú
+              });
+              context.go('/category/${platform['name']}'); // Navegar a la plataforma seleccionada
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[800], // Fondo gris oscuro
+                borderRadius: BorderRadius.circular(6.0), // Bordes redondeados más pequeños
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(platform['icon'] as IconData, color: Colors.white, size: 24), // Ícono más pequeño
+                  const SizedBox(height: 4), // Reducir el espacio entre ícono y texto
+                  Text(
+                    platform['name'] as String,
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), // Texto más pequeño
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
