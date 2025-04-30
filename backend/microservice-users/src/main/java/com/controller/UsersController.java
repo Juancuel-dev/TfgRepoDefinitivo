@@ -91,7 +91,7 @@ public class UsersController {
             }
 
             // Busca al usuario por el username
-            UserDTO aux = UserMapper.INSTANCE.toUserDTO(userService.findByUsername(username));
+            UserDTO aux = UserMapper.INSTANCE.toUserDTO(userService.findByUsername(jwt));
             log.info("User info: {}", aux);
             return aux;
         } catch (UsernameNotFoundException | UnauthorizedException e) {

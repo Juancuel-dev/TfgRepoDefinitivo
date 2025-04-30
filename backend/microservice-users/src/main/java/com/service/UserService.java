@@ -38,17 +38,12 @@ public class UserService {
         }
     }
 
-    public User findByUsername(String username) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        // Solo permite al usuario acceder a su propia información o a los administradores
-        if (!authentication.getName().equals(username) &&
-                !authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()))) {
-            throw new RuntimeException("No autorizado para acceder a este recurso");
+    public User findByUsername(Jwt jwt) throws UnauthorizedException {
+        if (jwt.getClaim("role").equals("ADMIN")) {
+            return userRepository.findByUsername(jwt.getClaim("username")).orElseThrow(()->new UsernameNotFoundException("Usuario no encontrado."));
+        } else {
+            throw new UnauthorizedException("No estas autorizado para realizar esta accion");
         }
-
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
     }
 
     public User save(User user){
