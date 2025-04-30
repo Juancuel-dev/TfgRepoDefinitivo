@@ -114,17 +114,17 @@ class MyApp extends StatelessWidget {
         final loggedIn = authProvider.isLoggedIn;
 
         // Permitir acceso público a las rutas no protegidas
-        if (state.location == '/' || state.location.startsWith('/details')) {
+        if (state.uri.path == '/' || state.uri.path.startsWith('/details')) {
           return null;
         }
 
         // Redirigir a /login si el usuario no está autenticado y está intentando acceder a rutas protegidas
-        if (!loggedIn && (state.location == '/cart' || state.location == '/admin')) {
+        if (!loggedIn && (state.uri.path == '/cart' || state.uri.path == '/admin')) {
           return '/login';
         }
 
         // Redirigir a la raíz si el usuario ya está autenticado y está en /login
-        if (loggedIn && state.location == '/login') {
+        if (loggedIn && state.uri.path == '/login') {
           return '/';
         }
 

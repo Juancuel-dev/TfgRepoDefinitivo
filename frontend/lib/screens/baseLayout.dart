@@ -15,6 +15,7 @@ class BaseLayout extends StatelessWidget {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80), // Altura personalizada del AppBar
         child: AppBar(
+          toolbarHeight: 80, // Ajustar la altura exacta del AppBar
           automaticallyImplyLeading: showBackButton,
           backgroundColor: Colors.grey[900],
           title: Row(
@@ -23,12 +24,11 @@ class BaseLayout extends StatelessWidget {
                 onTap: () {
                   context.go('/'); // Navegación al inicio
                 },
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 16.0), // Espacio solo en la parte superior
+                child: SizedBox(
+                  height: 60, // Ajustar al tamaño del logo
                   child: Image.asset(
                     'logo.png', // Ruta al logo
-                    height: 60, // Tamaño del logo acorde al header
-                    fit: BoxFit.contain,
+                    fit: BoxFit.fitHeight, // Ajustar la imagen al alto disponible
                   ),
                 ),
               ),
@@ -84,6 +84,12 @@ class BaseLayout extends StatelessWidget {
                       icon: const Icon(Icons.shopping_cart, color: Colors.white),
                       onPressed: () {
                         context.go('/cart'); // Navegación al carrito
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.person, color: Colors.white), // Ícono de persona
+                      onPressed: () {
+                        context.go('/my-account'); // Navegación a My Account
                       },
                     ),
                   ],

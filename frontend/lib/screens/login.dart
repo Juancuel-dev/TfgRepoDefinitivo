@@ -106,15 +106,9 @@ class _LoginPageState extends State<LoginPage> {
                                 setState(() {
                                   _isLoading = false;
                                 });
-                                if (token != null) {
-                                  widget.onLogin(token);
-                                  context.go('/'); // Navegación con GoRouter
-                                } else {
-                                  setState(() {
-                                    _errorMessage = 'Error al iniciar sesión. Por favor, inténtelo de nuevo.';
-                                  });
-                                }
-                              }
+                                widget.onLogin(token!);
+                                context.go('/'); // Navegación con GoRouter
+                                                            }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.greenAccent,
