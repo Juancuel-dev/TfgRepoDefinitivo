@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
 import 'package:flutter_auth_app/services/authProvider.dart';
 import 'package:flutter_auth_app/services/authService.dart';
+import 'package:flutter_auth_app/services/imageService.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -20,11 +21,13 @@ class _MyAccountPageState extends State<MyAccountPage> {
   String selectedCategory = 'Perfil'; // Categoría seleccionada por defecto
   bool isMenuVisible = false; // Controla si el menú está visible
   String? userRole; // Rol del usuario
+  String? userProfileImage; // Imagen de perfil seleccionada
 
   @override
   void initState() {
     super.initState();
     _fetchUserData();
+    _loadUserProfileImage();
   }
 
   Future<void> _fetchUserData() async {
@@ -67,6 +70,15 @@ class _MyAccountPageState extends State<MyAccountPage> {
       // Manejar errores de red o de la API
       Future.microtask(() => context.go('/login'));
     }
+  }
+
+  Future<void> _loadUserProfileImage() async {
+    // Cargar la imagen de perfil del usuario actual
+    final imageId = userData?['imageId'] ?? 1; // Usar un ID por defecto si no está definido
+    final imagePath = await ImageService.loadUserProfileImage(imageId);
+    setState(() {
+      userProfileImage = imagePath;
+    });
   }
 
   @override
@@ -205,9 +217,14 @@ class _MyAccountPageState extends State<MyAccountPage> {
               children: [
                 Row(
                   children: [
-                    const CircleAvatar(
-                      radius: 40,
-                      backgroundImage: AssetImage('favicon.png'), // Imagen de perfil
+                    GestureDetector(
+                      onTap: _showImagePickerDialog, // Abrir el popup al hacer clic
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundImage: userProfileImage != null
+                            ? AssetImage(userProfileImage!)
+                            : const AssetImage('assets/profile_pictures/default.png'),
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -260,6 +277,166 @@ class _MyAccountPageState extends State<MyAccountPage> {
         ),
       ],
     );
+  }
+
+  void _showImagePickerDialog() async {
+    final images = await ImageService.loadAllProfileImages(); // Cargar todas las imágenes disponibles
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.grey[900],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Selecciona una nueva imagen de perfil',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // Cambiar dinámicamente según el tamaño de pantalla
+                    crossAxisSpacing: 16.0,
+                    mainAxisSpacing: 16.0,
+                  ),
+                  itemCount: images.length,
+                  itemBuilder: (context, index) {
+                    final imagePath = images[index];
+                    return GestureDetector(
+                      onTap: () {
+                        _showConfirmationDialog(imagePath); // Mostrar el diálogo de confirmación
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: Image.asset(
+                          imagePath,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showConfirmationDialog(String selectedImagePath) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            'Confirmar selección',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            '¿Estás seguro de que deseas seleccionar esta imagen como tu nueva foto de perfil?',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+              },
+              child: const Text(
+                'No',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo de confirmación
+                Navigator.of(context).pop(); // Cerrar el diálogo de selección de imagen
+                _updateUserProfileImage(selectedImagePath); // Actualizar la imagen de perfil
+              },
+              child: const Text(
+                'Sí',
+                style: TextStyle(color: Colors.green),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _updateUserProfileImage(String newImagePath) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.jwtToken; // Obtener el token del usuario logueado
+
+    if (token == null) {
+      // Si no hay token, redirigir al login
+      Future.microtask(() => context.go('/login'));
+      return;
+    }
+
+    try {
+      final response = await http.put(
+        Uri.parse('http://localhost:8080/users'), // Endpoint para actualizar el usuario
+        headers: {
+          'Authorization': 'Bearer $token', // Pasar el token como parámetro de autorización
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'imageId': _extractImageIdFromPath(newImagePath)}), // Enviar el ID de la imagen
+      );
+
+      if (response.statusCode == 200) {
+        // Si la actualización es exitosa, actualizar la imagen localmente
+        setState(() {
+          userProfileImage = newImagePath;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Imagen de perfil actualizada con éxito'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        // Manejar errores del servidor
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al actualizar la imagen de perfil'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Manejar errores de red
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error de conexión al servidor'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  int _extractImageIdFromPath(String imagePath) {
+    // Extraer el ID de la imagen del nombre del archivo
+    final fileName = imagePath.split('/').last; // Obtener el nombre del archivo
+    final imageId = int.tryParse(fileName.split('.').first); // Extraer el número antes de ".png"
+    return imageId ?? 1; // Retornar 1 como valor por defecto si no se puede parsear
   }
 
   Widget _buildProfileInfoTile({required IconData icon, required String label, required String value}) {
@@ -378,7 +555,15 @@ class _MyAccountPageState extends State<MyAccountPage> {
                 final currentPassword = currentPasswordController.text.trim();
                 final newPassword = newPasswordController.text.trim();
                 if (currentPassword.isNotEmpty && newPassword.isNotEmpty) {
-                  // TODO: Implementar lógica para cambiar la contraseña
+                  // Lógica para cambiar la contraseña
+                  _changePassword(currentPassword, newPassword);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Por favor, completa todos los campos'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -390,6 +575,53 @@ class _MyAccountPageState extends State<MyAccountPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _changePassword(String currentPassword, String newPassword) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final token = authProvider.jwtToken;
+
+    if (token == null) {
+      Future.microtask(() => context.go('/login'));
+      return;
+    }
+
+    try {
+      final response = await http.put(
+        Uri.parse('http://localhost:8080/users/change-password'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contraseña cambiada con éxito'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al cambiar la contraseña'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error de conexión al servidor'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildLogoutButton(BuildContext context) {

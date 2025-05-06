@@ -58,55 +58,8 @@ class MainScreen extends StatelessWidget {
         ),
       ),
     );
-  }
+  } 
 
-  // Método para construir la sección de categorías de plataformas
-  Widget _buildPlatformCategoriesSection(BuildContext context) {
-    final platforms = [
-      {'name': 'PS5', 'icon': Icons.sports_esports, 'color': Colors.blueAccent},
-      {'name': 'PC', 'icon': Icons.computer, 'color': Colors.green},
-      {'name': 'Xbox', 'icon': Icons.videogame_asset, 'color': Colors.lightGreen},
-      {'name': 'Nintendo', 'icon': Icons.gamepad, 'color': Colors.redAccent},
-    ];
-
-    return Center(
-      child: Wrap(
-        spacing: 12.0, // Espacio horizontal entre elementos
-        runSpacing: 12.0, // Espacio vertical entre filas
-        alignment: WrapAlignment.center, // Centrar los elementos horizontalmente
-        children: platforms.map((platform) {
-          return GestureDetector(
-            onTap: () {
-              context.go('/platform/${platform['name']}'); // Navegar a la plataforma seleccionada
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(
-                  radius: 30, // Tamaño más pequeño del círculo
-                  backgroundColor: platform['color'] as Color,
-                  child: Icon(
-                    platform['icon'] as IconData,
-                    color: Colors.white,
-                    size: 24, // Tamaño más pequeño del ícono
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  platform['name'] as String,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12, // Tamaño de texto más pequeño
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
 
   // Método para construir la sección de juego destacado
   Widget _buildFeaturedGameSection(BuildContext context) {
@@ -230,32 +183,6 @@ class MainScreen extends StatelessWidget {
           );
         }
       },
-    );
-  }
-
-  // Método para construir un botón de categoría responsivo
-  Widget _buildResponsiveCategoryChip(BuildContext context, String category, double screenWidth) {
-    final buttonWidth = screenWidth < 400 ? (screenWidth / 2) - 24 : 120;
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        minWidth: buttonWidth.toDouble(),
-        maxWidth: buttonWidth.toDouble(),
-      ),
-      child: ElevatedButton(
-        onPressed: () {
-          context.go('/category/$category');
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blueGrey,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        ),
-        child: Text(
-          category,
-          style: const TextStyle(color: Colors.white),
-          textAlign: TextAlign.center,
-        ),
-      ),
     );
   }
 
