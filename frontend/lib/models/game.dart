@@ -25,4 +25,16 @@ class Game {
       imageUrl: json['imagen'] ?? '', // Valor predeterminado si la imagen es null
     );
   }
+
+  // Método para convertir un objeto Game a JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'precio': precio,
+      'metacritic': metacritic,
+      'consola': consola,
+      'imagen': imageUrl,
+    };
+  }
 }

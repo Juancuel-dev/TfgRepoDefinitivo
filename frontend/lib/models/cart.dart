@@ -5,6 +5,22 @@ class CartItem {
   int quantity;
 
   CartItem({required this.game, required this.quantity});
+
+  // Método para convertir un JSON en un objeto CartItem
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      game: Game.fromJson(json['game']), // Convertir el JSON del juego a un objeto Game
+      quantity: json['quantity'],
+    );
+  }
+
+  // Método para convertir un objeto CartItem a JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'game': game.toJson(), // Convertir el objeto Game a JSON
+      'quantity': quantity,
+    };
+  }
 }
 
 class Cart {

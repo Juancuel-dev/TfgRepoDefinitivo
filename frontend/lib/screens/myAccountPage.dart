@@ -23,12 +23,45 @@ class _MyAccountPageState extends State<MyAccountPage> {
   bool isMenuVisible = false; // Controla si el menú está visible
   String? userRole; // Rol del usuario
   String? userProfileImage; // Imagen de perfil seleccionada
+  List<dynamic> userOrders = []; // Lista de pedidos del usuario
 
   @override
   void initState() {
     super.initState();
     _fetchUserData();
     _loadUserProfileImage();
+  }
+
+  Future<void> _fetchUserOrders(String clientId, String jwtToken) async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:8080/gateway/orders/user/$clientId'),
+        headers: {
+          'Authorization': 'Bearer $jwtToken', // Pasar el token como parámetro de autorización
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          userOrders = data; // Guardar los pedidos obtenidos
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al obtener los pedidos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error de conexión al servidor'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _fetchUserData() async {
@@ -63,6 +96,12 @@ class _MyAccountPageState extends State<MyAccountPage> {
           userData = data;
           isLoading = false;
         });
+
+        // Obtener los pedidos del usuario
+        final clientId = data['clientId'];
+        if (clientId != null) {
+          await _fetchUserOrders(clientId, token);
+        }
       } else {
         // Si el token no es válido o hay un error, redirigir al login
         Future.microtask(() => context.go('/login'));
@@ -224,7 +263,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                         radius: 40,
                         backgroundImage: userProfileImage != null
                             ? AssetImage(userProfileImage!)
-                            : const AssetImage('assets/profile_pictures/default.png'),
+                            : const AssetImage('default.png'),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -482,6 +521,33 @@ class _MyAccountPageState extends State<MyAccountPage> {
   }
 
   Widget _buildOrdersSection() {
+    if (userOrders.isEmpty) {
+      return Card(
+        color: Colors.grey[850],
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'Mis Pedidos',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'No tienes pedidos realizados.',
+                style: TextStyle(color: Colors.white70),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Card(
       color: Colors.grey[850],
       child: Padding(
@@ -498,9 +564,67 @@ class _MyAccountPageState extends State<MyAccountPage> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'No tienes pedidos realizados.',
-              style: TextStyle(color: Colors.white70),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: userOrders.length,
+              itemBuilder: (context, index) {
+                final order = userOrders[index];
+                return Card(
+                  color: Colors.grey[800],
+                  margin: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pedido ID: ${order['orderId']}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Fecha: ${order['fecha']}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Precio Total: \$${order['precio']}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Juegos:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        ...List<Widget>.from(order['games'].map((game) {
+                          return Text(
+                            '- ${game['game']['name']} (Cantidad: ${game['quantity']})',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                            ),
+                          );
+                        })),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
