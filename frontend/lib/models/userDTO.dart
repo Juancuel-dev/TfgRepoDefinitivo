@@ -1,14 +1,14 @@
 class UserDTO {
   final String nombre;
   final String username;
-  final String password;
   final String email;
+  final int image;
 
   UserDTO({
     required this.nombre,
     required this.username,
-    required this.password,
     required this.email,
+    required this.image,
   });
 
   // Convierte el objeto a un mapa (JSON)
@@ -16,8 +16,8 @@ class UserDTO {
     return {
       'nombre': nombre,
       'username': username,
-      'password': password,
       'email': email,
+      'image': image,
     };
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_auth_app/models/userDTO.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/screens/baseLayout.dart';
@@ -392,19 +393,29 @@ class _MyAccountPageState extends State<MyAccountPage> {
     }
 
     try {
+      // Crear el objeto UserDTO con los datos actuales del usuario
+      final userDTO = UserDTO(
+        nombre: userData?['nombre'] ?? 'Nombre no disponible',
+        username: userData?['username'] ?? 'Username no disponible',
+        email: userData?['email'] ?? 'Email no disponible',
+        image: _extractImageIdFromPath(newImagePath), // Nuevo ID de la imagen
+      );
+
+      // Enviar la solicitud PUT al backend
       final response = await http.put(
-        Uri.parse('http://localhost:8080/users'), // Endpoint para actualizar el usuario
+        Uri.parse('http://localhost:8080/users/update'), // Endpoint para actualizar el usuario
         headers: {
           'Authorization': 'Bearer $token', // Pasar el token como parámetro de autorización
           'Content-Type': 'application/json',
         },
-        body: json.encode({'imageId': _extractImageIdFromPath(newImagePath)}), // Enviar el ID de la imagen
+        body: json.encode(userDTO.toJson()), // Convertir el UserDTO a JSON
       );
 
       if (response.statusCode == 200) {
         // Si la actualización es exitosa, actualizar la imagen localmente
         setState(() {
           userProfileImage = newImagePath;
+          userData?['image'] = _extractImageIdFromPath(newImagePath); // Actualizar el imageId localmente
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

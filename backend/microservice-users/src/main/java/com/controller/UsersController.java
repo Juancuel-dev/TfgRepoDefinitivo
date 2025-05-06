@@ -44,11 +44,11 @@ public class UsersController {
         }
     }
 
-    @PostMapping("/update")
-    public ResponseEntity<User> updateUser(@AuthenticationPrincipal Jwt jwt,User user){
-        try{
-           return ResponseEntity.ok(userService.edit(jwt,user));
-        }catch(UnauthorizedException | UsernameNotFoundException e){
+    @PutMapping("/update")
+    public ResponseEntity<User> updateUser(@AuthenticationPrincipal Jwt jwt, @RequestBody User user) {
+        try {
+            return ResponseEntity.ok(userService.edit(jwt, user));
+        } catch (UnauthorizedException | UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }

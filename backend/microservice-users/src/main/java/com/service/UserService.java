@@ -37,7 +37,12 @@ public class UserService {
     }
 
     public User save(User user){
+        user.setImagen(0);
         return userRepository.save(user);
+    }
+
+    public Integer getUserImage(String username){
+        return userRepository.findByUsername(username).orElseThrow(()->new UsernameNotFoundException("Usuario " + username +" no encontrado")).getImagen();
     }
 
     public User edit(Jwt jwt,User user) throws UnauthorizedException {
