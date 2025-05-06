@@ -128,16 +128,9 @@ class _LoginPageState extends State<LoginPage> {
                                 _isLoading = false;
                               });
 
-                              if (token != null) {
-                                widget.onLogin(token);
-                                context.go('/'); // Navegación con GoRouter
-                              } else {
-                                setState(() {
-                                  _errorMessage =
-                                      'Nombre de usuario o contraseña incorrectos';
-                                });
-                              }
-                            }
+                              widget.onLogin(token!);
+                              context.go('/'); // Navegación con GoRouter
+                                                        }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color.fromARGB(255, 98, 150, 38),

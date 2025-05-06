@@ -18,22 +18,23 @@ class CartService {
   }) async {
     final url = Uri.parse('$baseUrl/gateway/orders');
 
-    // Convertir los juegos a un formato que se pueda serializar
+    // Convertir los juegos a un formato que coincida con el backend
     final gamesJson = games.map((item) => {
-      'gameId': item.game.id,
+      'game': {
+        'name': item.game.name, // Asegúrate de que estos campos coincidan con GameDTO
+        'precio': item.game.precio,
+        'metacritic': item.game.metacritic,
+        'consola': item.game.consola,
+      },
       'quantity': item.quantity,
-      'precio': item.game.precio,
     }).toList();
-
-    // Calcular el precio total basado en los items del carrito
-    final totalprecio = games.fold(0.0, (sum, item) => sum + (item.game.precio * item.quantity));
 
     final body = {
       "orderId": orderId,
-      "games": gamesJson,
-      "precio": totalprecio,
-      "fecha": fecha.toIso8601String(),
       "clientId": clientId,
+      "precio": precio,
+      "fecha": fecha.toIso8601String(),
+      "games": gamesJson, // Enviar la lista de juegos con la estructura correcta
     };
 
     try {
