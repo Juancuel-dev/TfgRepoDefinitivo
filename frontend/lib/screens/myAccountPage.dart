@@ -22,7 +22,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
   String selectedCategory = 'Perfil'; // Categoría seleccionada por defecto
   bool isMenuVisible = false; // Controla si el menú está visible
   String? userRole; // Rol del usuario
-  String? userProfileImage; // Imagen de perfil seleccionada
+  AssetImage? userProfileImage = const AssetImage('assets/images/default.png'); // Imagen de perfil seleccionada
   List<dynamic> userOrders = []; // Lista de pedidos del usuario
 
   @override
@@ -34,6 +34,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
   Future<void> _fetchUserOrders(String clientId, String jwtToken) async {
     try {
+      print('Fetching orders for clientId: $clientId');
       final response = await http.get(
         Uri.parse('http://localhost:8080/gateway/orders/user/$clientId'),
         headers: {
@@ -41,11 +42,15 @@ class _MyAccountPageState extends State<MyAccountPage> {
         },
       );
 
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
           userOrders = data; // Guardar los pedidos obtenidos
         });
+        print('Orders assigned to userOrders: $userOrders');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -55,6 +60,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
         );
       }
     } catch (e) {
+      print('Error fetching orders: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error de conexión al servidor'),
@@ -69,13 +75,13 @@ class _MyAccountPageState extends State<MyAccountPage> {
     final authService = AuthService();
     final token = authProvider.jwtToken; // Obtener el token del usuario logueado
 
+    print('JWT Token: $token');
+
     if (token == null) {
-      // Si no hay token, redirigir al login
       Future.microtask(() => context.go('/login'));
       return;
     }
 
-    // Extraer el rol del token
     final role = authService.getRoleFromToken(token);
     setState(() {
       userRole = role; // Guardar el rol del usuario
@@ -89,35 +95,35 @@ class _MyAccountPageState extends State<MyAccountPage> {
         },
       );
 
+      print('User data response: ${response.body}');
+
       if (response.statusCode == 200) {
-        // Si la respuesta es exitosa, parsear los datos del usuario
         final data = json.decode(response.body);
         setState(() {
           userData = data;
           isLoading = false;
         });
 
-        // Obtener los pedidos del usuario
         final clientId = data['clientId'];
+        print('Client ID: $clientId');
+
         if (clientId != null) {
           await _fetchUserOrders(clientId, token);
         }
       } else {
-        // Si el token no es válido o hay un error, redirigir al login
         Future.microtask(() => context.go('/login'));
       }
     } catch (e) {
-      // Manejar errores de red o de la API
+      print('Error fetching user data: $e');
       Future.microtask(() => context.go('/login'));
     }
   }
 
   Future<void> _loadUserProfileImage() async {
-    // Cargar la imagen de perfil del usuario actual
     final imageId = userData?['imageId'] ?? 1; // Usar un ID por defecto si no está definido
-    final imagePath = await ImageService.loadUserProfileImage(imageId);
+    final image = await ImageService.loadUserProfileImage(imageId, context);
     setState(() {
-      userProfileImage = imagePath;
+      userProfileImage = image; // Asignar el objeto AssetImage
     });
   }
 
@@ -261,9 +267,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                       onTap: _showImagePickerDialog, // Abrir el popup al hacer clic
                       child: CircleAvatar(
                         radius: 40,
-                        backgroundImage: userProfileImage != null
-                            ? AssetImage(userProfileImage!)
-                            : const AssetImage('default.png'),
+                        backgroundImage: userProfileImage ?? const AssetImage('assets/profile_pictures/default.png'),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -354,7 +358,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                   ),
                   itemCount: images.length,
                   itemBuilder: (context, index) {
-                    final imagePath = images[index];
+                    final String imagePath = (images[index]).assetName;
                     return GestureDetector(
                       onTap: () {
                         _showConfirmationDialog(imagePath); // Mostrar el diálogo de confirmación
@@ -362,7 +366,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8.0),
                         child: Image.asset(
-                          imagePath,
+                          imagePath, // Asegúrate de que imagePath es un String
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -453,7 +457,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
       if (response.statusCode == 200) {
         // Si la actualización es exitosa, actualizar la imagen localmente
         setState(() {
-          userProfileImage = newImagePath;
+          userProfileImage = AssetImage(newImagePath); // Convertir el String a AssetImage
           userData?['image'] = _extractImageIdFromPath(newImagePath); // Actualizar el imageId localmente
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -521,6 +525,8 @@ class _MyAccountPageState extends State<MyAccountPage> {
   }
 
   Widget _buildOrdersSection() {
+    print('Building orders section with orders: $userOrders');
+
     if (userOrders.isEmpty) {
       return Card(
         color: Colors.grey[850],
@@ -570,6 +576,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
               itemCount: userOrders.length,
               itemBuilder: (context, index) {
                 final order = userOrders[index];
+                print('Rendering order: $order');
                 return Card(
                   color: Colors.grey[800],
                   margin: const EdgeInsets.symmetric(vertical: 8.0),

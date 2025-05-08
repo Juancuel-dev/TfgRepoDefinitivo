@@ -14,4 +14,5 @@ public class GameDTO {
     private Integer metacritic;
     private String consola;
     private String imagen;
+    private String descripcion;
 }

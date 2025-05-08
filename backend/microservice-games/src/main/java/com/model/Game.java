@@ -32,4 +32,7 @@ public class Game {
     @Field("imagen")
     private String imagen;
 
+    @Field("descripcion")
+    private String descripcion;
+
 }

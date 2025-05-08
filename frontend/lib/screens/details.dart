@@ -69,10 +69,9 @@ class GameDetailPage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              // Descripción del juego (opcional)
-              const Text(
-                'Este es un juego increíble que no te puedes perder. Disfruta de horas de diversión en tu consola favorita.',
-                style: TextStyle(
+              Text(
+                game.descripcion,
+                style: const TextStyle(
                   fontSize: 16,
                   color: Colors.white70,
                 ),

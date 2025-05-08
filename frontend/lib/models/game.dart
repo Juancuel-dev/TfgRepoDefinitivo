@@ -5,6 +5,7 @@ class Game {
   final int? metacritic; // Cambiar a nullable (int?)
   final String consola;
   final String imageUrl;
+  final String descripcion;
 
   Game({
     required this.id,
@@ -13,6 +14,7 @@ class Game {
     this.metacritic, // Permitir que sea null
     required this.consola,
     required this.imageUrl,
+    required this.descripcion
   });
 
   factory Game.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class Game {
       metacritic: json['metacritic'] != null ? json['metacritic'] as int : null, // Manejar null en metacritic
       consola: json['consola'] ?? 'Desconocida', // Valor predeterminado si consola es null
       imageUrl: json['imagen'] ?? '', // Valor predeterminado si la imagen es null
+      descripcion: json['descripcion'] ?? '', // Valor predeterminado si la descripcion es null
     );
   }
 
@@ -35,6 +38,7 @@ class Game {
       'metacritic': metacritic,
       'consola': consola,
       'imagen': imageUrl,
+      'descripcion': descripcion,
     };
   }
 }
