@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_auth_app/services/cartProvider.dart';
-import 'package:flutter_auth_app/services/cartService.dart';
-import 'package:flutter_auth_app/services/authProvider.dart';
-import 'package:flutter_auth_app/screens/baseLayout.dart';
+import 'package:flutter_auth_app/services/cart_provider.dart';
+import 'package:flutter_auth_app/services/cart_service.dart';
+import 'package:flutter_auth_app/services/auth_provider.dart';
+import 'package:flutter_auth_app/screens/base_layout.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});

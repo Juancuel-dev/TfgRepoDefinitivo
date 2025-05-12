@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_auth_app/screens/baseLayout.dart';
+import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:go_router/go_router.dart'; // Importar GoRouter para la navegación
 
 class WelcomePage extends StatelessWidget {

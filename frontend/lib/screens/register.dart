@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_auth_app/screens/baseLayout.dart';
-import 'package:flutter_auth_app/services/authService.dart';
+import 'package:flutter_auth_app/screens/base_layout.dart';
+import 'package:flutter_auth_app/services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
   final void Function(String token)? onRegister; // Callback opcional para manejar el token después del registro

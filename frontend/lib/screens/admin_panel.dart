@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_auth_app/screens/baseLayout.dart';
+import 'package:flutter_auth_app/screens/base_layout.dart';
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});

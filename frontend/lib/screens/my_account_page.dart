@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/models/userDTO.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_auth_app/screens/baseLayout.dart';
-import 'package:flutter_auth_app/services/authProvider.dart';
-import 'package:flutter_auth_app/services/authService.dart';
-import 'package:flutter_auth_app/services/imageService.dart';
+import 'package:flutter_auth_app/screens/base_layout.dart';
+import 'package:flutter_auth_app/services/auth_provider.dart';
+import 'package:flutter_auth_app/services/auth_service.dart';
+import 'package:flutter_auth_app/services/image_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -71,53 +71,56 @@ class _MyAccountPageState extends State<MyAccountPage> {
   }
 
   Future<void> _fetchUserData() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final authService = AuthService();
-    final token = authProvider.jwtToken; // Obtener el token del usuario logueado
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  final authService = AuthService();
+  final token = authProvider.jwtToken;
 
-    print('JWT Token: $token');
+  print('JWT Token: $token');
 
-    if (token == null) {
-      Future.microtask(() => context.go('/login'));
-      return;
-    }
-
-    final role = authService.getRoleFromToken(token);
-    setState(() {
-      userRole = role; // Guardar el rol del usuario
-    });
-
-    try {
-      final response = await http.get(
-        Uri.parse('http://localhost:8080/gateway/users/me'),
-        headers: {
-          'Authorization': 'Bearer $token', // Pasar el token como parámetro de autorización
-        },
-      );
-
-      print('User data response: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          userData = data;
-          isLoading = false;
-        });
-
-        final clientId = data['clientId'];
-        print('Client ID: $clientId');
-
-        if (clientId != null) {
-          await _fetchUserOrders(clientId, token);
-        }
-      } else {
-        Future.microtask(() => context.go('/login'));
-      }
-    } catch (e) {
-      print('Error fetching user data: $e');
-      Future.microtask(() => context.go('/login'));
-    }
+  if (token == null) {
+    Future.microtask(() => context.go('/login'));
+    return;
   }
+
+  // 1. Extraer clientId del token (no esperar a la respuesta del backend)
+  final clientId = authService.getClaimFromToken(token, 'clientId');
+  final role = authService.getRoleFromToken(token);
+  
+  print('Client ID from token: $clientId'); // <- Esto ya no será null
+
+  setState(() {
+    userRole = role;
+  });
+
+  try {
+    final response = await http.get(
+      Uri.parse('http://localhost:8080/gateway/users/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('User data response: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        userData = data;
+        isLoading = false;
+      });
+
+      // 2. Usar el clientId que obtuvimos del token
+      if (clientId != null) {
+        await _fetchUserOrders(clientId, token);
+      }
+    } else {
+      Future.microtask(() => context.go('/login'));
+    }
+  } catch (e) {
+    print('Error fetching user data: $e');
+    Future.microtask(() => context.go('/login'));
+  }
+}
 
   Future<void> _loadUserProfileImage() async {
     final imageId = userData?['imageId'] ?? 1; // Usar un ID por defecto si no está definido
@@ -603,7 +606,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Precio Total: \$${order['precio']}',
+                          'Precio Total: \$${order['precio'].toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.white70,

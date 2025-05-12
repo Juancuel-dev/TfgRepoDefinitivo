@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/models/game.dart';
-import 'package:flutter_auth_app/services/gamesService.dart';
-import 'package:flutter_auth_app/screens/baseLayout.dart';
+import 'package:flutter_auth_app/services/games_service.dart';
+import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:go_router/go_router.dart';
 
 class SearchPage extends StatefulWidget {

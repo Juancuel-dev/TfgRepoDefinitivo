@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_auth_app/models/game.dart';
-import 'package:flutter_auth_app/services/cartProvider.dart';
-import 'package:flutter_auth_app/screens/baseLayout.dart';
+import 'package:flutter_auth_app/services/cart_provider.dart';
+import 'package:flutter_auth_app/screens/base_layout.dart';
 
 class GameDetailPage extends StatelessWidget {
   final Game game;

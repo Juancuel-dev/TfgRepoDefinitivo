@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/models/game.dart';
-import 'package:flutter_auth_app/screens/adminPanel.dart';
-import 'package:flutter_auth_app/screens/categorypage.dart';
+import 'package:flutter_auth_app/screens/admin_panel.dart';
+import 'package:flutter_auth_app/screens/category_page.dart';
 import 'package:flutter_auth_app/screens/main_screen.dart'; // Importar MainScreen
-import 'package:flutter_auth_app/screens/myAccountPage.dart';
-import 'package:flutter_auth_app/screens/searchpage.dart';
+import 'package:flutter_auth_app/screens/my_account_page.dart';
+import 'package:flutter_auth_app/screens/search_page.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/screens/login.dart';
 import 'package:flutter_auth_app/screens/register.dart';
 import 'package:flutter_auth_app/screens/cart.dart';
 import 'package:flutter_auth_app/screens/details.dart';
-import 'package:flutter_auth_app/services/cartProvider.dart';
-import 'package:flutter_auth_app/services/authProvider.dart';
+import 'package:flutter_auth_app/services/cart_provider.dart';
+import 'package:flutter_auth_app/services/auth_provider.dart';
 
 void main() {
   runApp(

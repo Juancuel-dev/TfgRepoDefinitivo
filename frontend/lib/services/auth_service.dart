@@ -56,4 +56,32 @@ class AuthService {
       return null;
     }
   }
+
+  String? getClaimFromToken(String token, String claim) {
+  try {
+    final parts = token.split('.');
+    if (parts.length != 3) throw Exception('Invalid token');
+    
+    final payload = _decodeBase64(parts[1]);
+    final payloadMap = json.decode(payload);
+    
+    return payloadMap[claim]?.toString(); // Convierte a String por seguridad
+  } catch (e) {
+    print('Error decoding token: $e');
+    return null;
+  }
+}
+
+String _decodeBase64(String str) {
+  String output = str.replaceAll('-', '+').replaceAll('_', '/');
+  
+  switch (output.length % 4) {
+    case 0: break;
+    case 2: output += '=='; break;
+    case 3: output += '='; break;
+    default: throw Exception('Illegal base64url string!');
+  }
+  
+  return utf8.decode(base64Url.decode(output));
+}
 }
