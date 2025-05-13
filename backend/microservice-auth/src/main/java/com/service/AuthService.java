@@ -10,7 +10,9 @@ import com.util.exception.ClienteNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,6 +27,11 @@ public class AuthService {
         User user = UserMapper.INSTANCE.toUser(input);
         user.setPassword(passwordEncoder.encode(input.getPassword()));
 
+        return UserMapper.INSTANCE.userToUserDTO(userRepository.save(user));
+    }
+    public UserDTO cambiarContrasenia(Jwt jwt, String password) throws ClienteNotFoundException {
+        User user = userRepository.findById(jwt.getClaimAsString("clientId")).orElseThrow(()-> new ClienteNotFoundException("Cliente no encontrado"));
+        user.setPassword(passwordEncoder.encode(password));
         return UserMapper.INSTANCE.userToUserDTO(userRepository.save(user));
     }
 

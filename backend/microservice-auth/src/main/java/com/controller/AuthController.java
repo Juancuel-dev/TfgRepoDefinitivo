@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -103,6 +104,15 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
         }return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @PostMapping("/change-password/{password}")
+    public ResponseEntity<?> cambiarContrasenia(Jwt jwt, @PathVariable String password){
+        try {
+            return ResponseEntity.ok(authenticationService.cambiarContrasenia(jwt,password));
+        } catch (ClienteNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }
