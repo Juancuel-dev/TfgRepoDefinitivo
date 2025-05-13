@@ -150,37 +150,98 @@ class _AdminPanelState extends State<AdminPanel> {
   }
 
   Widget _buildProductOperations() {
-    return FutureBuilder<List<dynamic>>(
-      future: _fetchData('games'),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.blue));
-        } else if (snapshot.hasError) {
-          return const Center(
-            child: Text('Error al cargar productos', style: TextStyle(color: Colors.red)),
-          );
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Text('No hay productos disponibles', style: TextStyle(color: Colors.white70)),
-          );
-        }
+    return Stack(
+      children: [
+        FutureBuilder<List<dynamic>>(
+          future: _fetchData('games'),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator(color: Colors.blue));
+            } else if (snapshot.hasError) {
+              return const Center(
+                child: Text('Error al cargar productos', style: TextStyle(color: Colors.red)),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(
+                child: Text('No hay productos disponibles', style: TextStyle(color: Colors.white70)),
+              );
+            }
 
-        final products = snapshot.data!;
-        return ListView.builder(
-          itemCount: products.length,
-          itemBuilder: (context, index) {
-            final product = products[index];
-            return ListTile(
-              title: Text(product['name'], style: const TextStyle(color: Colors.white)),
-              subtitle: Text('Precio: \$${product['precio']}', style: const TextStyle(color: Colors.white70)),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _deleteData('games', product['id']),
+            final products = snapshot.data!;
+            return GridView.builder(
+              padding: const EdgeInsets.all(16.0),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Número de columnas
+                crossAxisSpacing: 16.0, // Espaciado horizontal
+                mainAxisSpacing: 16.0, // Espaciado vertical
+                childAspectRatio: 4 / 1, // Relación de aspecto ajustada para tarjetas más estrechas
               ),
+              itemCount: products.length,
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[800], // Fondo oscuro para la tarjeta
+                    borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            product['name'],
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis, // Cortar texto si es muy largo
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => _deleteData('games', product['id']),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                            decoration: BoxDecoration(
+                              color: Colors.red, // Fondo rojo para el botón
+                              borderRadius: BorderRadius.circular(4.0),
+                            ),
+                            child: const Text(
+                              'Eliminar',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
           },
-        );
-      },
+        ),
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: GestureDetector(
+            onTap: () => _showAddGameDialog(),
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Colors.blue, // Fondo azul para el botón flotante
+                borderRadius: BorderRadius.circular(50.0),
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 24),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -248,7 +309,7 @@ class _AdminPanelState extends State<AdminPanel> {
         headers: {'Authorization': 'Bearer $token'},
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 204) {
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Elemento eliminado con éxito'), backgroundColor: Colors.green),
@@ -263,5 +324,163 @@ class _AdminPanelState extends State<AdminPanel> {
         const SnackBar(content: Text('Error al eliminar elemento'), backgroundColor: Colors.red),
       );
     }
+  }
+
+  Future<void> _addGame(
+    String name,
+    double precio,
+    int? metacritic,
+    String consola,
+    String imageUrl,
+    String descripcion,
+  ) async {
+    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+
+    final newGame = {
+      'name': name,
+      'precio': precio,
+      'metacritic': metacritic,
+      'consola': consola,
+      'imagen': imageUrl,
+      'descripcion': descripcion,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:8080/gateway/games'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(newGame),
+      );
+
+      if (response.statusCode == 201) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Juego agregado con éxito'), backgroundColor: Colors.green),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al agregar el juego'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      print('Error adding game: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error de conexión al servidor'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  void _showAddGameDialog() {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController precioController = TextEditingController();
+    final TextEditingController metacriticController = TextEditingController();
+    final TextEditingController consolaController = TextEditingController();
+    final TextEditingController imageUrlController = TextEditingController();
+    final TextEditingController descripcionController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.grey[850], // Fondo oscuro
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Agregar Nuevo Juego',
+                  style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                _buildCustomTextField(nameController, 'Nombre'),
+                _buildCustomTextField(precioController, 'Precio', isNumeric: true),
+                _buildCustomTextField(metacriticController, 'Metacritic (opcional)', isNumeric: true),
+                _buildCustomTextField(consolaController, 'Consola'),
+                _buildCustomTextField(imageUrlController, 'URL de la Imagen'),
+                _buildCustomTextField(descripcionController, 'Descripción'),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _buildCustomButton(
+                      label: 'Cancelar',
+                      color: Colors.red,
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildCustomButton(
+                      label: 'Agregar',
+                      color: Colors.green,
+                      onPressed: () {
+                        _addGame(
+                          nameController.text,
+                          double.tryParse(precioController.text) ?? 0.0,
+                          int.tryParse(metacriticController.text),
+                          consolaController.text,
+                          imageUrlController.text,
+                          descripcionController.text,
+                        );
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomTextField(TextEditingController controller, String label, {bool isNumeric = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[800], // Fondo oscuro para el campo de texto
+            borderRadius: BorderRadius.circular(4.0), // Bordes redondeados
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+            style: const TextStyle(color: Colors.white), // Texto blanco
+            decoration: const InputDecoration(
+              border: InputBorder.none, // Sin bordes
+              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8), // Espaciado interno
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildCustomButton({required String label, required Color color, required VoidCallback onPressed}) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: color, // Color del botón
+          borderRadius: BorderRadius.circular(4.0), // Bordes redondeados
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), // Texto blanco
+        ),
+      ),
+    );
   }
 }
