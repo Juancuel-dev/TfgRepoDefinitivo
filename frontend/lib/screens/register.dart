@@ -152,31 +152,45 @@ class _RegisterPageState extends State<RegisterPage> {
                                 email,
                               );
 
-                              setState(() {
-                                _isLoading = false;
-                              });
-
                               if (success) {
-                                // Simular un token de registro (puedes obtenerlo del backend si es necesario)
-                                final fakeToken = 'fake_jwt_token';
+                                // Intentar iniciar sesión automáticamente después del registro
+                                final token = await _authService.login(username, password);
 
-                                // Llamar al callback onRegister si está definido
-                                if (widget.onRegister != null) {
-                                  widget.onRegister!(fakeToken);
+                                setState(() {
+                                  _isLoading = false;
+                                });
+
+                                if (token != null) {
+                                  // Llamar al callback onRegister si está definido
+                                  if (widget.onRegister != null) {
+                                    widget.onRegister!(token);
+                                  }
+
+                                  // Mostrar mensaje de éxito
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Registro exitoso'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+
+                                  // Redirigir al home o a otra pantalla
+                                  Navigator.of(context).pop();
+                                } else {
+                                  // Mostrar mensaje de error si el login falla
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Error al iniciar sesión después del registro'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
                                 }
-
-                                // Mostrar mensaje de éxito
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Registro exitoso'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-
-                                // Redirigir al home o a otra pantalla
-                                Navigator.of(context).pop();
                               } else {
-                                // Mostrar mensaje de error
+                                setState(() {
+                                  _isLoading = false;
+                                });
+
+                                // Mostrar mensaje de error si el registro falla
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Error al registrar usuario'),

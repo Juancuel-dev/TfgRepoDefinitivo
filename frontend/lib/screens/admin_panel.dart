@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
+import 'package:flutter_auth_app/services/auth_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
@@ -111,68 +115,153 @@ class _AdminPanelState extends State<AdminPanel> {
   }
 
   Widget _buildUserOperations() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Operaciones de Usuario',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Aquí puedes gestionar usuarios.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        // TODO: Agregar contenido específico para operaciones de usuario
-      ],
+    return FutureBuilder<List<dynamic>>(
+      future: _fetchData('users'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: Colors.blue));
+        } else if (snapshot.hasError) {
+          return const Center(
+            child: Text('Error al cargar usuarios', style: TextStyle(color: Colors.red)),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('No hay usuarios disponibles', style: TextStyle(color: Colors.white70)),
+          );
+        }
+
+        final users = snapshot.data!;
+        return ListView.builder(
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            final user = users[index];
+            return ListTile(
+              title: Text(user['username'], style: const TextStyle(color: Colors.white)),
+              subtitle: Text(user['email'], style: const TextStyle(color: Colors.white70)),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _deleteData('users', user['id']),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget _buildProductOperations() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Operaciones de Productos',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Aquí puedes gestionar productos.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        // TODO: Agregar contenido específico para operaciones de productos
-      ],
+    return FutureBuilder<List<dynamic>>(
+      future: _fetchData('games'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: Colors.blue));
+        } else if (snapshot.hasError) {
+          return const Center(
+            child: Text('Error al cargar productos', style: TextStyle(color: Colors.red)),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('No hay productos disponibles', style: TextStyle(color: Colors.white70)),
+          );
+        }
+
+        final products = snapshot.data!;
+        return ListView.builder(
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+            final product = products[index];
+            return ListTile(
+              title: Text(product['name'], style: const TextStyle(color: Colors.white)),
+              subtitle: Text('Precio: \$${product['precio']}', style: const TextStyle(color: Colors.white70)),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _deleteData('games', product['id']),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget _buildOrderOperations() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Operaciones de Pedidos',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Aquí puedes gestionar pedidos.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        // TODO: Agregar contenido específico para operaciones de pedidos
-      ],
+    return FutureBuilder<List<dynamic>>(
+      future: _fetchData('orders'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: Colors.blue));
+        } else if (snapshot.hasError) {
+          return const Center(
+            child: Text('Error al cargar pedidos', style: TextStyle(color: Colors.red)),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('No hay pedidos disponibles', style: TextStyle(color: Colors.white70)),
+          );
+        }
+
+        final orders = snapshot.data!;
+        return ListView.builder(
+          itemCount: orders.length,
+          itemBuilder: (context, index) {
+            final order = orders[index];
+            return ListTile(
+              title: Text('Pedido ID: ${order['orderId']}', style: const TextStyle(color: Colors.white)),
+              subtitle: Text('Total: \$${order['precio']}', style: const TextStyle(color: Colors.white70)),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _deleteData('orders', order['orderId']),
+              ),
+            );
+          },
+        );
+      },
     );
+  }
+
+  Future<List<dynamic>> _fetchData(String endpoint) async {
+    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:8080/gateway/$endpoint'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Error al obtener datos de $endpoint');
+      }
+    } catch (e) {
+      print('Error fetching data from $endpoint: $e');
+      throw Exception('Error al obtener datos de $endpoint');
+    }
+  }
+
+  Future<void> _deleteData(String endpoint, String id) async {
+    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+
+    try {
+      final response = await http.delete(
+        Uri.parse('http://localhost:8080/gateway/$endpoint/$id'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Elemento eliminado con éxito'), backgroundColor: Colors.green),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al eliminar elemento'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al eliminar elemento'), backgroundColor: Colors.red),
+      );
+    }
   }
 }

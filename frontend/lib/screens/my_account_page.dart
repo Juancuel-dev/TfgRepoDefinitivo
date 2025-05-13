@@ -130,6 +130,70 @@ class _MyAccountPageState extends State<MyAccountPage> {
     });
   }
 
+  Future<List<dynamic>> _fetchData(String endpoint) async {
+    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+
+    print('Fetching data from endpoint: $endpoint');
+    print('JWT Token: $token');
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:8080/gateway/$endpoint'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      print('Response status for $endpoint: ${response.statusCode}');
+      print('Response body for $endpoint: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('Parsed data for $endpoint: $data');
+        return data;
+      } else {
+        print('Error fetching data from $endpoint: ${response.statusCode}');
+        throw Exception('Error al obtener datos de $endpoint');
+      }
+    } catch (e) {
+      print('Exception while fetching data from $endpoint: $e');
+      throw Exception('Error al obtener datos de $endpoint');
+    }
+  }
+
+  Future<void> _deleteData(String endpoint, String id) async {
+    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+
+    print('Deleting data from endpoint: $endpoint with ID: $id');
+    print('JWT Token: $token');
+
+    try {
+      final response = await http.delete(
+        Uri.parse('http://localhost:8080/gateway/$endpoint/$id'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      print('Response status for DELETE $endpoint/$id: ${response.statusCode}');
+      print('Response body for DELETE $endpoint/$id: ${response.body}');
+
+      if (response.statusCode == 200) {
+        print('Successfully deleted data from $endpoint/$id');
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Elemento eliminado con éxito'), backgroundColor: Colors.green),
+        );
+      } else {
+        print('Error deleting data from $endpoint/$id: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al eliminar elemento'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      print('Exception while deleting data from $endpoint/$id: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al eliminar elemento'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600; // Detectar si es móvil
@@ -231,6 +295,11 @@ class _MyAccountPageState extends State<MyAccountPage> {
         return _buildChangePasswordSection();
       case 'Cerrar Sesión':
         return _buildLogoutButton(context);
+      case 'Admin Panel':
+        Future.microtask(() => context.go('/admin')); // Redirigir a /admin
+        return const Center(
+          child: CircularProgressIndicator(), // Mostrar un indicador mientras se redirige
+        );
       default:
         return const Center(
           child: Text(
@@ -449,7 +518,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
       // Enviar la solicitud PUT al backend
       final response = await http.put(
-        Uri.parse('http://localhost:8080/users/update'), // Endpoint para actualizar el usuario
+        Uri.parse('http://localhost:8080/gateway/users/update'), // Endpoint para actualizar el usuario
         headers: {
           'Authorization': 'Bearer $token', // Pasar el token como parámetro de autorización
           'Content-Type': 'application/json',
@@ -587,11 +656,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pedido ID: ${order['orderId']}',
-                          style: const TextStyle(
-                            fontSize: 16,
+                      children: [                        Text(                          'Pedido ID: ${order['orderId']}',                          style: const TextStyle(                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),

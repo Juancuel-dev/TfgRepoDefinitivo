@@ -1,50 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Gracias por inscribirte</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido Confirmado</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-        }
-        .container {
-            width: 80%;
-            margin: 40px auto;
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .text {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-        .button {
-            background-color: #4CAF50;
+            background-color: #000;
             color: #fff;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            margin: 0;
+            padding: 0;
         }
-        .button:hover {
-            background-color: #3e8e41;
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .header {
+            background-color: #222;
+            padding: 20px;
+            text-align: center;
+        }
+        .header img {
+            max-width: 150px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 10px 0 0;
+            color: #98c738;
+        }
+        .content {
+            padding: 20px;
+        }
+        .content h2 {
+            font-size: 20px;
+            color: #98c738;
+        }
+        .content p {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #ccc;
+        }
+        .order-details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #333;
+            border-radius: 8px;
+        }
+        .order-details h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #98c738;
+        }
+        .order-details p {
+            font-size: 14px;
+            margin: 5px 0;
+            color: #ccc;
+        }
+        .footer {
+            background-color: #222;
+            padding: 15px;
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+        }
+        .footer a {
+            color: #98c738;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1 class="title">Gracias por inscribirte</h1>
-    <p class="text">Estamos emocionados de que te hayas inscrito en nuestro sorteo. Tu participación es muy importante para nosotros.</p>
-    <p class="text">Te deseamos mucha suerte y esperamos que ganes uno de nuestros premios.</p>
-    <p class="text">Si tienes alguna pregunta o necesitas más información, no dudes en contactarnos.</p>
-    <a href="#" class="button">Ver más información</a>
+<div class="email-container">
+    <div class="header">
+        <img src="https://via.placeholder.com/150x50?text=LevelUp+Shop" alt="LevelUp Shop Logo">
+        <h1>¡Gracias por tu pedido!</h1>
+    </div>
+    <div class="content">
+        <p>Tu pedido ha sido confirmado con éxito. Estamos preparando todo para que lo recibas lo antes posible.</p>
+        <p>Si tienes alguna pregunta sobre tu pedido, no dudes en <a href="mailto:soporte@levelupshop.com" style="color: #98c738;">contactarnos</a>.</p>
+        <p>Gracias por confiar en <strong>LevelUp Shop</strong>. ¡Esperamos que disfrutes de tu compra!</p>
+    </div>
+    <div class="footer">
+        <p>© 2025 LevelUp Shop. Todos los derechos reservados.</p>
+        <p><a href="http://localhost:8080">Visita nuestra tienda</a></p>
+    </div>
 </div>
 </body>
 </html>
