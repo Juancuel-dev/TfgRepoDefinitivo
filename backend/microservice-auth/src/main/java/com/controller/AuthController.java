@@ -117,10 +117,10 @@ public class AuthController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarUsuario(@AuthenticationPrincipal Jwt jwt, @PathVariable String id){
+    public ResponseEntity<?> eliminarUsuario(@RequestHeader("Authorization") String token, @PathVariable String id){
         try {
-            authenticationService.delete(jwt,id);
-            return ResponseEntity.ok().build();
+            authenticationService.delete(token,id);
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }

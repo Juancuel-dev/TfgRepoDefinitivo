@@ -8,12 +8,14 @@ import com.repository.user.UserRepository;
 import com.util.UserMapper;
 import com.util.exception.ClienteNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -62,8 +64,12 @@ public class AuthService {
         return userRepository.findById(clientId).orElseThrow(()-> new ClienteNotFoundException("Cliente no encontrado con id " + clientId)).getEmail();
     }
 
-    public void delete(Jwt jwt,String id) {
-        if(jwt.getClaim("role").equals("admin")) {
+    public void delete(String token,String id) {
+        if(token.contains("Bearer ")){
+            token = token.substring(+7);
+        }
+        if(jwtService.hasRole(token,"ADMIN")) {
+            log.info("Eliminando usuario");
             userRepository.deleteById(id);
         }
     }

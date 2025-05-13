@@ -323,7 +323,6 @@ class _AdminPanelState extends State<AdminPanel> {
         Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint/$id'),
         headers: {'Authorization': 'Bearer $token'},
       );
-
       if (response.statusCode == 204) {
         // Si el endpoint es "users", realiza la segunda solicitud DELETE
         if (endpoint == 'users') {
@@ -333,6 +332,7 @@ class _AdminPanelState extends State<AdminPanel> {
           );
 
           if (authResponse.statusCode != 204) {
+            print('Error deleting user in auth: ${authResponse.statusCode}');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Error al eliminar el usuario en auth'),
