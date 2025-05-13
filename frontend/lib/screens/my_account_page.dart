@@ -72,56 +72,50 @@ class _MyAccountPageState extends State<MyAccountPage> {
   }
 
   Future<void> _fetchUserData() async {
-  final authProvider = Provider.of<AuthProvider>(context, listen: false);
-  final authService = AuthService();
-  final token = authProvider.jwtToken;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authService = AuthService();
+    final token = authProvider.jwtToken;
 
-  print('JWT Token: $token');
+    print('JWT Token: $token');
 
-  if (token == null) {
-    Future.microtask(() => context.go('/login'));
-    return;
-  }
+    if (token == null) {
+      Future.microtask(() => context.go('/login'));
+      return;
+    }
 
-  // 1. Extraer clientId del token (no esperar a la respuesta del backend)
-  final clientId = authService.getClaimFromToken(token, 'clientId');
-  final role = authService.getRoleFromToken(token);
-  
-  print('Client ID from token: $clientId'); // <- Esto ya no será null
+    // 1. Extraer clientId y rol del token JWT
+    final clientId = authService.getClaimFromToken(token, 'clientId');
+    final role = authService.getRoleFromToken(token);
 
-  setState(() {
-    userRole = role;
-  });
+    print('Client ID from token: $clientId');
+    print('Role from token: $role');
 
-  try {
-    final response = await http.get(
-      Uri.parse('${ServerConfig.serverIp}/gateway/users/me'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
+    setState(() {
+      userRole = role;
+    });
 
-    print('User data response: ${response.body}');
+    try {
+      // 2. Llamar al método fetchUserInfo del AuthService
+      final fetchedUserData = await authService.fetchUserInfo(token);
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        userData = data;
-        isLoading = false;
-      });
+      if (fetchedUserData != null) {
+        setState(() {
+          userData = fetchedUserData;
+          isLoading = false;
+        });
 
-      // 2. Usar el clientId que obtuvimos del token
-      if (clientId != null) {
-        await _fetchUserOrders(clientId, token);
+        // 3. Usar el clientId para obtener los pedidos del usuario
+        if (clientId != null) {
+          await _fetchUserOrders(clientId, token);
+        }
+      } else {
+        Future.microtask(() => context.go('/login'));
       }
-    } else {
+    } catch (e) {
+      print('Error fetching user data: $e');
       Future.microtask(() => context.go('/login'));
     }
-  } catch (e) {
-    print('Error fetching user data: $e');
-    Future.microtask(() => context.go('/login'));
   }
-}
 
   Future<void> _loadUserProfileImage() async {
     final imageId = userData?['imageId'] ?? 1; // Usar un ID por defecto si no está definido
@@ -344,7 +338,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
                   icon: Icons.edit,
                   label: 'Actualizar Información',
                   onTap: () {
-                    // Aquí puedes implementar la funcionalidad para actualizar información personal
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Funcionalidad en desarrollo'),
@@ -551,144 +544,88 @@ class _MyAccountPageState extends State<MyAccountPage> {
     return imageId ?? 1; // Retornar 1 como valor por defecto si no se puede parsear
   }
 
-  Widget _buildProfileInfoTile({required IconData icon, required String label, required String value}) {
-    return SizedBox(
-      width: 120, // Ancho fijo para evitar desbordamientos
+  Widget _buildOrdersSection() {
+    return SingleChildScrollView(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.blue, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
+          const Text(
+            'Mis Pedidos',
+            style: TextStyle(
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.white70,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
               color: Colors.white,
             ),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis, // Evitar desbordamientos
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOrdersSection() {
-    print('Building orders section with orders: $userOrders');
-
-    if (userOrders.isEmpty) {
-      return Card(
-        color: Colors.grey[850],
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'Mis Pedidos',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'No tienes pedidos realizados.',
-                style: TextStyle(color: Colors.white70),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Card(
-      color: Colors.grey[850],
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Mis Pedidos',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: userOrders.length,
-              itemBuilder: (context, index) {
-                final order = userOrders[index];
-                print('Rendering order: $order');
-                return Card(
-                  color: Colors.grey[800],
-                  margin: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [                        Text(                          'Pedido ID: ${order['orderId']}',                          style: const TextStyle(                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Fecha: ${order['fecha']}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Precio Total: \$${order['precio'].toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Juegos:',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        ...List<Widget>.from(order['games'].map((game) {
-                          return Text(
-                            '- ${game['game']['name']} (Cantidad: ${game['quantity']})',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.white70,
+          const SizedBox(height: 8),
+          userOrders.isEmpty
+              ? const Text(
+                  'No tienes pedidos realizados.',
+                  style: TextStyle(color: Colors.white70),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: userOrders.length,
+                  itemBuilder: (context, index) {
+                    final order = userOrders[index];
+                    return Card(
+                      color: Colors.grey[800],
+                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pedido ID: ${order['orderId']}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          );
-                        })),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Fecha: ${order['fecha']}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Precio Total: \$${order['precio'].toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Juegos:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            ...List<Widget>.from(order['games'].map((game) {
+                              return Text(
+                                '- ${game['game']['name']} (Cantidad: ${game['quantity']})',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white70,
+                                ),
+                              );
+                            })),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ],
       ),
     );
   }

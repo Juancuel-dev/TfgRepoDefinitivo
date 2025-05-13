@@ -5,6 +5,7 @@ import 'package:flutter_auth_app/models/game.dart';
 
 class CartProvider with ChangeNotifier {
   final List<CartItem> _items = [];
+  String? _jwtToken; // Propiedad para almacenar el token JWT
 
   /// Getter para obtener los elementos del carrito
   List<CartItem> get items => List.unmodifiable(_items);
@@ -12,6 +13,15 @@ class CartProvider with ChangeNotifier {
   /// Getter para calcular el precio total del carrito
   double get totalPrice =>
       _items.fold(0, (total, item) => total + (item.game.precio * item.quantity));
+
+  /// Getter para obtener el token JWT
+  String? get jwtToken => _jwtToken;
+
+  /// Setter para configurar el token JWT
+  void setJwtToken(String token) {
+    _jwtToken = token;
+    notifyListeners();
+  }
 
   /// Agrega un juego al carrito
   void addToCart(Game game) {

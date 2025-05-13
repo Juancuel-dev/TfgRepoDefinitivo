@@ -13,6 +13,7 @@ import 'package:flutter_auth_app/screens/cart.dart';
 import 'package:flutter_auth_app/screens/details.dart';
 import 'package:flutter_auth_app/services/cart_provider.dart';
 import 'package:flutter_auth_app/services/auth_provider.dart';
+import 'package:flutter_auth_app/screens/order_confirmation.dart'; // Importar OrderConfirmationPage
 
 void main() {
   runApp(
@@ -114,6 +115,10 @@ class MyApp extends StatelessWidget {
           path: '/my-account',
           builder: (context, state) => const MyAccountPage(), // Nueva ruta para "Mi Cuenta"
         ),
+        GoRoute(
+          path: '/order-confirmation',
+          builder: (context, state) => const OrderConfirmationPage(), // Nueva ruta para "Confirmación de Pedido"
+        ),
       ],
       redirect: (context, state) {
         final loggedIn = authProvider.isLoggedIn;
@@ -124,7 +129,7 @@ class MyApp extends StatelessWidget {
         }
 
         // Redirigir a /login si el usuario no está autenticado y está intentando acceder a rutas protegidas
-        final protectedRoutes = ['/cart', '/admin', '/my-account'];
+        final protectedRoutes = ['/cart', '/admin', '/my-account', '/order-confirmation'];
         if (!loggedIn && protectedRoutes.contains(state.uri.path)) {
           return '/login';
         }

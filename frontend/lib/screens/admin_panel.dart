@@ -5,6 +5,7 @@ import 'package:flutter_auth_app/services/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:go_router/go_router.dart'; // Importación necesaria para la navegación
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
@@ -62,6 +63,7 @@ class _AdminPanelState extends State<AdminPanel> {
       'Operaciones de Usuario',
       'Operaciones de Productos',
       'Operaciones de Pedidos',
+      'Volver a Mi Cuenta', // Nueva categoría
     ];
 
     return Container(
@@ -87,6 +89,11 @@ class _AdminPanelState extends State<AdminPanel> {
                 if (MediaQuery.of(context).size.width < 600) {
                   isMenuVisible = false; // Ocultar el menú en móvil al seleccionar una categoría
                 }
+
+                // Navegar a "Mi Cuenta" si se selecciona la nueva categoría
+                if (category == 'Volver a Mi Cuenta') {
+                  context.go('/my-account'); // Redirigir a la página de "Mi Cuenta"
+                }
               });
             },
             selected: isSelected,
@@ -105,6 +112,12 @@ class _AdminPanelState extends State<AdminPanel> {
         return _buildProductOperations();
       case 'Operaciones de Pedidos':
         return _buildOrderOperations();
+      case 'Volver a Mi Cuenta':
+        // Redirigir a "Mi Cuenta" (opcional, ya se maneja en el onTap del menú)
+        Future.microtask(() => context.go('/my-account'));
+        return const Center(
+          child: CircularProgressIndicator(), // Mostrar un indicador mientras se redirige
+        );
       default:
         return const Center(
           child: Text(

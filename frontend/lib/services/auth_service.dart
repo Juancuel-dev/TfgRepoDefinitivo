@@ -85,4 +85,28 @@ String _decodeBase64(String str) {
   
   return utf8.decode(base64Url.decode(output));
 }
+
+Future<Map<String, dynamic>?> fetchUserInfo(String jwtToken) async {
+    const url = '${ServerConfig.serverIp}/gateway/users/me'; // Cambia esto por tu URL real
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $jwtToken', // Agregar el token JWT en el encabezado
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Decodificar la respuesta JSON
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        print('Error al obtener la información del usuario: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Error en la solicitud HTTP: $e');
+      return null;
+    }
+  }
 }
