@@ -20,6 +20,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
     public UserDTO signup(RegisterRequest input) {
 
@@ -28,8 +29,11 @@ public class AuthService {
 
         return UserMapper.INSTANCE.userToUserDTO(userRepository.save(user));
     }
-    public UserDTO cambiarContrasenia(Jwt jwt, String password) throws ClienteNotFoundException {
-        User user = userRepository.findById(jwt.getClaimAsString("clientId")).orElseThrow(()-> new ClienteNotFoundException("Cliente no encontrado"));
+    public UserDTO cambiarContrasenia(String token, String password) throws ClienteNotFoundException {
+        if(token.contains("Bearer ")){
+            token = token.substring(+7);
+        }
+        User user = userRepository.findById(jwtService.extractClientId(token)).orElseThrow(()-> new ClienteNotFoundException("Cliente no encontrado"));
         user.setPassword(passwordEncoder.encode(password));
         return UserMapper.INSTANCE.userToUserDTO(userRepository.save(user));
     }

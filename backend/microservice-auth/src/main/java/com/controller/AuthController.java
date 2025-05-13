@@ -108,9 +108,9 @@ public class AuthController {
     }
 
     @PostMapping("/change-password/{password}")
-    public ResponseEntity<?> cambiarContrasenia(@AuthenticationPrincipal Jwt jwt, @PathVariable String password){
+    public ResponseEntity<?> cambiarContrasenia(@RequestHeader("Authorization") String token, @PathVariable String password){
         try {
-            return ResponseEntity.ok(authenticationService.cambiarContrasenia(jwt,password));
+            return ResponseEntity.ok(authenticationService.cambiarContrasenia(token,password));
         } catch (ClienteNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
