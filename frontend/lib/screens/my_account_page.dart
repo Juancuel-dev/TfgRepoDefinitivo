@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:flutter_auth_app/models/userDTO.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -36,7 +37,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
     try {
       print('Fetching orders for clientId: $clientId');
       final response = await http.get(
-        Uri.parse('http://localhost:8080/gateway/orders/user/$clientId'),
+        Uri.parse('${ServerConfig.serverIp}/gateway/orders/user/$clientId'),
         headers: {
           'Authorization': 'Bearer $jwtToken', // Pasar el token como parámetro de autorización
         },
@@ -94,7 +95,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
   try {
     final response = await http.get(
-      Uri.parse('http://localhost:8080/gateway/users/me'),
+      Uri.parse('${ServerConfig.serverIp}/gateway/users/me'),
       headers: {
         'Authorization': 'Bearer $token',
       },
@@ -128,70 +129,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
     setState(() {
       userProfileImage = image; // Asignar el objeto AssetImage
     });
-  }
-
-  Future<List<dynamic>> _fetchData(String endpoint) async {
-    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
-
-    print('Fetching data from endpoint: $endpoint');
-    print('JWT Token: $token');
-
-    try {
-      final response = await http.get(
-        Uri.parse('http://localhost:8080/gateway/$endpoint'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      print('Response status for $endpoint: ${response.statusCode}');
-      print('Response body for $endpoint: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        print('Parsed data for $endpoint: $data');
-        return data;
-      } else {
-        print('Error fetching data from $endpoint: ${response.statusCode}');
-        throw Exception('Error al obtener datos de $endpoint');
-      }
-    } catch (e) {
-      print('Exception while fetching data from $endpoint: $e');
-      throw Exception('Error al obtener datos de $endpoint');
-    }
-  }
-
-  Future<void> _deleteData(String endpoint, String id) async {
-    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
-
-    print('Deleting data from endpoint: $endpoint with ID: $id');
-    print('JWT Token: $token');
-
-    try {
-      final response = await http.delete(
-        Uri.parse('http://localhost:8080/gateway/$endpoint/$id'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      print('Response status for DELETE $endpoint/$id: ${response.statusCode}');
-      print('Response body for DELETE $endpoint/$id: ${response.body}');
-
-      if (response.statusCode == 200) {
-        print('Successfully deleted data from $endpoint/$id');
-        setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Elemento eliminado con éxito'), backgroundColor: Colors.green),
-        );
-      } else {
-        print('Error deleting data from $endpoint/$id: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al eliminar elemento'), backgroundColor: Colors.red),
-        );
-      }
-    } catch (e) {
-      print('Exception while deleting data from $endpoint/$id: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al eliminar elemento'), backgroundColor: Colors.red),
-      );
-    }
   }
 
   @override
@@ -518,7 +455,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
       // Enviar la solicitud PUT al backend
       final response = await http.put(
-        Uri.parse('http://localhost:8080/gateway/users/update'), // Endpoint para actualizar el usuario
+        Uri.parse('${ServerConfig.serverIp}/gateway/users/update'), // Endpoint para actualizar el usuario
         headers: {
           'Authorization': 'Bearer $token', // Pasar el token como parámetro de autorización
           'Content-Type': 'application/json',
@@ -798,7 +735,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
     try {
       final response = await http.put(
-        Uri.parse('http://localhost:8080/users/change-password'),
+        Uri.parse('${ServerConfig.serverIp}/users/change-password'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/services/cart_provider.dart';
@@ -30,7 +31,7 @@ class CartPage extends StatelessWidget {
   Future<void> _purchase(BuildContext context) async {
     final cartItems = Provider.of<CartProvider>(context, listen: false).items;
     final jwtToken = Provider.of<AuthProvider>(context, listen: false).jwtToken;
-    final cartService = CartService(baseUrl: 'http://localhost:8080');
+    final cartService = CartService(baseUrl: '${ServerConfig.serverIp}');
 
     // Verificar si el carrito está vacío
     if (cartItems.isEmpty) {

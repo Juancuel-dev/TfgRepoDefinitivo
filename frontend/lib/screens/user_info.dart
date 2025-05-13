@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -25,7 +26,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
   Future<void> fetchUserInfo() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:8080/gateway/me'), // Cambia la URL según tu backend
+        Uri.parse('${ServerConfig.serverIp}/gateway/me'), // Cambia la URL según tu backend
         headers: {
           'Authorization': widget.token, // Pasar el token en el encabezado
         },

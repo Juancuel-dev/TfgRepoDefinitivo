@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  final String apiUrl = 'http://localhost:8080/gateway';
+  final String apiUrl = '${ServerConfig.serverIp}/gateway';
 
   Future<String?> login(String username, String password) async {
     final response = await http.post(

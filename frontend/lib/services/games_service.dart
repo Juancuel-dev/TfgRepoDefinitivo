@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_auth_app/models/game.dart';
 
 class GamesService {
-  final String apiUrl = 'http://localhost:8080/gateway/games';
+  final String apiUrl = '${ServerConfig.serverIp}/gateway/games';
 
   Future<List<Game>> fetchGames() async {
     final response = await http.get(
@@ -41,7 +42,7 @@ class GamesService {
   }
 
   Future<List<Game>> searchGames(String query) async {
-    final url = Uri.parse('http://localhost:8080/gateway/games/search?name=$query');
+    final url = Uri.parse('${ServerConfig.serverIp}/gateway/games/search?name=$query');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {

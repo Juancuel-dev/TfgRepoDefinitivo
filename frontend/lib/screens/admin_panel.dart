@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:flutter_auth_app/services/auth_provider.dart';
 import 'package:provider/provider.dart';
@@ -285,7 +286,7 @@ class _AdminPanelState extends State<AdminPanel> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:8080/gateway/$endpoint'),
+        Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -305,7 +306,7 @@ class _AdminPanelState extends State<AdminPanel> {
 
     try {
       final response = await http.delete(
-        Uri.parse('http://localhost:8080/gateway/$endpoint/$id'),
+        Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint/$id'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -347,7 +348,7 @@ class _AdminPanelState extends State<AdminPanel> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8080/gateway/games'),
+        Uri.parse('${ServerConfig.serverIp}/gateway/games'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
