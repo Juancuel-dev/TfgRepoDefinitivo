@@ -25,17 +25,32 @@ class _AdminPanelState extends State<AdminPanel> {
     return BaseLayout(
       child: Stack(
         children: [
-          Row(
-            children: [
-              if (!isMobile || isMenuVisible) _buildSidebar(), // Mostrar menú si es grande o está visible
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: _buildContent(), // Contenido dinámico según la categoría seleccionada
+          // Mostrar contenido principal solo si el menú no está visible en móvil
+          if (!isMobile || !isMenuVisible)
+            Row(
+              children: [
+                if (!isMobile) _buildSidebar(), // Mostrar menú si no es móvil
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildContent(), // Contenido dinámico según la categoría seleccionada
+                  ),
                 ),
+              ],
+            ),
+          // Mostrar menú lateral en móvil si está visible
+          if (isMobile && isMenuVisible)
+            Positioned(
+              top: 0,
+              left: 0,
+              child: Container(
+                width: 200,
+                height: MediaQuery.of(context).size.height,
+                color: Colors.grey[900],
+                child: _buildSidebar(),
               ),
-            ],
-          ),
+            ),
+          // Botón para alternar el menú en móvil
           if (isMobile)
             Positioned(
               top: 0,
@@ -420,51 +435,53 @@ class _AdminPanelState extends State<AdminPanel> {
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.grey[850], // Fondo oscuro
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Agregar Nuevo Juego',
-                  style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                _buildCustomTextField(nameController, 'Nombre'),
-                _buildCustomTextField(precioController, 'Precio', isNumeric: true),
-                _buildCustomTextField(metacriticController, 'Metacritic (opcional)', isNumeric: true),
-                _buildCustomTextField(consolaController, 'Consola'),
-                _buildCustomTextField(imageUrlController, 'URL de la Imagen'),
-                _buildCustomTextField(descripcionController, 'Descripción'),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _buildCustomButton(
-                      label: 'Cancelar',
-                      color: Colors.red,
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildCustomButton(
-                      label: 'Agregar',
-                      color: Colors.green,
-                      onPressed: () {
-                        _addGame(
-                          nameController.text,
-                          double.tryParse(precioController.text) ?? 0.0,
-                          int.tryParse(metacriticController.text),
-                          consolaController.text,
-                          imageUrlController.text,
-                          descripcionController.text,
-                        );
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-              ],
+          child: SingleChildScrollView( // Hacer el contenido desplazable
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Agregar Nuevo Juego',
+                    style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCustomTextField(nameController, 'Nombre'),
+                  _buildCustomTextField(precioController, 'Precio', isNumeric: true),
+                  _buildCustomTextField(metacriticController, 'Metacritic (opcional)', isNumeric: true),
+                  _buildCustomTextField(consolaController, 'Consola'),
+                  _buildCustomTextField(imageUrlController, 'URL de la Imagen'),
+                  _buildCustomTextField(descripcionController, 'Descripción'),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _buildCustomButton(
+                        label: 'Cancelar',
+                        color: Colors.red,
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildCustomButton(
+                        label: 'Agregar',
+                        color: Colors.green,
+                        onPressed: () {
+                          _addGame(
+                            nameController.text,
+                            double.tryParse(precioController.text) ?? 0.0,
+                            int.tryParse(metacriticController.text),
+                            consolaController.text,
+                            imageUrlController.text,
+                            descripcionController.text,
+                          );
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
