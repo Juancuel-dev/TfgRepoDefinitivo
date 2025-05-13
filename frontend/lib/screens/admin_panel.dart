@@ -305,24 +305,44 @@ class _AdminPanelState extends State<AdminPanel> {
     final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
 
     try {
+      // Primera solicitud DELETE
       final response = await http.delete(
         Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint/$id'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 204) {
+        // Si el endpoint es "users", realiza la segunda solicitud DELETE
+        if (endpoint == 'users') {
+          final authResponse = await http.delete(
+            Uri.parse('${ServerConfig.serverIp}/gateway/auth/$id'),
+            headers: {'Authorization': 'Bearer $token'},
+          );
+
+          if (authResponse.statusCode != 204) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Error al eliminar el usuario en auth'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+        }
+
+        // Mostrar mensaje de éxito
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Elemento eliminado con éxito'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Usuario eliminado con éxito'), backgroundColor: Colors.green),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al eliminar elemento'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Error al eliminar el usuario'), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al eliminar elemento'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Error de conexión al servidor'), backgroundColor: Colors.red),
       );
     }
   }

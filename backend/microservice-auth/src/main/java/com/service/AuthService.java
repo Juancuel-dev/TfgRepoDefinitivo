@@ -10,7 +10,6 @@ import com.util.exception.ClienteNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -57,5 +56,11 @@ public class AuthService {
 
     public String getEmail(String clientId) throws ClienteNotFoundException {
         return userRepository.findById(clientId).orElseThrow(()-> new ClienteNotFoundException("Cliente no encontrado con id " + clientId)).getEmail();
+    }
+
+    public void delete(Jwt jwt,String id) {
+        if(jwt.getClaim("role").equals("admin")) {
+            userRepository.deleteById(id);
+        }
     }
 }

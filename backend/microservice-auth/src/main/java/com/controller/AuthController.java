@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
@@ -107,10 +108,20 @@ public class AuthController {
     }
 
     @PostMapping("/change-password/{password}")
-    public ResponseEntity<?> cambiarContrasenia(Jwt jwt, @PathVariable String password){
+    public ResponseEntity<?> cambiarContrasenia(@AuthenticationPrincipal Jwt jwt, @PathVariable String password){
         try {
             return ResponseEntity.ok(authenticationService.cambiarContrasenia(jwt,password));
         } catch (ClienteNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminarUsuario(@AuthenticationPrincipal Jwt jwt, @PathVariable String id){
+        try {
+            authenticationService.delete(jwt,id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
     }

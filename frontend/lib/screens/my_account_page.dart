@@ -248,87 +248,136 @@ class _MyAccountPageState extends State<MyAccountPage> {
   }
 
   Widget _buildProfileSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 20), // Espacio adicional para separar el texto de la flecha
-        const Text(
-          'Mi Perfil',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          const Text(
+            'Mi Perfil',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          color: Colors.grey[850],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: 16),
+          // Información del usuario
+          Card(
+            color: Colors.grey[850],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: _showImagePickerDialog, // Cambiar imagen de perfil
+                    child: CircleAvatar(
+                      radius: 40,
+                      backgroundImage: userProfileImage ?? const AssetImage('assets/profile_pictures/default.png'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userData?['nombre'] ?? 'Nombre no disponible',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          userData?['email'] ?? 'Email no disponible',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Usuario: ${userData?['username'] ?? 'No disponible'}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+          const SizedBox(height: 16),
+          // Opciones adicionales
+          Card(
+            color: Colors.grey[850],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Column(
               children: [
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: _showImagePickerDialog, // Abrir el popup al hacer clic
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundImage: userProfileImage ?? const AssetImage('assets/profile_pictures/default.png'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            userData?['nombre'] ?? 'Nombre no disponible',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                            overflow: TextOverflow.ellipsis, // Evitar desbordamientos
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            userData?['email'] ?? 'Email no disponible',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.white70,
-                            ),
-                            overflow: TextOverflow.ellipsis, // Evitar desbordamientos
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                _buildProfileOption(
+                  icon: Icons.lock,
+                  label: 'Cambiar Contraseña',
+                  onTap: () => setState(() {
+                    selectedCategory = 'Cambiar Contraseña';
+                  }),
                 ),
-                const Divider(color: Colors.white24, height: 32),
-                Wrap(
-                  spacing: 16, // Espaciado entre elementos
-                  runSpacing: 16, // Espaciado entre filas
-                  children: [
-                    _buildProfileInfoTile(
-                      icon: Icons.person,
-                      label: 'Usuario',
-                      value: userData?['username'] ?? 'No disponible',
-                    ),
-                    _buildProfileInfoTile(
-                      icon: Icons.email,
-                      label: 'Email',
-                      value: userData?['email'] ?? 'No disponible',
-                    ),
-                  ],
+                _buildProfileOption(
+                  icon: Icons.history,
+                  label: 'Historial de Pedidos',
+                  onTap: () => setState(() {
+                    selectedCategory = 'Mis Pedidos';
+                  }),
+                ),
+                _buildProfileOption(
+                  icon: Icons.edit,
+                  label: 'Actualizar Información',
+                  onTap: () {
+                    // Aquí puedes implementar la funcionalidad para actualizar información personal
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Funcionalidad en desarrollo'),
+                        backgroundColor: Colors.blue,
+                      ),
+                    );
+                  },
+                ),
+                _buildProfileOption(
+                  icon: Icons.logout,
+                  label: 'Cerrar Sesión',
+                  onTap: () {
+                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                    authProvider.logout();
+                    context.go('/login');
+                  },
                 ),
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileOption({required IconData icon, required String label, required VoidCallback onTap}) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.blue),
+      title: Text(
+        label,
+        style: const TextStyle(color: Colors.white),
+      ),
+      onTap: onTap,
     );
   }
 
@@ -645,8 +694,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
   }
 
   Widget _buildChangePasswordSection() {
-    final TextEditingController currentPasswordController =
-        TextEditingController();
     final TextEditingController newPasswordController = TextEditingController();
 
     return Card(
@@ -662,22 +709,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: currentPasswordController,
-              obscureText: true,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Contraseña Actual',
-                labelStyle: TextStyle(color: Colors.white70),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -699,15 +730,13 @@ class _MyAccountPageState extends State<MyAccountPage> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                final currentPassword = currentPasswordController.text.trim();
                 final newPassword = newPasswordController.text.trim();
-                if (currentPassword.isNotEmpty && newPassword.isNotEmpty) {
-                  // Lógica para cambiar la contraseña
-                  _changePassword(currentPassword, newPassword);
+                if (newPassword.isNotEmpty) {
+                  _changePassword(newPassword);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Por favor, completa todos los campos'),
+                      content: Text('Por favor, ingresa una nueva contraseña'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -724,29 +753,34 @@ class _MyAccountPageState extends State<MyAccountPage> {
     );
   }
 
-  Future<void> _changePassword(String currentPassword, String newPassword) async {
+  Future<void> _changePassword(String newPassword) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.jwtToken;
 
     if (token == null) {
+      print('JWT Token no encontrado. Redirigiendo al login.');
       Future.microtask(() => context.go('/login'));
       return;
     }
 
+    print('Intentando cambiar contraseña...');
+    print('Nueva contraseña: $newPassword');
+    print('JWT Token: $token');
+
     try {
-      final response = await http.put(
-        Uri.parse('${ServerConfig.serverIp}/users/change-password'),
+      final response = await http.post(
+        Uri.parse('${ServerConfig.serverIp}/gateway/auth/change-password/$newPassword'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: json.encode({
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
-        }),
       );
 
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 200) {
+        print('Contraseña cambiada con éxito.');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Contraseña cambiada con éxito'),
@@ -754,6 +788,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
           ),
         );
       } else {
+        print('Error al cambiar la contraseña. Código de estado: ${response.statusCode}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error al cambiar la contraseña'),
@@ -762,6 +797,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
         );
       }
     } catch (e) {
+      print('Error de conexión al servidor: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error de conexión al servidor'),
