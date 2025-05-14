@@ -38,11 +38,16 @@ public class GamesService{
     }
 
     public List<Game> searchGamesByName(String name) {
-        if(name == null || name.isEmpty()){
+        if (name == null || name.isEmpty()) {
             return new ArrayList<>();
         }
+
+        // Escapar caracteres especiales en la entrada del usuario
+        String escapedName = name.replaceAll("([\\\\+*?\\[\\](){}|.^$])", "\\\\$1");
+
         // Crear una expresión regular para buscar nombres que contengan el término (insensible a mayúsculas)
-        String regex = "(?i).*" + name + ".*"; // (?i) hace que la búsqueda sea insensible a mayúsculas
+        String regex = "(?i).*" + escapedName + ".*"; // (?i) hace que la búsqueda sea insensible a mayúsculas
+
         return gamesRepository.findByNameRegex(regex);
     }
 

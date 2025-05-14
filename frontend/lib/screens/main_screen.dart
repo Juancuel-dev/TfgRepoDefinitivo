@@ -1,65 +1,86 @@
 import 'dart:math';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/services/games_service.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:flutter_auth_app/services/auth_provider.dart';
+import 'package:flutter/gestures.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BaseLayout(
-      showBackButton: false,
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              
-
-
-              // Juego destacado
-              _buildFeaturedGameSection(context),
-
-              const SizedBox(height: 32),
-
-              // Productos populares
-              const Text(
-                'Productos Populares',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Contenido principal
+          BaseLayout(
+            showBackButton: false,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Secciones de la pantalla principal
+                    _buildFeaturedGameSection(context),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'Productos Populares',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildPopularProductsSection(context),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'Juegos en Oferta',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDiscountedGamesSection(context),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              _buildPopularProductsSection(context),
-
-              const SizedBox(height: 32),
-
-              // Juegos en oferta
-              const Text(
-                'Juegos en Oferta',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildDiscountedGamesSection(context),
-
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
-        ),
+
+          // Botón flotante de IA
+          Positioned(
+            bottom: 16,
+            left: 16,
+            child: FloatingActionButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.grey[900],
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  builder: (context) => _ChatWidget(),
+                );
+              },
+              backgroundColor: Colors.blueAccent,
+              child: const Icon(Icons.smart_toy, color: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
-  } 
-
+  }
 
   // Método para construir la sección de juego destacado
   Widget _buildFeaturedGameSection(BuildContext context) {
@@ -537,6 +558,208 @@ class MainScreen extends StatelessWidget {
           );
         }
       },
+    );
+  }
+}
+
+// Widget del chat
+class _ChatWidget extends StatefulWidget {
+  @override
+  State<_ChatWidget> createState() => _ChatWidgetState();
+}
+
+class _ChatWidgetState extends State<_ChatWidget> {
+  final TextEditingController _controller = TextEditingController();
+  final List<Map<String, String>> _messages = [];
+  bool _isLoading = false;
+
+  // Método para procesar el texto del bot y convertir nombres de juegos en enlaces
+  List<InlineSpan> _processBotMessage(String message) {
+    final regex = RegExp(r'\*\*"?([^"\*]+)"?\*\*'); // Busca texto entre **, ignorando comillas
+    final spans = <InlineSpan>[];
+    int lastMatchEnd = 0;
+
+    for (final match in regex.allMatches(message)) {
+      // Agregar texto antes del nombre del juego
+      if (match.start > lastMatchEnd) {
+        spans.add(TextSpan(
+          text: message.substring(lastMatchEnd, match.start),
+          style: const TextStyle(color: Colors.white),
+        ));
+      }
+
+      // Agregar el nombre del juego como enlace
+      final gameName = match.group(1)!.trim(); // Captura el texto entre ** y elimina espacios
+      spans.add(TextSpan(
+        text: gameName,
+        style: const TextStyle(
+          color: Colors.blueAccent,
+          fontWeight: FontWeight.bold,
+          decoration: TextDecoration.underline,
+        ),
+        recognizer: TapGestureRecognizer()
+          ..onTap = () {
+            // Navegar a /search/{nombre del juego}
+            context.go('/search/$gameName');
+          },
+      ));
+
+      lastMatchEnd = match.end;
+    }
+
+    // Agregar texto restante después del último nombre del juego
+    if (lastMatchEnd < message.length) {
+      spans.add(TextSpan(
+        text: message.substring(lastMatchEnd),
+        style: const TextStyle(color: Colors.white),
+      ));
+    }
+
+    return spans;
+  }
+
+  Future<void> _sendMessage(BuildContext context) async {
+    final jwtToken = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+    final userMessage = _controller.text.trim();
+
+    // Verificar si el mensaje está vacío o si el token JWT no está disponible
+    if (userMessage.isEmpty) {
+      print('El mensaje del usuario está vacío.');
+      return;
+    }
+    if (jwtToken == null) {
+      print('El token JWT no está disponible.');
+      return;
+    }
+
+    print('Mensaje del usuario: $userMessage');
+    print('Token JWT: $jwtToken');
+
+    setState(() {
+      _messages.add({"role": "user", "message": userMessage});
+      _controller.clear();
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:8080/gateway/ai'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $jwtToken',
+        },
+        body: jsonEncode({"texto": userMessage}),
+      );
+
+      print('Estado de la respuesta: ${response.statusCode}');
+      print('Cuerpo de la respuesta (sin decodificar): ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Decodificar correctamente el cuerpo de la respuesta como UTF-8
+        final decodedBody = utf8.decode(response.bodyBytes);
+        print('Cuerpo de la respuesta (decodificado): $decodedBody');
+
+        final data = jsonDecode(decodedBody);
+        final botMessage = data['content'][0]['text'];
+
+        print('Mensaje del bot: $botMessage');
+
+        setState(() {
+          _messages.add({"role": "bot", "message": botMessage});
+        });
+      } else {
+        print('Error en la respuesta del servidor: ${response.body}');
+        setState(() {
+          _messages.add({"role": "bot", "message": "Error: No se pudo procesar tu solicitud."});
+        });
+      }
+    } catch (e) {
+      print('Error al enviar la solicitud: $e');
+      setState(() {
+        _messages.add({"role": "bot", "message": "Error: $e"});
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0),
+      child: Column(
+        children: [
+          const Text(
+            'Asistente IA',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const Divider(color: Colors.white),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+                final isUser = message['role'] == 'user';
+
+                return Align(
+                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isUser ? Colors.blue : Colors.grey[800],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: isUser
+                        ? Text(
+                            message['message']!,
+                            style: const TextStyle(color: Colors.white),
+                          )
+                        : RichText(
+                            text: TextSpan(
+                              children: _processBotMessage(message['message']!),
+                            ),
+                          ),
+                  ),
+                );
+              },
+            ),
+          ),
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(color: Colors.blueAccent),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      hintText: 'Escribe tu mensaje...',
+                      hintStyle: TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: Colors.grey,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Colors.blueAccent),
+                  onPressed: () => _sendMessage(context),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
