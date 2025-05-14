@@ -118,24 +118,44 @@ class _LoginPageState extends State<LoginPage> {
                                 _errorMessage = null;
                               });
 
-                              // Llamar al servicio de inicio de sesión
-                              String? token = await _authService.login(
-                                _usernameController.text.trim(),
-                                _passwordController.text.trim(),
-                              );
+                              try {
+                                // Llamar al servicio de inicio de sesión
+                                String? token = await _authService.login(
+                                  _usernameController.text.trim(),
+                                  _passwordController.text.trim(),
+                                );
 
-                              setState(() {
-                                _isLoading = false;
-                              });
-
-                              widget.onLogin(token!);
-                              context.go('/'); // Navegación con GoRouter
-                                                        }
+                                if (token == null) {
+                                  // Mostrar un SnackBar si el token es nulo (error en el login)
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Error: Usuario o contraseña incorrectos.'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                } else {
+                                  // Si el login es exitoso, continuar con la navegación
+                                  widget.onLogin(token);
+                                  context.go('/'); // Navegación con GoRouter
+                                }
+                              } catch (e) {
+                                // Manejar errores inesperados
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              } finally {
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              }
+                            }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromARGB(255, 98, 150, 38),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 32, vertical: 16),
+                            backgroundColor: const Color.fromARGB(255, 98, 150, 38),
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

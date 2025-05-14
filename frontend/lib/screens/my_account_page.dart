@@ -247,7 +247,9 @@ class _MyAccountPageState extends State<MyAccountPage> {
   Widget _buildContent() {
     switch (selectedCategory) {
       case 'Perfil':
-        return _buildProfileSection();
+        // Actualizar la consola favorita al abrir la sección "Perfil"
+        final favoriteConsole = _getFavoriteConsole();
+        return _buildProfileSection(favoriteConsole);
       case 'Mis Pedidos':
         return _buildOrdersSection();
       case 'Cambiar Contraseña':
@@ -269,10 +271,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
     }
   }
 
-  Widget _buildProfileSection() {
-    // Calcular la consola favorita
-    final favoriteConsole = _getFavoriteConsole();
-
+  Widget _buildProfileSection(String? favoriteConsole) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
