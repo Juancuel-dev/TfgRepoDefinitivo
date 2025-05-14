@@ -125,6 +125,34 @@ class _MyAccountPageState extends State<MyAccountPage> {
     });
   }
 
+  String? _getFavoriteConsole() {
+    if (userOrders.isEmpty) return null;
+
+    // Crear un mapa para contar los juegos por consola
+    final Map<String, int> consoleCount = {};
+
+    for (final order in userOrders) {
+      final games = order['games'] as List<dynamic>;
+      for (final game in games) {
+        final console = game['game']['consola'] ?? 'Desconocida';
+        consoleCount[console] = (consoleCount[console] ?? 0) + 1;
+      }
+    }
+
+    // Encontrar la consola con el mayor número de juegos
+    String? favoriteConsole;
+    int maxCount = 0;
+
+    consoleCount.forEach((console, count) {
+      if (count > maxCount) {
+        favoriteConsole = console;
+        maxCount = count;
+      }
+    });
+
+    return favoriteConsole;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600; // Detectar si es móvil
@@ -242,6 +270,9 @@ class _MyAccountPageState extends State<MyAccountPage> {
   }
 
   Widget _buildProfileSection() {
+    // Calcular la consola favorita
+    final favoriteConsole = _getFavoriteConsole();
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,6 +342,40 @@ class _MyAccountPageState extends State<MyAccountPage> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          // Consola favorita
+          if (favoriteConsole != null)
+            GestureDetector(
+              onTap: () {
+                // Navegar a la categoría de juegos de la consola favorita
+                context.go('/games?console=$favoriteConsole');
+              },
+              child: Card(
+                color: Colors.grey[850],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.videogame_asset, color: Colors.blue),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'Tu consola favorita es: $favoriteConsole',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
           // Opciones adicionales
           Card(
