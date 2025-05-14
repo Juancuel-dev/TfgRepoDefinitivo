@@ -12,6 +12,7 @@ import com.repository.GamesRepository;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,70 +47,246 @@ public class GamesService{
             return new ArrayList<>();
         }
 
-        String normalizedInput = name.trim().toLowerCase();
-        String[] searchTerms = normalizedInput.split("%20");
+        // Normalización del input
+        String normalizedInput = normalizeInput(name);
+        String[] searchTerms = normalizedInput.split(" ");
 
-        // 1. Primero buscar la frase exacta
-        String exactPhraseRegex = "(?i).*" + Pattern.quote(normalizedInput) + ".*";
-        List<Game> exactResults = gamesRepository.findByNameRegex(exactPhraseRegex);
-
+        // 1. Búsqueda exacta (frase completa)
+        List<Game> exactResults = searchExactPhrase(normalizedInput);
         if (!exactResults.isEmpty()) {
-            log.info("Encontrados {} resultados para frase exacta", exactResults.size());
             return exactResults;
         }
 
-        log.debug("No se encontraron resultados para frase exacta, buscando términos individuales");
-
-        // 2. Búsqueda por términos individuales
-        Set<Game> combinedResults = new HashSet<>();
-
-        for (String term : searchTerms) {
-            String termRegex = "(?i).*" + Pattern.quote(term) + ".*";
-            List<Game> termResults = gamesRepository.findByNameRegex(termRegex);
-            combinedResults.addAll(termResults);
+        // 2. Búsqueda de todos los términos exactos
+        List<Game> allTermsResults = searchAllTerms(searchTerms);
+        if (!allTermsResults.isEmpty()) {
+            return sortByRelevance(allTermsResults, normalizedInput, searchTerms);
         }
 
-        // 3. Ordenar por relevancia
-        List<Game> finalResults = new ArrayList<>(combinedResults);
-        finalResults.sort((g1, g2) -> {
-            int score1 = calculateRelevanceScore(g1.getName(), normalizedInput, searchTerms);
-            int score2 = calculateRelevanceScore(g2.getName(), normalizedInput, searchTerms);
+        // 3. Búsqueda aproximada (tolerancia a errores)
+        return fuzzySearchWithScoring(normalizedInput, searchTerms);
+    }
+
+    private List<Game> fuzzySearchWithScoring(String fullQuery, String[] searchTerms) {
+        // Obtenemos todos los juegos
+        List<Game> allGames = gamesRepository.findAll();
+
+        // Mapa temporal para almacenar puntuaciones
+        Map<Game, Integer> gameScores = new HashMap<>();
+
+        // Calculamos puntuaciones para cada juego
+        for (Game game : allGames) {
+            String gameName = game.getName().toLowerCase();
+            int score = calculateFuzzyMatchScore(gameName, fullQuery, searchTerms);
+
+            if (score > 50) { // Umbral mínimo de aceptación
+                gameScores.put(game, score);
+            }
+        }
+
+        // Ordenamos por puntuación descendente
+        return gameScores.entrySet().stream()
+                .sorted(Map.Entry.<Game, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+    }
+
+    private int calculateFuzzyMatchScore(String gameName, String fullQuery, String[] searchTerms) {
+        int score = 0;
+
+        // 1. Coincidencia con la frase completa
+        int fullQueryScore = calculateFuzzyScore(gameName, fullQuery);
+        score += fullQueryScore;
+
+        // 2. Coincidencia con términos individuales
+        for (String term : searchTerms) {
+            score += (int) (calculateFuzzyScore(gameName, term) * 0.7); // Peso menor que la frase completa
+        }
+
+        // 3. Bonus si los términos aparecen en orden
+        if (searchTerms.length > 1) {
+            if (termsAppearInOrder(gameName, searchTerms)) {
+                score += 30;
+            }
+        }
+
+        return score;
+    }
+
+    private boolean termsAppearInOrder(String text, String[] terms) {
+        int lastIndex = -1;
+        for (String term : terms) {
+            int currentIndex = text.indexOf(term);
+            if (currentIndex == -1) {
+                return false;
+            }
+            if (currentIndex < lastIndex) {
+                return false;
+            }
+            lastIndex = currentIndex;
+        }
+        return true;
+    }
+
+    private String normalizeInput(String input) {
+        return input.trim().toLowerCase()
+                .replace("%20", " ");
+    }
+
+    private List<Game> searchExactPhrase(String phrase) {
+        String exactPhraseRegex = "(?i)^" + Pattern.quote(phrase) + ".*";
+        List<Game> results = gamesRepository.findByNameRegex(exactPhraseRegex);
+
+        if (results.isEmpty()) {
+            exactPhraseRegex = "(?i).*" + Pattern.quote(phrase) + ".*";
+            results = gamesRepository.findByNameRegex(exactPhraseRegex);
+        }
+
+        return results;
+    }
+
+    private List<Game> searchAllTerms(String[] terms) {
+        if (terms.length == 0) return new ArrayList<>();
+
+        String regex = "(?i)(?=.*" + String.join(")(?=.*", terms) + ").*";
+        return gamesRepository.findByNameRegex(regex);
+    }
+
+    private int calculateFuzzyScore(String text, String query) {
+        // Coincidencia exacta
+        if (text.contains(query)) {
+            return 100;
+        }
+
+        // Algoritmo de similitud aproximada (Levenshtein modificado)
+        int maxDistance = Math.max(1, query.length() / 3);
+        int distance = levenshteinDistance(text, query);
+
+        if (distance <= maxDistance) {
+            return 100 - (distance * 100 / maxDistance);
+        }
+
+        // Buscar subcadenas aproximadas
+        int bestScore = 0;
+        for (int i = 0; i <= text.length() - query.length(); i++) {
+            String substring = text.substring(i, i + query.length());
+            distance = levenshteinDistance(substring, query);
+            if (distance <= maxDistance) {
+                int currentScore = 100 - (distance * 100 / maxDistance);
+                if (currentScore > bestScore) {
+                    bestScore = currentScore;
+                }
+            }
+        }
+
+        return bestScore;
+    }
+
+    // Algoritmo de distancia de Levenshtein para medir diferencias entre strings
+    private int levenshteinDistance(String a, String b) {
+        a = a.toLowerCase();
+        b = b.toLowerCase();
+
+        int[] costs = new int[b.length() + 1];
+        for (int j = 0; j < costs.length; j++) {
+            costs[j] = j;
+        }
+
+        for (int i = 1; i <= a.length(); i++) {
+            costs[0] = i;
+            int nw = i - 1;
+            for (int j = 1; j <= b.length(); j++) {
+                int cj = Math.min(1 + Math.min(costs[j], costs[j - 1]),
+                        a.charAt(i - 1) == b.charAt(j - 1) ? nw : nw + 1);
+                nw = costs[j];
+                costs[j] = cj;
+            }
+        }
+
+        return costs[b.length()];
+    }
+
+    private List<Game> sortByRelevance(List<Game> games, String fullQuery, String[] searchTerms) {
+        games.sort((g1, g2) -> {
+
+            // Lógica de ordenación original para búsquedas no aproximadas
+            int score1 = calculateRelevanceScore(g1.getName(), fullQuery, searchTerms);
+            int score2 = calculateRelevanceScore(g2.getName(), fullQuery, searchTerms);
+
+            if (score1 == score2) {
+                return Integer.compare(g1.getName().length(), g2.getName().length());
+            }
+
             return Integer.compare(score2, score1);
         });
 
-        log.info("Búsqueda completada. {} resultados encontrados", finalResults.size());
-        return finalResults;
+        return games;
     }
 
     private int calculateRelevanceScore(String gameName, String fullQuery, String[] searchTerms) {
         String lowerName = gameName.toLowerCase();
         int score = 0;
 
-        // Priorizar coincidencias con el inicio del nombre
+        // 1. Coincidencia exacta desde el inicio (máxima prioridad)
         if (lowerName.startsWith(fullQuery)) {
-            score += 100;
+            score += 1000;
         }
 
-        // Puntos por cada término coincidente
+        // 2. Todos los términos presentes en orden (aunque no consecutivos)
+        boolean allTermsInOrder = true;
+        int lastIndex = -1;
+        for (String term : searchTerms) {
+            int currentIndex = lowerName.indexOf(term);
+            if (currentIndex == -1) {
+                allTermsInOrder = false;
+                break;
+            }
+            if (currentIndex < lastIndex) {
+                allTermsInOrder = false;
+                break;
+            }
+            lastIndex = currentIndex;
+        }
+        if (allTermsInOrder) {
+            score += 800;
+        }
+
+        // 3. Todos los términos presentes (sin importar orden)
+        boolean allTermsPresent = true;
+        for (String term : searchTerms) {
+            if (!lowerName.contains(term)) {
+                allTermsPresent = false;
+                break;
+            }
+        }
+        if (allTermsPresent) {
+            score += 500;
+        }
+
+        // 4. Puntos por cada término individual
         for (String term : searchTerms) {
             if (lowerName.contains(term)) {
-                score += 10;
+                score += 100;
 
                 // Bonus si el término está al inicio
                 if (lowerName.startsWith(term)) {
-                    score += 5;
+                    score += 50;
+                }
+
+                // Bonus si el término es largo (más significativo)
+                if (term.length() >= 5) {
+                    score += term.length() * 2;
                 }
             }
         }
 
-        // Bonus por coincidencia exacta de múltiples términos en orden
+        // 5. Coincidencia exacta en cualquier posición
         if (lowerName.contains(fullQuery)) {
-            score += 30;
+            score += 200;
         }
 
         return score;
     }
-
 
 
     public List<Game> fetchGamesAPI(String page) {
