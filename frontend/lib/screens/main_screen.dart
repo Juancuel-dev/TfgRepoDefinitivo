@@ -692,7 +692,7 @@ class _ChatWidgetState extends State<_ChatWidget> {
       child: Column(
         children: [
           const Text(
-            'Asistente IA',
+            'LevelUp AI',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const Divider(color: Colors.white),

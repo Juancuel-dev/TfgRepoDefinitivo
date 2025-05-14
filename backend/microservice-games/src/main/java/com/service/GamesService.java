@@ -3,17 +3,19 @@ package com.service;
 import com.util.exception.GameNotFoundException;
 import com.util.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import com.model.Game;
 import com.repository.GamesRepository;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GamesService{
 
     private final GamesRepository gamesRepository;
@@ -38,18 +40,77 @@ public class GamesService{
     }
 
     public List<Game> searchGamesByName(String name) {
-        if (name == null || name.isEmpty()) {
+        log.info("Iniciando búsqueda para: '{}'", name);
+
+        if (name == null || name.trim().isEmpty()) {
             return new ArrayList<>();
         }
 
-        // Escapar caracteres especiales en la entrada del usuario
-        String escapedName = name.replaceAll("([\\\\+*?\\[\\](){}|.^$])", "\\\\$1");
+        String normalizedInput = name.trim().toLowerCase();
+        String[] searchTerms = normalizedInput.split("%20");
 
-        // Crear una expresión regular para buscar nombres que contengan el término (insensible a mayúsculas)
-        String regex = "(?i).*" + escapedName + ".*"; // (?i) hace que la búsqueda sea insensible a mayúsculas
+        // 1. Primero buscar la frase exacta
+        String exactPhraseRegex = "(?i).*" + Pattern.quote(normalizedInput) + ".*";
+        List<Game> exactResults = gamesRepository.findByNameRegex(exactPhraseRegex);
 
-        return gamesRepository.findByNameRegex(regex);
+        if (!exactResults.isEmpty()) {
+            log.info("Encontrados {} resultados para frase exacta", exactResults.size());
+            return exactResults;
+        }
+
+        log.debug("No se encontraron resultados para frase exacta, buscando términos individuales");
+
+        // 2. Búsqueda por términos individuales
+        Set<Game> combinedResults = new HashSet<>();
+
+        for (String term : searchTerms) {
+            String termRegex = "(?i).*" + Pattern.quote(term) + ".*";
+            List<Game> termResults = gamesRepository.findByNameRegex(termRegex);
+            combinedResults.addAll(termResults);
+        }
+
+        // 3. Ordenar por relevancia
+        List<Game> finalResults = new ArrayList<>(combinedResults);
+        finalResults.sort((g1, g2) -> {
+            int score1 = calculateRelevanceScore(g1.getName(), normalizedInput, searchTerms);
+            int score2 = calculateRelevanceScore(g2.getName(), normalizedInput, searchTerms);
+            return Integer.compare(score2, score1);
+        });
+
+        log.info("Búsqueda completada. {} resultados encontrados", finalResults.size());
+        return finalResults;
     }
+
+    private int calculateRelevanceScore(String gameName, String fullQuery, String[] searchTerms) {
+        String lowerName = gameName.toLowerCase();
+        int score = 0;
+
+        // Priorizar coincidencias con el inicio del nombre
+        if (lowerName.startsWith(fullQuery)) {
+            score += 100;
+        }
+
+        // Puntos por cada término coincidente
+        for (String term : searchTerms) {
+            if (lowerName.contains(term)) {
+                score += 10;
+
+                // Bonus si el término está al inicio
+                if (lowerName.startsWith(term)) {
+                    score += 5;
+                }
+            }
+        }
+
+        // Bonus por coincidencia exacta de múltiples términos en orden
+        if (lowerName.contains(fullQuery)) {
+            score += 30;
+        }
+
+        return score;
+    }
+
+
 
     public List<Game> fetchGamesAPI(String page) {
 
