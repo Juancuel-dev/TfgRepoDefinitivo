@@ -137,6 +137,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.cohere</groupId>
+            <artifactId>cohere-java</artifactId>
+            <version>1.7.0</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-netflix-eureka-client -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

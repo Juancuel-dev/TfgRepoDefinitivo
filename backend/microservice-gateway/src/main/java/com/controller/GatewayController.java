@@ -1,8 +1,10 @@
 package com.controller;
 
+import com.cohere.api.types.AssistantMessageResponse;
 import com.model.LoginRequest;
 import com.model.UserDTO;
 import com.model.register.RegisterUsersRequest;
+import com.service.AIService;
 import com.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -97,5 +99,11 @@ public class GatewayController {
     public ResponseEntity<UserDTO> getMySelf(@AuthenticationPrincipal Jwt jwt){
         log.info("El username desde el que se hace la peticion es: " + jwt.getClaim("username"));
         return authService.myself(jwt);
+    }
+
+    @PostMapping("/ai")
+    public ResponseEntity<AssistantMessageResponse> talkToAI(@AuthenticationPrincipal Jwt jwt, @RequestBody String texto){
+
+        return ResponseEntity.ok(AIService.escribir(texto));
     }
 }
