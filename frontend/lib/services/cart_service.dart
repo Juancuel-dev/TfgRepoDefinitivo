@@ -1,11 +1,13 @@
 import 'dart:convert';
+import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:flutter_auth_app/models/cart.dart';
+import 'package:flutter_auth_app/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 
 class CartService {
-  final String baseUrl;
+  String? lastResponseBody; // Almacena la última respuesta del servidor
 
-  CartService({required this.baseUrl});
+  CartService();
 
   /// Realiza un pedido enviando los datos al backend
   Future<bool> createOrder({
@@ -16,7 +18,10 @@ class CartService {
     required String jwtToken,
     required String clientId,
   }) async {
-    final url = Uri.parse('$baseUrl/gateway/orders');
+    final url = Uri.parse('${ServerConfig.serverIp}/gateway/orders');
+
+    // Depuración: Imprimir la URL utilizada
+    print('URL utilizada: $url');
 
     // Convertir los juegos a un formato que coincida con el backend
     final gamesJson = games.map((item) => {
@@ -37,6 +42,9 @@ class CartService {
       "games": gamesJson, // Enviar la lista de juegos con la estructura correcta
     };
 
+    // Depuración: Imprimir los datos enviados al backend
+    print('Datos enviados al backend: ${jsonEncode(body)}');
+
     try {
       final response = await http.post(
         url,
@@ -46,6 +54,14 @@ class CartService {
         },
         body: jsonEncode(body),
       );
+
+      // Depuración: Imprimir el token JWT
+      print('Token JWT enviado: $jwtToken');
+
+      // Almacenar la respuesta del servidor
+      lastResponseBody = response.body;
+
+      print('Código de estado del servidor: ${response.statusCode}');
 
       if (response.statusCode == 201) {
         return true;
@@ -65,6 +81,12 @@ class CartService {
     required String jwtToken,
     required String clientId,
   }) async {
+    final clientId = AuthService().getClaimFromToken(jwtToken, 'clientId') ?? '';
+    if (clientId.isEmpty) {
+      print('Error: clientId está vacío');
+      return false;
+    }
+
     final orderId = '${DateTime.now().millisecondsSinceEpoch}';
     
     // Calcular el precio total de todos los items

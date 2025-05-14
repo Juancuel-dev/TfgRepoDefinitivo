@@ -5,17 +5,66 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/services/cart_provider.dart';
 import 'package:flutter_auth_app/services/auth_service.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
+import 'package:flutter_auth_app/services/cart_service.dart';
 
 class OrderConfirmationPage extends StatelessWidget {
   const OrderConfirmationPage({super.key});
 
+  Future<void> _handleOrderConfirmation(
+    BuildContext context,
+    CartProvider cartProvider,
+    String jwtToken,
+    String clientId,
+  ) async {
+    final cartService = CartService();
+
+    // Mostrar un indicador de carga mientras se procesa el pedido
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    // Intentar crear el pedido
+    final success = await cartService.createOrders(
+      items: cartProvider.items,
+      jwtToken: jwtToken,
+      clientId: clientId,
+    );
+
+    // Cerrar el indicador de carga
+    Navigator.of(context).pop();
+
+    // Imprimir la respuesta del servidor
+    print('Respuesta del servidor: ${cartService.lastResponseBody}');
+
+    if (success) {
+      // Pedido creado con éxito
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pedido confirmado y registrado correctamente.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      cartProvider.clear(); // Vaciar el carrito después del pedido
+      context.go('/'); // Redirigir a la página principal
+    } else {
+      // Error al crear el pedido
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error al registrar el pedido. Inténtalo de nuevo.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
-    final jwtToken = Provider.of<AuthProvider>(context,listen:false).jwtToken; // Obtener el JWT desde el CartProvider
-
-    // Depuración: Verificar si el token JWT está disponible
-    print('Token JWT recibido en OrderConfirmationPage: $jwtToken');
+    final jwtToken = Provider.of<AuthProvider>(context, listen: false).jwtToken;
 
     // Verificar si el token JWT está disponible
     if (jwtToken == null || jwtToken.isEmpty) {
@@ -30,22 +79,12 @@ class OrderConfirmationPage extends StatelessWidget {
       );
     }
 
-    // Usar el token JWT para extraer información del usuario
-    
+    final clientId = AuthService().getClaimFromToken(jwtToken, 'userId') ?? '';
     final userName = AuthService().getClaimFromToken(jwtToken, 'username') ?? 'Nombre de usuario no disponible';
-
-    // Depuración: Verificar los claims extraídos del token JWT
-    print('Usuario extraído del token JWT:');
-    print('Username: $userName');
 
     // Calcular IVA (21%)
     final iva = cartProvider.totalPrice * 0.21;
     final totalConIva = cartProvider.totalPrice + iva;
-
-    // Depuración: Verificar el total del carrito
-    print('Total del carrito: ${cartProvider.totalPrice}');
-    print('IVA calculado: $iva');
-    print('Total con IVA: $totalConIva');
 
     return BaseLayout(
       child: SingleChildScrollView(
@@ -103,7 +142,6 @@ class OrderConfirmationPage extends StatelessWidget {
                       itemCount: cartProvider.items.length,
                       itemBuilder: (context, index) {
                         final item = cartProvider.items[index];
-                        print('Producto en el carrito: ${item.game.name}, Cantidad: ${item.quantity}');
                         return Container(
                           margin: const EdgeInsets.symmetric(vertical: 8.0),
                           padding: const EdgeInsets.all(12.0),
@@ -237,16 +275,9 @@ class OrderConfirmationPage extends StatelessWidget {
               const SizedBox(height: 20),
               // Botón de confirmación
               ElevatedButton(
-                onPressed: () {
-                  print('Pedido confirmado. Limpiando el carrito...');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Pedido confirmado. Gracias por tu compra.'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  cartProvider.clear(); // Vaciar el carrito después del pedido
-                  Navigator.pop(context); // Regresar a la pantalla anterior
+                onPressed: () async {
+                  print('Confirmando pedido...');
+                  await _handleOrderConfirmation(context, cartProvider, jwtToken, clientId);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,

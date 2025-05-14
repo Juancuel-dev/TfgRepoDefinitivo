@@ -345,33 +345,36 @@ class _MyAccountPageState extends State<MyAccountPage> {
           const SizedBox(height: 16),
           // Consola favorita
           if (favoriteConsole != null)
-            GestureDetector(
-              onTap: () {
-                // Navegar a la categoría de juegos de la consola favorita
-                context.go('/games?console=$favoriteConsole');
-              },
-              child: Card(
-                color: Colors.grey[850],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.videogame_asset, color: Colors.blue),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          'Tu consola favorita es: $favoriteConsole',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+            MouseRegion(
+              cursor: SystemMouseCursors.click, // Cambiar el puntero al de la mano
+              child: GestureDetector(
+                onTap: () {
+                  // Navegar a la categoría de juegos de la consola favorita
+                  context.go('/category/$favoriteConsole');
+                },
+                child: Card(
+                  color: Colors.grey[850],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.videogame_asset, color: Colors.blue),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            'Tu consola favorita es: $favoriteConsole',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
