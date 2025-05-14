@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/config/server_config.dart';
-import 'package:flutter_auth_app/models/userDTO.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
@@ -273,6 +272,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
   }
 
   Widget _buildProfileSection(String? favoriteConsole) {
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,71 +380,13 @@ class _MyAccountPageState extends State<MyAccountPage> {
               ),
             ),
           const SizedBox(height: 16),
-          // Opciones adicionales
-          Card(
-            color: Colors.grey[850],
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                _buildProfileOption(
-                  icon: Icons.lock,
-                  label: 'Cambiar Contraseña',
-                  onTap: () => setState(() {
-                    selectedCategory = 'Cambiar Contraseña';
-                  }),
-                ),
-                _buildProfileOption(
-                  icon: Icons.history,
-                  label: 'Historial de Pedidos',
-                  onTap: () => setState(() {
-                    selectedCategory = 'Mis Pedidos';
-                  }),
-                ),
-                _buildProfileOption(
-                  icon: Icons.edit,
-                  label: 'Actualizar Información',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Funcionalidad en desarrollo'),
-                        backgroundColor: Colors.blue,
-                      ),
-                    );
-                  },
-                ),
-                _buildProfileOption(
-                  icon: Icons.logout,
-                  label: 'Cerrar Sesión',
-                  onTap: () {
-                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                    authProvider.logout();
-                    context.go('/login');
-                  },
-                ),
-              ],
-            ),
-          ),
+          
         ],
       ),
     );
   }
 
-  Widget _buildProfileOption({required IconData icon, required String label, required VoidCallback onTap}) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.blue),
-      title: Text(
-        label,
-        style: const TextStyle(color: Colors.white),
-      ),
-      onTap: onTap,
-    );
-  }
-
   void _showImagePickerDialog() async {
-    // Define el número total de imágenes disponibles
-    const int totalImages = 15;
 
     // Cargar las imágenes
     final images = await ImageService.loadAllProfileImages();
@@ -458,52 +400,58 @@ class _MyAccountPageState extends State<MyAccountPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Selecciona una nueva imagen de perfil',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3, // Mostrar 3 imágenes por fila
-                      crossAxisSpacing: 16.0,
-                      mainAxisSpacing: 16.0,
+          child: SizedBox(
+            width: 300, // Ancho del diálogo
+            height: 450, // Altura del diálogo
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Selecciona una nueva imagen de perfil',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
-                    itemCount: images.length,
-                    itemBuilder: (context, index) {
-                      final AssetImage image = images[index];
-                      return GestureDetector(
-                        onTap: () async {
-                          print('Imagen seleccionada: ${image.assetName}');
-
-                          // Realizar la petición para actualizar la imagen en el backend
-                          await _updateUserProfileImage(image.assetName);
-
-                          // Cerrar el diálogo después de completar la petición
-                          Navigator.pop(context);
-                        },
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
-                          child: Image(
-                            image: image,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      );
-                    },
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: GridView.builder(
+                      physics: const BouncingScrollPhysics(), // Permitir scroll con efecto rebote
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3, // Mostrar 3 imágenes por fila
+                        crossAxisSpacing: 8.0, // Espaciado horizontal entre imágenes
+                        mainAxisSpacing: 8.0, // Espaciado vertical entre imágenes
+                        childAspectRatio: 1, // Relación de aspecto cuadrada para las imágenes
+                      ),
+                      itemCount: images.length,
+                      itemBuilder: (context, index) {
+                        final AssetImage image = images[index];
+                        return GestureDetector(
+                          onTap: () async {
+                            print('Imagen seleccionada: ${image.assetName}');
+
+                            // Realizar la petición para actualizar la imagen en el backend
+                            await _updateUserProfileImage(image.assetName);
+
+                            // Cerrar el diálogo después de completar la petición
+                            Navigator.pop(context);
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image(
+                              image: image,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
