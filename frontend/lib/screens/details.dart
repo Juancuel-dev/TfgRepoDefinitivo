@@ -51,7 +51,7 @@ class GameDetailPage extends StatelessWidget {
               const SizedBox(height: 10),
               // Precio del juego
               Text(
-                '\$${game.precio.toStringAsFixed(2)}',
+                '${game.precio.toStringAsFixed(2)}€',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,

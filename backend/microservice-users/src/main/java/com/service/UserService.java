@@ -4,6 +4,7 @@ import com.model.User;
 import com.repository.UserRepository;
 import com.util.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsPasswordService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,14 @@ public class UserService {
         }else{
             throw new UsernameNotFoundException("Usuario no encontrado");
         }
+    }
+
+    public User editImage(Jwt jwt,String imageId) throws UnauthorizedException {
+
+        User u = userRepository.findByUsername(jwt.getClaim("username")).orElseThrow(()->new UsernameNotFoundException("Usuario no encontrado"));
+        u.setImagen(Integer.parseInt(imageId));
+                return userRepository.save(u);
+
     }
 
     public void deleteById(Jwt jwt, String id) throws UnauthorizedException, UsernameNotFoundException {

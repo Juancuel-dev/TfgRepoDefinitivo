@@ -53,6 +53,15 @@ public class UsersController {
         }
     }
 
+    @PutMapping("/update-image/{imageId}")
+    public ResponseEntity<User> updateImage(@AuthenticationPrincipal Jwt jwt, @PathVariable String imageId) {
+        try {
+            return ResponseEntity.ok(userService.editImage(jwt, imageId));
+        } catch (UnauthorizedException | UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
     @PostMapping("/register")
     public ResponseEntity<User> save(@RequestBody User user) {
         User savedUser = userService.save(user);

@@ -159,7 +159,7 @@ class MainScreen extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '\$$originalPrice',
+                          '$originalPrice€',
                           style: const TextStyle(
                             color: Colors.red,
                             fontSize: 16,
@@ -168,7 +168,7 @@ class MainScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '\$${featuredGame.precio.toStringAsFixed(2)}',
+                          '${featuredGame.precio.toStringAsFixed(2)}€',
                           style: const TextStyle(
                             color: Colors.greenAccent,
                             fontSize: 20,
@@ -291,7 +291,7 @@ class MainScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '\$${game.precio.toStringAsFixed(2)}',
+                                  '${game.precio.toStringAsFixed(2)}€',
                                   style: const TextStyle(
                                     color: Colors.greenAccent,
                                     fontSize: 12,
@@ -373,7 +373,7 @@ class MainScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '\$${game.precio.toStringAsFixed(2)}',
+                                    '${game.precio.toStringAsFixed(2)}€',
                                     style: const TextStyle(
                                       color: Colors.greenAccent,
                                       fontSize: 12,
@@ -490,7 +490,7 @@ class MainScreen extends StatelessWidget {
                                       Row(
                                         children: [
                                           Text(
-                                            '\$$originalPrice',
+                                            '$originalPrice€',
                                             style: const TextStyle(
                                               color: Colors.red,
                                               fontSize: 12,
@@ -499,7 +499,7 @@ class MainScreen extends StatelessWidget {
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
-                                            '\$${game.precio.toStringAsFixed(2)}',
+                                            '${game.precio.toStringAsFixed(2)}€',
                                             style: const TextStyle(
                                               color: Colors.greenAccent,
                                               fontSize: 14,
@@ -572,6 +572,12 @@ class _ChatWidgetState extends State<_ChatWidget> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, String>> _messages = [];
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ya no cargamos el historial del chat
+  }
 
   // Método para procesar el texto del bot y convertir nombres de juegos en enlaces
   List<InlineSpan> _processBotMessage(String message) {

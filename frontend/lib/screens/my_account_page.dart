@@ -23,19 +23,22 @@ class _MyAccountPageState extends State<MyAccountPage> {
   String selectedCategory = 'Perfil'; // Categoría seleccionada por defecto
   bool isMenuVisible = false; // Controla si el menú está visible
   String? userRole; // Rol del usuario
-  AssetImage? userProfileImage = const AssetImage('assets/images/default.png'); // Imagen de perfil seleccionada
+  AssetImage? userProfileImage = const AssetImage('assets/images/default.jpg'); // Imagen de perfil seleccionada
   List<dynamic> userOrders = []; // Lista de pedidos del usuario
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
-    _loadUserProfileImage();
+    _fetchUserData(); // Esto está bien en initState porque no depende del BuildContext
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
   }
 
   Future<void> _fetchUserOrders(String clientId, String jwtToken) async {
     try {
-      print('Fetching orders for clientId: $clientId');
       final response = await http.get(
         Uri.parse('${ServerConfig.serverIp}/gateway/orders/user/$clientId'),
         headers: {
@@ -43,15 +46,11 @@ class _MyAccountPageState extends State<MyAccountPage> {
         },
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
           userOrders = data; // Guardar los pedidos obtenidos
         });
-        print('Orders assigned to userOrders: $userOrders');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -61,7 +60,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
         );
       }
     } catch (e) {
-      print('Error fetching orders: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error de conexión al servidor'),
@@ -76,7 +74,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
     final authService = AuthService();
     final token = authProvider.jwtToken;
 
-    print('JWT Token: $token');
 
     if (token == null) {
       Future.microtask(() => context.go('/login'));
@@ -86,9 +83,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
     // 1. Extraer clientId y rol del token JWT
     final clientId = authService.getClaimFromToken(token, 'clientId');
     final role = authService.getRoleFromToken(token);
-
-    print('Client ID from token: $clientId');
-    print('Role from token: $role');
 
     setState(() {
       userRole = role;
@@ -100,6 +94,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
       if (fetchedUserData != null) {
         setState(() {
+          print(fetchedUserData);
           userData = fetchedUserData;
           isLoading = false;
         });
@@ -115,14 +110,20 @@ class _MyAccountPageState extends State<MyAccountPage> {
       print('Error fetching user data: $e');
       Future.microtask(() => context.go('/login'));
     }
+    _loadUserProfileImage();
   }
 
   Future<void> _loadUserProfileImage() async {
-    final imageId = userData?['imageId'] ?? 1; // Usar un ID por defecto si no está definido
-    final image = await ImageService.loadUserProfileImage(imageId, context);
-    setState(() {
-      userProfileImage = image; // Asignar el objeto AssetImage
-    });
+    final imageId = userData?['imagen']; // Usar un ID por defecto si no está definido
+    print('El image id es $imageId'); // Depuración
+    try {
+      final String imagePath = 'assets/images/$imageId.jpg'; // Ruta de la imagen en los assets
+      setState(() {
+        userProfileImage = AssetImage(imagePath); // Asignar el objeto AssetImage
+      });
+    } catch (e) {
+      print('Error al cargar la imagen de perfil: $e');
+    }
   }
 
   String? _getFavoriteConsole() {
@@ -300,7 +301,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                     onTap: _showImagePickerDialog, // Cambiar imagen de perfil
                     child: CircleAvatar(
                       radius: 40,
-                      backgroundImage: userProfileImage ?? const AssetImage('assets/profile_pictures/default.png'),
+                      backgroundImage: userProfileImage ?? const AssetImage('assets/images/default.jpg'),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -442,8 +443,13 @@ class _MyAccountPageState extends State<MyAccountPage> {
   }
 
   void _showImagePickerDialog() async {
-    final images = await ImageService.loadAllProfileImages(); // Cargar todas las imágenes disponibles
+    // Define el número total de imágenes disponibles
+    const int totalImages = 15;
 
+    // Cargar las imágenes
+    final images = await ImageService.loadAllProfileImages();
+
+    // Mostrar el diálogo con las imágenes cargadas
     showDialog(
       context: context,
       builder: (context) {
@@ -466,78 +472,40 @@ class _MyAccountPageState extends State<MyAccountPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, // Cambiar dinámicamente según el tamaño de pantalla
-                    crossAxisSpacing: 16.0,
-                    mainAxisSpacing: 16.0,
-                  ),
-                  itemCount: images.length,
-                  itemBuilder: (context, index) {
-                    final String imagePath = (images[index]).assetName;
-                    return GestureDetector(
-                      onTap: () {
-                        _showConfirmationDialog(imagePath); // Mostrar el diálogo de confirmación
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.asset(
-                          imagePath, // Asegúrate de que imagePath es un String
-                          fit: BoxFit.cover,
+                Expanded(
+                  child: GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3, // Mostrar 3 imágenes por fila
+                      crossAxisSpacing: 16.0,
+                      mainAxisSpacing: 16.0,
+                    ),
+                    itemCount: images.length,
+                    itemBuilder: (context, index) {
+                      final AssetImage image = images[index];
+                      return GestureDetector(
+                        onTap: () async {
+                          print('Imagen seleccionada: ${image.assetName}');
+
+                          // Realizar la petición para actualizar la imagen en el backend
+                          await _updateUserProfileImage(image.assetName);
+
+                          // Cerrar el diálogo después de completar la petición
+                          Navigator.pop(context);
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Image(
+                            image: image,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  void _showConfirmationDialog(String selectedImagePath) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.grey[900],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: const Text(
-            'Confirmar selección',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: const Text(
-            '¿Estás seguro de que deseas seleccionar esta imagen como tu nueva foto de perfil?',
-            style: TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo
-              },
-              child: const Text(
-                'No',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo de confirmación
-                Navigator.of(context).pop(); // Cerrar el diálogo de selección de imagen
-                _updateUserProfileImage(selectedImagePath); // Actualizar la imagen de perfil
-              },
-              child: const Text(
-                'Sí',
-                style: TextStyle(color: Colors.green),
-              ),
-            ),
-          ],
         );
       },
     );
@@ -554,29 +522,32 @@ class _MyAccountPageState extends State<MyAccountPage> {
     }
 
     try {
+      // Extraer el ID de la imagen del nombre del archivo
+      final int imageId = _extractImageIdFromPath(newImagePath);
+
       // Crear el objeto UserDTO con los datos actuales del usuario
-      final userDTO = UserDTO(
-        nombre: userData?['nombre'] ?? 'Nombre no disponible',
-        username: userData?['username'] ?? 'Username no disponible',
-        email: userData?['email'] ?? 'Email no disponible',
-        image: _extractImageIdFromPath(newImagePath), // Nuevo ID de la imagen
-      );
+      final userDTO = {
+        'nombre': userData?['nombre'] ?? 'Nombre no disponible',
+        'username': userData?['username'] ?? 'Username no disponible',
+        'email': userData?['email'] ?? 'Email no disponible',
+        'image': imageId, // Nuevo ID de la imagen
+      };
 
       // Enviar la solicitud PUT al backend
       final response = await http.put(
-        Uri.parse('${ServerConfig.serverIp}/gateway/users/update'), // Endpoint para actualizar el usuario
+        Uri.parse('${ServerConfig.serverIp}/gateway/users/update-image/$imageId'), // Endpoint para actualizar el usuario
         headers: {
-          'Authorization': 'Bearer $token', // Pasar el token como parámetro de autorización
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // Token de autenticación
         },
-        body: json.encode(userDTO.toJson()), // Convertir el UserDTO a JSON
+        body: jsonEncode(userDTO), // Convertir el objeto a JSON
       );
 
       if (response.statusCode == 200) {
         // Si la actualización es exitosa, actualizar la imagen localmente
         setState(() {
-          userProfileImage = AssetImage(newImagePath); // Convertir el String a AssetImage
-          userData?['image'] = _extractImageIdFromPath(newImagePath); // Actualizar el imageId localmente
+          userProfileImage = AssetImage(newImagePath); // Actualizar la imagen en la interfaz
+          userData?['imageId'] = imageId; // Actualizar el ID de la imagen localmente
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -586,6 +557,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
         );
       } else {
         // Manejar errores del servidor
+        print('Error al actualizar la imagen de perfil: ${response.body}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error al actualizar la imagen de perfil'),
@@ -595,6 +567,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
       }
     } catch (e) {
       // Manejar errores de red
+      print('Error de conexión al servidor: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error de conexión al servidor'),
@@ -607,7 +580,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
   int _extractImageIdFromPath(String imagePath) {
     // Extraer el ID de la imagen del nombre del archivo
     final fileName = imagePath.split('/').last; // Obtener el nombre del archivo
-    final imageId = int.tryParse(fileName.split('.').first); // Extraer el número antes de ".png"
+    final imageId = int.tryParse(fileName.split('.').first); // Extraer el número antes de ".jpg"
     return imageId ?? 1; // Retornar 1 como valor por defecto si no se puede parsear
   }
 

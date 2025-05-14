@@ -1,42 +1,35 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter/services.dart';
 
-class ImageService {// Ruta de las imágenes de perfil
-
+class ImageService {
   /// Carga la imagen de perfil del usuario actual según su `imageId`.
   static Future<AssetImage> loadUserProfileImage(int imageId, BuildContext context) async {
-    final String imagePath = '$imageId.png';
+    final String imagePath = 'images/$imageId.jpg'; // Ruta completa de la imagen
     try {
       // Verificar si la imagen existe utilizando AssetImage
       final AssetImage image = AssetImage(imagePath);
-      await precacheImage(image, context); // Precargar la imagen con un BuildContext válido
+      // Precargar la imagen después de que el contexto esté completamente inicializado
+      await precacheImage(image, context);
       return image; // Retornar la imagen si existe
     } catch (e) {
+      print('Error loading image: $e'); // Imprimir error en caso de fallo
       // Si no existe, retornar una imagen por defecto
-      return const AssetImage('default.png');
+      return const AssetImage('images/default.jpg');
     }
   }
 
-  /// Carga todas las imágenes disponibles en la carpeta `assets/profile_pictures`.
+  /// Genera una lista de imágenes basadas en un rango de índices.
   static Future<List<AssetImage>> loadAllProfileImages() async {
-    try {
-      // Obtener la lista de imágenes disponibles en la carpeta
-      final manifestContent = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifestMap = Map<String, dynamic>.from(
-        await Future.value((manifestContent.isNotEmpty ? manifestContent : {}) as FutureOr<Map>?),
-      );
+    final List<AssetImage> images = [];
+    const int totalImages = 15; // Número total de imágenes (0.jpg a 14.jpg)
 
-      // Filtrar las imágenes que están en la carpeta de perfil
-      final List<String> imagePaths = manifestMap.keys
-          .where((String key) => key.endsWith('.png'))
-          .toList();
-
-      // Convertir las rutas a AssetImage
-      return imagePaths.map((path) => AssetImage(path)).toList();
-    } catch (e) {
-      // Si ocurre un error, retornar una lista vacía
-      return [];
+    for (int i = 0; i < totalImages; i++) {
+      final String imagePath = 'images/$i.jpg';
+      images.add(AssetImage(imagePath));
     }
+
+    return images;
   }
 }
+
