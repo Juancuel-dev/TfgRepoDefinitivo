@@ -22,7 +22,7 @@ class ImageService {
   /// Genera una lista de imágenes basadas en un rango de índices.
   static Future<List<AssetImage>> loadAllProfileImages() async {
     final List<AssetImage> images = [];
-    const int totalImages = 15; // Número total de imágenes (0.jpg a 14.jpg)
+    const int totalImages = 17; // Número total de imágenes (0.jpg a 14.jpg)
 
     for (int i = 0; i < totalImages; i++) {
       final String imagePath = 'images/$i.jpg';
