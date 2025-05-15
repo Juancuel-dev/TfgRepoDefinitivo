@@ -22,4 +22,8 @@ public class User {
     private String nombre;
 
     private Integer imagen;
+
+    private Byte edad;
+
+    private String pais;
 }

@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Agregar configuración de CORS
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/gateway/login", "/gateway/register").permitAll()
+                        .requestMatchers("/gateway/login", "/gateway/register","/gateway/ai").permitAll()
                         .requestMatchers(HttpMethod.GET, "/gateway/games/**").permitAll() // Permitir GET a /games/**
                         .anyRequest().authenticated()
                 )

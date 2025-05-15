@@ -199,11 +199,11 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
   Widget _buildSidebar() {
     // Categorías base
-    final categories = ['Perfil', 'Mis Pedidos', 'Cambiar Contraseña', 'Cerrar Sesión'];
+    final categories = ['Perfil', 'Mis Pedidos', 'Cambiar Contraseña'];
 
     // Verificar si el usuario es ADMIN y agregar la categoría "Admin Panel"
     if (userRole == 'ADMIN') {
-      categories.insert(3, 'Admin Panel'); // Insertar "Admin Panel" antes de "Cerrar Sesión"
+      categories.add('Admin Panel'); // Agregar "Admin Panel" al final
     }
 
     return Container(
@@ -272,7 +272,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
   }
 
   Widget _buildProfileSection(String? favoriteConsole) {
-
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,7 +379,31 @@ class _MyAccountPageState extends State<MyAccountPage> {
               ),
             ),
           const SizedBox(height: 16),
-          
+          // Botón "Cerrar Sesión"
+          Center(
+            child: GestureDetector(
+              onTap: () {
+                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                authProvider.logout(); // Llamar al método de logout
+                context.go('/login'); // Navegar al login
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Cerrar Sesión',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

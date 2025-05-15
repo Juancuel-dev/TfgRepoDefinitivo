@@ -581,12 +581,13 @@ class _ChatWidgetState extends State<_ChatWidget> {
 
   // Método para procesar el texto del bot y convertir nombres de juegos en enlaces
   List<InlineSpan> _processBotMessage(String message) {
-    final regex = RegExp(r'\*\*"?([^"\*]+)"?\*\*'); // Busca texto entre **, ignorando comillas
+    // Expresión regular para capturar texto entre **, *, o ""
+    final regex = RegExp(r'(\*\*.*?\*\*|\*.*?\*|".*?")');
     final spans = <InlineSpan>[];
     int lastMatchEnd = 0;
 
     for (final match in regex.allMatches(message)) {
-      // Agregar texto antes del nombre del juego
+      // Agregar texto antes del enlace
       if (match.start > lastMatchEnd) {
         spans.add(TextSpan(
           text: message.substring(lastMatchEnd, match.start),
@@ -594,8 +595,11 @@ class _ChatWidgetState extends State<_ChatWidget> {
         ));
       }
 
-      // Agregar el nombre del juego como enlace
-      final gameName = match.group(1)!.trim(); // Captura el texto entre ** y elimina espacios
+      // Capturar el texto entre los delimitadores
+      final rawText = match.group(0)!;
+      final gameName = rawText.replaceAll(RegExp(r'[\*\"]'), '').trim(); // Eliminar * y " del texto
+
+      // Agregar el texto como enlace
       spans.add(TextSpan(
         text: gameName,
         style: const TextStyle(
@@ -613,7 +617,7 @@ class _ChatWidgetState extends State<_ChatWidget> {
       lastMatchEnd = match.end;
     }
 
-    // Agregar texto restante después del último nombre del juego
+    // Agregar texto restante después del último enlace
     if (lastMatchEnd < message.length) {
       spans.add(TextSpan(
         text: message.substring(lastMatchEnd),
@@ -625,21 +629,22 @@ class _ChatWidgetState extends State<_ChatWidget> {
   }
 
   Future<void> _sendMessage(BuildContext context) async {
-    final jwtToken = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final jwtToken = authProvider.jwtToken; // Obtener el token JWT si está disponible
     final userMessage = _controller.text.trim();
 
-    // Verificar si el mensaje está vacío o si el token JWT no está disponible
+    // Verificar si el mensaje está vacío
     if (userMessage.isEmpty) {
       print('El mensaje del usuario está vacío.');
       return;
     }
-    if (jwtToken == null) {
-      print('El token JWT no está disponible.');
-      return;
-    }
 
     print('Mensaje del usuario: $userMessage');
-    print('Token JWT: $jwtToken');
+    if (jwtToken != null) {
+      print('Token JWT: $jwtToken');
+    } else {
+      print('El usuario no está logueado. No se enviará el token JWT.');
+    }
 
     setState(() {
       _messages.add({"role": "user", "message": userMessage});
@@ -648,12 +653,16 @@ class _ChatWidgetState extends State<_ChatWidget> {
     });
 
     try {
+      // Construir los encabezados de la solicitud
+      final headers = {
+        'Content-Type': 'application/json',
+        if (jwtToken != null) 'Authorization': 'Bearer $jwtToken', // Agregar el token solo si está disponible
+      };
+
+      // Realizar la solicitud HTTP
       final response = await http.post(
         Uri.parse('http://localhost:8080/gateway/ai'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $jwtToken',
-        },
+        headers: headers,
         body: jsonEncode({"texto": userMessage}),
       );
 

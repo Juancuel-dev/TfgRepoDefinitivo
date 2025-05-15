@@ -25,7 +25,7 @@ class AuthService {
     }
   }
 
-  Future<bool> register(String nombre,String username, String password,String email) async {
+  Future<bool> register(String nombre, String username, String password, String email, int edad, String pais) async {
     final response = await http.post(
       Uri.parse('$apiUrl/register'),
       headers: {
@@ -36,6 +36,8 @@ class AuthService {
         'password': password,
         'username': username,
         'email': email,
+        'edad': edad, // Agregar edad al cuerpo de la solicitud
+        'pais': pais, // Agregar país al cuerpo de la solicitud
       }),
     );
 

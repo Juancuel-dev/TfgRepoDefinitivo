@@ -104,6 +104,6 @@ public class GatewayController {
     @PostMapping("/ai")
     public ResponseEntity<AssistantMessageResponse> talkToAI(@AuthenticationPrincipal Jwt jwt, @RequestBody String texto){
 
-        return ResponseEntity.ok(AIService.escribir(texto));
+        return ResponseEntity.ok(AIService.escribir(jwt,texto));
     }
 }

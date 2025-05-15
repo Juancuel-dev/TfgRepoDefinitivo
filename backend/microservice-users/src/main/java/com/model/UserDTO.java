@@ -16,4 +16,8 @@ public class UserDTO {
 
     private Integer imagen;
 
+    private Byte edad;
+
+    private String pais;
+
 }

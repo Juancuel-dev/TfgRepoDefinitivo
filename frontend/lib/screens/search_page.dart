@@ -99,107 +99,129 @@ class _SearchPageState extends State<SearchPage> {
                         ),
                       );
                     } else {
-                      return LayoutBuilder(
-                        builder: (context, constraints) {
-                          // Ajustar dinámicamente el número de columnas
-                          final crossAxisCount = constraints.maxWidth <= 405
-                              ? 1
-                              : (constraints.maxWidth > 405 && constraints.maxWidth <= 600)
-                                  ? 2
-                                  : (constraints.maxWidth > 600 && constraints.maxWidth <= 900)
-                                      ? 3
-                                      : 4;
+                      final games = snapshot.data!;
+                      final exactMatch = games.isNotEmpty && games.first.name.toLowerCase() == _searchController.text.trim().toLowerCase();
 
-                          // Calcular dinámicamente el childAspectRatio
-                          final cardWidth = (constraints.maxWidth - (crossAxisCount - 1) * 16) / crossAxisCount;
-                          final cardHeight = cardWidth / 0.75; // Mantener la proporción original
-                          final childAspectRatio = cardWidth / cardHeight;
-
-                          return GridView.builder(
-                            padding: const EdgeInsets.only(top: 16), // Espaciado superior
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxisCount,
-                              crossAxisSpacing: 16.0,
-                              mainAxisSpacing: 16.0,
-                              childAspectRatio: childAspectRatio, // Usar el aspecto dinámico
-                            ),
-                            itemCount: snapshot.data!.length,
-                            itemBuilder: (context, index) {
-                              final game = snapshot.data![index];
-                              return Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[850],
-                                  borderRadius: BorderRadius.circular(8.0),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (!exactMatch)
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 16.0),
+                              child: Text(
+                                'No hemos encontrado lo que buscas, pero te pueden interesar:',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
-                                child: InkWell(
-                                  onTap: () {
-                                    // Navegar a la página de detalles del juego usando GoRouter
-                                    context.go(
-                                      '/details',
-                                      extra: game, // Pasar el objeto Game como argumento
-                                    );
-                                  },
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      AspectRatio(
-                                        aspectRatio: 1.5,
-                                        child: ClipRRect(
-                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
-                                          child: Image.network(
-                                            game.imageUrl,
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return const Center(
-                                                child: Icon(Icons.error, color: Colors.red, size: 50),
-                                              );
-                                            },
-                                          ),
-                                        ),
+                              ),
+                            ),
+                          Expanded(
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                // Ajustar dinámicamente el número de columnas
+                                final crossAxisCount = constraints.maxWidth <= 405
+                                    ? 1
+                                    : (constraints.maxWidth > 405 && constraints.maxWidth <= 600)
+                                        ? 2
+                                        : (constraints.maxWidth > 600 && constraints.maxWidth <= 900)
+                                            ? 3
+                                            : 4;
+
+                                // Calcular dinámicamente el childAspectRatio
+                                final cardWidth = (constraints.maxWidth - (crossAxisCount - 1) * 16) / crossAxisCount;
+                                final cardHeight = cardWidth / 0.75; // Mantener la proporción original
+                                final childAspectRatio = cardWidth / cardHeight;
+
+                                return GridView.builder(
+                                  padding: const EdgeInsets.only(top: 16), // Espaciado superior
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    crossAxisSpacing: 16.0,
+                                    mainAxisSpacing: 16.0,
+                                    childAspectRatio: childAspectRatio, // Usar el aspecto dinámico
+                                  ),
+                                  itemCount: games.length,
+                                  itemBuilder: (context, index) {
+                                    final game = games[index];
+                                    return Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[850],
+                                        borderRadius: BorderRadius.circular(8.0),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
+                                      child: InkWell(
+                                        onTap: () {
+                                          // Navegar a la página de detalles del juego usando GoRouter
+                                          context.go(
+                                            '/details',
+                                            extra: game, // Pasar el objeto Game como argumento
+                                          );
+                                        },
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              game.name,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '\$${game.precio.toStringAsFixed(2)}',
-                                              style: const TextStyle(
-                                                color: Colors.greenAccent,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
+                                            AspectRatio(
+                                              aspectRatio: 1.5,
+                                              child: ClipRRect(
+                                                borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
+                                                child: Image.network(
+                                                  game.imageUrl,
+                                                  fit: BoxFit.cover,
+                                                  width: double.infinity,
+                                                  errorBuilder: (context, error, stackTrace) {
+                                                    return const Center(
+                                                      child: Icon(Icons.error, color: Colors.red, size: 50),
+                                                    );
+                                                  },
+                                                ),
                                               ),
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Metacritic: ${game.metacritic}',
-                                              style: const TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 12,
+                                            Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    game.name,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    '\$${game.precio.toStringAsFixed(2)}',
+                                                    style: const TextStyle(
+                                                      color: Colors.greenAccent,
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    'Metacritic: ${game.metacritic}',
+                                                    style: const TextStyle(
+                                                      color: Colors.white70,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       );
                     }
                   },
