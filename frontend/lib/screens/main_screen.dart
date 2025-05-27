@@ -9,12 +9,17 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:flutter_auth_app/services/auth_provider.dart';
 import 'package:flutter/gestures.dart';
+import 'package:logger/logger.dart'; // Importa el paquete logger
 
 class MainScreen extends StatelessWidget {
-  const MainScreen({super.key});
+  MainScreen({super.key});
+
+  final Logger _logger = Logger(); // Instancia del logger
 
   @override
   Widget build(BuildContext context) {
+    _logger.i('Construyendo la pantalla principal'); // Log de inicio de construcción
+
     return Scaffold(
       body: Stack(
         children: [
@@ -27,7 +32,6 @@ class MainScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Secciones de la pantalla principal
                     _buildFeaturedGameSection(context),
                     const SizedBox(height: 32),
                     const Text(
@@ -63,6 +67,7 @@ class MainScreen extends StatelessWidget {
             left: 16,
             child: FloatingActionButton(
               onPressed: () {
+                _logger.i('Botón de IA pulsado'); // Log del botón de IA
                 showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
@@ -84,12 +89,16 @@ class MainScreen extends StatelessWidget {
 
   // Método para construir la sección de juego destacado
   Widget _buildFeaturedGameSection(BuildContext context) {
+    _logger.i('Construyendo la sección de juego destacado'); // Log de inicio de sección
+
     return FutureBuilder<List<Game>>(
-      future: GamesService().fetchDiscountedGames(), // Obtener juegos en oferta
+      future: GamesService().fetchDiscountedGames(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
+          _logger.i('Cargando juegos destacados'); // Log de carga
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
+          _logger.e('Error al cargar juegos destacados: ${snapshot.error}'); // Log de error
           return Center(
             child: Text(
               'Error: ${snapshot.error}',
@@ -97,6 +106,7 @@ class MainScreen extends StatelessWidget {
             ),
           );
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          _logger.w('No se encontraron juegos destacados'); // Log de advertencia
           return const Center(
             child: Text(
               'No se encontraron juegos en oferta.',
@@ -105,8 +115,10 @@ class MainScreen extends StatelessWidget {
           );
         } else {
           final random = Random();
-          final featuredGame = snapshot.data![random.nextInt(snapshot.data!.length)]; // Seleccionar un juego aleatorio
+          final featuredGame = snapshot.data![random.nextInt(snapshot.data!.length)];
           final originalPrice = (featuredGame.precio / (1 - (15 + random.nextInt(36)) / 100)).toStringAsFixed(2);
+
+          _logger.i('Juego destacado seleccionado: ${featuredGame.name}'); // Log del juego destacado
 
           return Stack(
             children: [
@@ -115,10 +127,11 @@ class MainScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8.0),
                 child: Image.network(
                   featuredGame.imageUrl,
-                  height: 350, // Ajustar la altura de la imagen
+                  height: 350,
                   width: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
+                    _logger.e('Error al cargar la imagen del juego destacado: $error'); // Log de error de imagen
                     return const Center(
                       child: Icon(Icons.error, color: Colors.red, size: 50),
                     );
@@ -180,10 +193,9 @@ class MainScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () {
-                        final formattedName = featuredGame.name.replaceAll(' ', '-'); // Reemplazar espacios por guiones
-                        context.go(
-                          '/details/$formattedName', // Pasar el nombre del juego formateado en la URL
-                        );
+                        _logger.i('Navegando a los detalles del juego: ${featuredGame.name}'); // Log de navegación
+                        final formattedName = featuredGame.name.replaceAll(' ', '-');
+                        context.go('/details/$formattedName');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blueAccent,
@@ -209,12 +221,16 @@ class MainScreen extends StatelessWidget {
 
   // Sección de productos populares
   Widget _buildPopularProductsSection(BuildContext context) {
+    _logger.i('Construyendo la sección de productos populares'); // Log de inicio de sección
+
     return FutureBuilder<List<Game>>(
-      future: GamesService().fetchGamesLimit(9), // Usar el nuevo método con un límite de 9
+      future: GamesService().fetchGames(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
+          _logger.i('Cargando productos populares'); // Log de carga
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
+          _logger.e('Error al cargar productos populares: ${snapshot.error}'); // Log de error
           return Center(
             child: Text(
               'Error: ${snapshot.error}',
@@ -222,6 +238,7 @@ class MainScreen extends StatelessWidget {
             ),
           );
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          _logger.w('No se encontraron productos populares'); // Log de advertencia
           return const Center(
             child: Text(
               'No se encontraron juegos populares.',
@@ -229,7 +246,7 @@ class MainScreen extends StatelessWidget {
             ),
           );
         } else {
-          final games = snapshot.data!; // Ya no es necesario limitar aquí
+          final games = snapshot.data!.take(9).toList(); // Limitar a 9 juegos
           final isMobile = MediaQuery.of(context).size.width < 600;
 
           if (isMobile) {
@@ -250,6 +267,7 @@ class MainScreen extends StatelessWidget {
                     ),
                     child: InkWell(
                       onTap: () {
+                        _logger.i('Navegando a los detalles del juego: ${game.name}'); // Log de navegación
                         final formattedName = game.name.replaceAll(' ', '-'); // Reemplazar espacios por guiones
                         context.go(
                           '/details/$formattedName', // Pasar el nombre del juego formateado en la URL
@@ -267,6 +285,7 @@ class MainScreen extends StatelessWidget {
                                 fit: BoxFit.cover,
                                 width: double.infinity,
                                 errorBuilder: (context, error, stackTrace) {
+                                  _logger.e('Error al cargar la imagen del juego: $error'); // Log de error de imagen
                                   return const Center(
                                     child: Icon(Icons.error, color: Colors.red, size: 50),
                                   );
@@ -332,6 +351,7 @@ class MainScreen extends StatelessWidget {
                       ),
                       child: InkWell(
                         onTap: () {
+                          _logger.i('Navegando a los detalles del juego: ${game.name}'); // Log de navegación
                           final formattedName = game.name.replaceAll(' ', '-'); // Reemplazar espacios por guiones
                           context.go(
                             '/details/$formattedName', // Pasar el nombre del juego formateado en la URL
@@ -349,6 +369,7 @@ class MainScreen extends StatelessWidget {
                                   fit: BoxFit.cover,
                                   width: double.infinity,
                                   errorBuilder: (context, error, stackTrace) {
+                                    _logger.e('Error al cargar la imagen del juego: $error'); // Log de error de imagen
                                     return const Center(
                                       child: Icon(Icons.error, color: Colors.red, size: 50),
                                     );
@@ -399,12 +420,16 @@ class MainScreen extends StatelessWidget {
 
   // Método para construir la sección de juegos en oferta
   Widget _buildDiscountedGamesSection(BuildContext context) {
+    _logger.i('Construyendo la sección de juegos en oferta'); // Log de inicio de sección
+
     return FutureBuilder<List<Game>>(
       future: GamesService().fetchDiscountedGames(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
+          _logger.i('Cargando juegos en oferta'); // Log de carga
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
+          _logger.e('Error al cargar juegos en oferta: ${snapshot.error}'); // Log de error
           return Center(
             child: Text(
               'Error: ${snapshot.error}',
@@ -412,6 +437,7 @@ class MainScreen extends StatelessWidget {
             ),
           );
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          _logger.w('No se encontraron juegos en oferta'); // Log de advertencia
           return const Center(
             child: Text(
               'No hay juegos en oferta.',
@@ -421,6 +447,8 @@ class MainScreen extends StatelessWidget {
         } else {
           final games = snapshot.data!;
           final ScrollController scrollController = ScrollController();
+
+          _logger.i('Juegos en oferta cargados correctamente'); // Log de éxito
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,6 +475,7 @@ class MainScreen extends StatelessWidget {
                           ),
                           child: InkWell(
                             onTap: () {
+                              _logger.i('Navegando a los detalles del juego: ${game.name}'); // Log de navegación
                               final formattedName = game.name.replaceAll(' ', '-'); // Reemplazar espacios por guiones
                               context.go(
                                 '/details/$formattedName', // Pasar el nombre del juego formateado en la URL
@@ -464,6 +493,7 @@ class MainScreen extends StatelessWidget {
                                       fit: BoxFit.cover,
                                       width: double.infinity,
                                       errorBuilder: (context, error, stackTrace) {
+                                        _logger.e('Error al cargar la imagen del juego: $error'); // Log de error de imagen
                                         return const Center(
                                           child: Icon(Icons.error, color: Colors.red, size: 50),
                                         );

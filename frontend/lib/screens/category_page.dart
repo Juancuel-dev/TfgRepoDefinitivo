@@ -110,9 +110,9 @@ class _CategoryPageState extends State<CategoryPage> {
                               child: InkWell(
                                 onTap: () {
                                   // Navegar a la página de detalles del juego usando GoRouter
+                                  final formattedName = game.name.replaceAll(' ', '-'); // Formatear el nombre del juego
                                   context.go(
-                                    '/details',
-                                    extra: game, // Pasar el objeto Game como argumento
+                                    '/details/$formattedName', // Pasar el nombre del juego en la URL
                                   );
                                 },
                                 child: Column(

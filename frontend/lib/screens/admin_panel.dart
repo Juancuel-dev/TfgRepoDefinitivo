@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/config/server_config.dart';
-import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:flutter_auth_app/services/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:go_router/go_router.dart'; // Importación necesaria para la navegación
+import 'package:logger/logger.dart';
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
@@ -16,6 +16,12 @@ class AdminPanel extends StatefulWidget {
 }
 
 class _AdminPanelState extends State<AdminPanel> {
+  
+  final Logger _logger = Logger(
+    level: Level.debug, 
+    printer: PrettyPrinter(), 
+  ); 
+
   String selectedCategory = 'Operaciones de Usuario'; // Categoría seleccionada por defecto
   bool isMenuVisible = false; // Controla si el menú está visible en móvil
   List<OrderEntry> userOrders = []; // Lista de pedidos del usuario
@@ -420,8 +426,8 @@ class _AdminPanelState extends State<AdminPanel> {
   Future<void> _fetchAllOrders() async {
     final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
 
-    print('Iniciando la solicitud para obtener todos los pedidos...');
-    print('Token JWT: $token');
+    _logger.i('Iniciando la solicitud para obtener todos los pedidos...');
+    _logger.d('Token JWT: $token');
 
     try {
       final response = await http.get(
@@ -431,23 +437,23 @@ class _AdminPanelState extends State<AdminPanel> {
         },
       );
 
-      print('Respuesta del servidor: ${response.statusCode}');
-      print('Cuerpo de la respuesta: ${response.body}');
+      _logger.i('Respuesta del servidor: ${response.statusCode}');
+      _logger.d('Cuerpo de la respuesta: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body); // Decodificar como lista dinámica
-        print('Datos decodificados: $data');
+        _logger.d('Datos decodificados: $data');
 
         setState(() {
           userOrders = data.map((json) {
-            print('Procesando pedido: $json');
+            _logger.d('Procesando pedido: $json');
             return OrderEntry.fromJson(json as Map<String, dynamic>); // Mapear a objetos OrderEntry
           }).toList();
         });
 
-        print('Pedidos procesados correctamente: $userOrders');
+        _logger.i('Pedidos procesados correctamente: $userOrders');
       } else {
-        print('Error al obtener los pedidos. Código de estado: ${response.statusCode}');
+        _logger.e('Error al obtener los pedidos. Código de estado: ${response.statusCode}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error al obtener los pedidos'),
@@ -456,7 +462,7 @@ class _AdminPanelState extends State<AdminPanel> {
         );
       }
     } catch (e) {
-      print('Error al realizar la solicitud: $e');
+      _logger.e('Error al realizar la solicitud', e);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error de conexión al servidor'),

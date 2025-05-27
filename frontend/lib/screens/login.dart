@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/services/auth_service.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
-import 'package:go_router/go_router.dart'; // Importar GoRouter para la navegación
+import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart'; // Importar GoRouter para la navegación
 
 class LoginPage extends StatefulWidget {
   final Function(String) onLogin;
@@ -19,6 +20,11 @@ class _LoginPageState extends State<LoginPage> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
   String? _errorMessage;
+  
+  final Logger _logger = Logger(
+    level: Level.debug, 
+    printer: PrettyPrinter(), 
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +124,9 @@ class _LoginPageState extends State<LoginPage> {
                                 _errorMessage = null;
                               });
 
+                              _logger.i('Iniciando sesión...');
+                              _logger.d('Usuario: ${_usernameController.text.trim()}');
+
                               try {
                                 // Llamar al servicio de inicio de sesión
                                 String? token = await _authService.login(
@@ -126,7 +135,7 @@ class _LoginPageState extends State<LoginPage> {
                                 );
 
                                 if (token == null) {
-                                  // Mostrar un SnackBar si el token es nulo (error en el login)
+                                  _logger.w('Inicio de sesión fallido: Usuario o contraseña incorrectos.');
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text('Error: Usuario o contraseña incorrectos.'),
@@ -134,12 +143,12 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   );
                                 } else {
-                                  // Si el login es exitoso, continuar con la navegación
+                                  _logger.i('Inicio de sesión exitoso. Token recibido.');
                                   widget.onLogin(token);
                                   context.go('/'); // Navegación con GoRouter
                                 }
                               } catch (e) {
-                                // Manejar errores inesperados
+                                _logger.e('Error inesperado durante el inicio de sesión', e);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Error: $e'),
@@ -150,6 +159,7 @@ class _LoginPageState extends State<LoginPage> {
                                 setState(() {
                                   _isLoading = false;
                                 });
+                                _logger.i('Finalizado el proceso de inicio de sesión.');
                               }
                             }
                           },

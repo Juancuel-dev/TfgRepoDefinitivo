@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/services/auth_provider.dart';
@@ -18,10 +19,16 @@ class _BaseLayoutState extends State<BaseLayout> {
   bool _showCategories = false; // Controlar si el menú de categorías está visible
   bool _showSearchBar = false; // Controlar si la barra de búsqueda está visible
   final TextEditingController _searchController = TextEditingController();
+  final Logger _logger = Logger(
+    level: Level.debug, 
+    printer: PrettyPrinter(), 
+  );
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600; // Detectar si es móvil
+
+    _logger.i('Construyendo BaseLayout. ¿Es movil?: $isMobile'); // Log de información
 
     return Scaffold(
       key: _scaffoldKey,
@@ -45,6 +52,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                           cursor: SystemMouseCursors.click, // Cambiar el cursor al de una mano señalando
                           child: GestureDetector(
                             onTap: () {
+                              _logger.i('Logo pulsado. Volviendo a home'); // Log de navegación
                               context.go('/'); // Navegación al inicio
                             },
                             child: AnimatedContainer(
@@ -76,6 +84,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                           onPressed: () {
                             setState(() {
                               _showCategories = !_showCategories; // Alternar visibilidad del menú
+                              _logger.i('Pulsado menu de categorias. _showCategories: $_showCategories'); // Log del estado
                             });
                           },
                         ),
@@ -88,12 +97,14 @@ class _BaseLayoutState extends State<BaseLayout> {
                             onPressed: () {
                               setState(() {
                                 _showSearchBar = !_showSearchBar; // Alternar visibilidad de la barra de búsqueda
+                                _logger.i('Pulsado boton busqueda. _showSearchBar: $_showSearchBar'); // Log del estado
                               });
                             },
                           ),
                           IconButton(
                             icon: const Icon(Icons.shopping_cart, color: Colors.white),
                             onPressed: () {
+                              _logger.i('Navegando a carrito.'); // Log de navegación
                               context.go('/cart'); // Navegación al carrito
                             },
                           ),
@@ -103,8 +114,10 @@ class _BaseLayoutState extends State<BaseLayout> {
                                 icon: const Icon(Icons.person, color: Colors.white), // Ícono de persona
                                 onPressed: () {
                                   if (authProvider.isLoggedIn) {
+                                    _logger.i('El usuario esta loggeado.'); // Log de usuario logueado
                                     context.go('/my-account'); // Navegar a My Account si está logueado
                                   } else {
+                                    _logger.i('El usuario no esta loggeado'); // Log de usuario no logueado
                                     context.go('/login'); // Navegar al Login si no está logueado
                                   }
                                 },
@@ -245,8 +258,8 @@ class _BaseLayoutState extends State<BaseLayout> {
     final platforms = [
       {'name': 'PS5', 'icon': Icons.sports_esports},
       {'name': 'PC', 'icon': Icons.computer},
-      {'name': 'Xbox', 'icon': Icons.videogame_asset},
-      {'name': 'Nintendo', 'icon': Icons.gamepad},
+      {'name': 'XBOX', 'icon': Icons.videogame_asset},
+      {'name': 'SWITCH', 'icon': Icons.gamepad},
     ];
 
     return Container(

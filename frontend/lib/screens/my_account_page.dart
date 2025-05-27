@@ -253,7 +253,11 @@ class _MyAccountPageState extends State<MyAccountPage> {
       case 'Mis Pedidos':
         return _buildOrdersSection();
       case 'Cambiar Contraseña':
-        return _buildChangePasswordSection();
+        return ChangePasswordSection(
+          onPasswordChanged: (newPassword) {
+            _changePassword(newPassword);
+          },
+        );
       case 'Cerrar Sesión':
         return _buildLogoutButton(context);
       case 'Admin Panel':
@@ -641,66 +645,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
     );
   }
 
-  Widget _buildChangePasswordSection() {
-    final TextEditingController newPasswordController = TextEditingController();
-
-    return Card(
-      color: Colors.grey[850],
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Cambiar Contraseña',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: newPasswordController,
-              obscureText: true,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Nueva Contraseña',
-                labelStyle: TextStyle(color: Colors.white70),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                final newPassword = newPasswordController.text.trim();
-                if (newPassword.isNotEmpty) {
-                  _changePassword(newPassword);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Por favor, ingresa una nueva contraseña'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-              ),
-              child: const Text('Cambiar Contraseña'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _changePassword(String newPassword) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.jwtToken;
@@ -733,6 +677,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
           const SnackBar(
             content: Text('Contraseña cambiada con éxito'),
             backgroundColor: Colors.green,
+            duration: Duration(seconds: 2), // Duración de 2 segundos
           ),
         );
       } else {
@@ -767,6 +712,128 @@ class _MyAccountPageState extends State<MyAccountPage> {
           backgroundColor: Colors.red,
         ),
         child: const Text('Cerrar Sesión'),
+      ),
+    );
+  }
+}
+
+class ChangePasswordSection extends StatefulWidget {
+  final Function(String) onPasswordChanged;
+
+  const ChangePasswordSection({Key? key, required this.onPasswordChanged}) : super(key: key);
+
+  @override
+  _ChangePasswordSectionState createState() => _ChangePasswordSectionState();
+}
+
+class _ChangePasswordSectionState extends State<ChangePasswordSection> {
+  final TextEditingController _newPasswordController = TextEditingController();
+  final List<String> _passwordErrors = [];
+  bool _isButtonEnabled = false; // Variable para habilitar/deshabilitar el botón
+
+  void _validatePassword(String password) {
+    final errors = <String>[];
+
+    if (password.isEmpty) {
+      errors.add('La contraseña no puede estar vacía');
+    }
+    if (password.length < 8) {
+      errors.add('Debe tener al menos 8 caracteres');
+    }
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      errors.add('Debe incluir al menos una letra minúscula');
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      errors.add('Debe incluir al menos una letra mayúscula');
+    }
+    if (!RegExp(r'\d').hasMatch(password)) {
+      errors.add('Debe incluir al menos un número');
+    }
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
+      errors.add('Debe incluir al menos un símbolo');
+    }
+    if (_hasConsecutiveNumbers(password)) {
+      errors.add('No debe contener números consecutivos');
+    }
+
+    setState(() {
+      _passwordErrors.clear();
+      _passwordErrors.addAll(errors);
+      _isButtonEnabled = _passwordErrors.isEmpty; // Habilitar el botón si no hay errores
+    });
+  }
+
+  bool _hasConsecutiveNumbers(String password) {
+    for (int i = 0; i < password.length - 1; i++) {
+      final currentChar = password[i];
+      final nextChar = password[i + 1];
+      if (RegExp(r'\d').hasMatch(currentChar) &&
+          RegExp(r'\d').hasMatch(nextChar) &&
+          int.parse(nextChar) == int.parse(currentChar) + 1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Future<void> _handleChangePassword() async {
+    final newPassword = _newPasswordController.text.trim();
+    if (newPassword.isEmpty || !_isButtonEnabled) return;
+
+    // Llamar al método onPasswordChanged para realizar la solicitud al backend
+    await widget.onPasswordChanged(newPassword);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.grey[850],
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Cambiar Contraseña',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _newPasswordController,
+              obscureText: true,
+              onChanged: _validatePassword,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Nueva Contraseña',
+                labelStyle: TextStyle(color: Colors.white70),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Mostrar errores de validación
+            ..._passwordErrors.map((error) => Text(
+                  '- $error',
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                )),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _isButtonEnabled ? _handleChangePassword : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _isButtonEnabled ? Colors.blue : Colors.grey,
+              ),
+              child: const Text('Cambiar Contraseña'),
+            ),
+          ],
+        ),
       ),
     );
   }

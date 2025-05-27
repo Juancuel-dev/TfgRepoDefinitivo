@@ -22,9 +22,55 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _ageController = TextEditingController(); // Controlador para la edad
   String? _selectedCountry; // Variable para almacenar el país seleccionado
+  final List<String> _passwordErrors = []; // Lista de errores de la contraseña
 
   final AuthService _authService = AuthService(); // Instancia del servicio de autenticación
   bool _isLoading = false; // Controla el estado de carga
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_validatePassword); // Escuchar cambios en la contraseña
+  }
+
+  @override
+  void dispose() {
+    _passwordController.removeListener(_validatePassword);
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _validatePassword() {
+    final password = _passwordController.text;
+    final errors = <String>[];
+
+    if (password.isEmpty) {
+      errors.add('La contraseña no puede estar vacía');
+    }
+    if (password.length < 8) {
+      errors.add('Debe tener al menos 8 caracteres');
+    }
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      errors.add('Debe incluir al menos una letra minúscula');
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      errors.add('Debe incluir al menos una letra mayúscula');
+    }
+    if (!RegExp(r'\d').hasMatch(password)) {
+      errors.add('Debe incluir al menos un número');
+    }
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
+      errors.add('Debe incluir al menos un símbolo');
+    }
+    if (_hasConsecutiveNumbers(password)) {
+      errors.add('No debe contener números consecutivos');
+    }
+
+    setState(() {
+      _passwordErrors.clear();
+      _passwordErrors.addAll(errors);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,35 +152,21 @@ class _RegisterPageState extends State<RegisterPage> {
                 // Campo de Contraseña
                 FractionallySizedBox(
                   widthFactor: 0.5,
-                  child: _buildTextField(
-                    controller: _passwordController,
-                    label: 'Contraseña',
-                    icon: Icons.lock,
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, ingresa tu contraseña';
-                      }
-                      if (value.length < 8) {
-                        return 'La contraseña debe tener al menos 8 caracteres';
-                      }
-                      if (!RegExp(r'[a-z]').hasMatch(value)) {
-                        return 'Debe incluir al menos una letra minúscula';
-                      }
-                      if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                        return 'Debe incluir al menos una letra mayúscula';
-                      }
-                      if (!RegExp(r'\d').hasMatch(value)) {
-                        return 'Debe incluir al menos un número';
-                      }
-                      if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
-                        return 'Debe incluir al menos un símbolo';
-                      }
-                      if (_hasConsecutiveNumbers(value)) {
-                        return 'No debe contener números consecutivos';
-                      }
-                      return null; // La contraseña es válida
-                    },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTextField(
+                        controller: _passwordController,
+                        label: 'Contraseña',
+                        icon: Icons.lock,
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 8),
+                      ..._passwordErrors.map((error) => Text(
+                            '- $error',
+                            style: const TextStyle(color: Colors.red, fontSize: 14),
+                          )),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -268,7 +300,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                           onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
+                            if (_formKey.currentState!.validate() && _passwordErrors.isEmpty) {
                               final password = _passwordController.text.trim();
 
                               // Validar la contraseña con la API de Have I Been Pwned
@@ -346,6 +378,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                 );
                               }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Por favor, corrige los errores antes de continuar'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
                             }
                           },
                           child: const Text(

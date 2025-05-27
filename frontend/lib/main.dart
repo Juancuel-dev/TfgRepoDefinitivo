@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
       routes: [
         GoRoute(
           path: '/',
-          builder: (context, state) => const MainScreen(), // Página principal actualizada
+          builder: (context, state) =>  MainScreen(), // Página principal actualizada
         ),
         GoRoute(
           path: '/search/:query',
@@ -77,7 +77,7 @@ class MyApp extends StatelessWidget {
         ),
         GoRoute(
           path: '/cart',
-          builder: (context, state) => const CartPage(),
+          builder: (context, state) => CartPage(),
         ),
         GoRoute(
           path: '/admin',

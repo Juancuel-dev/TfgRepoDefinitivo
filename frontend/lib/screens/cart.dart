@@ -3,13 +3,21 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/services/cart_provider.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
+import 'package:logger/logger.dart'; // Importa el paquete logger
 
 class CartPage extends StatelessWidget {
-  const CartPage({super.key});
+  CartPage({super.key});
+
+  final Logger _logger = Logger(
+    level: Level.debug, 
+    printer: PrettyPrinter(), 
+  );
 
   @override
   Widget build(BuildContext context) {
     final cartItems = Provider.of<CartProvider>(context).items;
+
+    _logger.i('Construyendo la pagina. Numero de items: ${cartItems.length}'); // Log de información
 
     return BaseLayout(
       child: Padding(
@@ -34,6 +42,8 @@ class CartPage extends StatelessWidget {
                       itemCount: cartItems.length,
                       itemBuilder: (context, index) {
                         final item = cartItems[index];
+                        _logger.i('Renderizando item: ${item.game.name}, Cantidad: ${item.quantity}'); // Log de cada ítem
+
                         return Container(
                           margin: const EdgeInsets.symmetric(vertical: 8.0),
                           padding: const EdgeInsets.all(12.0),
@@ -100,6 +110,7 @@ class CartPage extends StatelessWidget {
                 final cartItems = Provider.of<CartProvider>(context, listen: false).items;
 
                 if (cartItems.isEmpty) {
+                  _logger.w('Se ha intentado continuar con el carrito vacio'); // Log de advertencia
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('El carrito está vacío. Añade productos antes de continuar.'),
@@ -109,7 +120,7 @@ class CartPage extends StatelessWidget {
                   return;
                 }
 
-                print('Navegando a /order-confirmation');
+                _logger.i('Confirmando pedido. Articulos: ${cartItems.length}'); // Log de navegación
                 context.go('/order-confirmation');
               },
               style: ElevatedButton.styleFrom(
