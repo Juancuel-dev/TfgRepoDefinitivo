@@ -93,6 +93,19 @@ class CartPage extends StatelessWidget {
                                   ],
                                 ),
                               ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  _logger.i('Eliminando item: ${item.game.name}'); // Log de eliminación
+                                  Provider.of<CartProvider>(context, listen: false).removeItem(item);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('${item.game.name} eliminado del carrito.'),
+                                      duration: const Duration(seconds: 1),
+                                    ),
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         );

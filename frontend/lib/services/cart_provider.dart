@@ -46,6 +46,12 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Elimina un elemento específico del carrito
+  void removeItem(CartItem item) {
+    _items.remove(item);
+    notifyListeners();
+  }
+
   /// Vacía el carrito
   void clear() {
     _items.clear();
