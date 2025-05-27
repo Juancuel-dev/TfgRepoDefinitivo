@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/screens/admin_panel.dart';
 import 'package:flutter_auth_app/screens/category_page.dart';
 import 'package:flutter_auth_app/screens/main_screen.dart'; // Importar MainScreen
@@ -14,6 +13,7 @@ import 'package:flutter_auth_app/screens/details.dart';
 import 'package:flutter_auth_app/services/cart_provider.dart';
 import 'package:flutter_auth_app/services/auth_provider.dart';
 import 'package:flutter_auth_app/screens/order_confirmation.dart'; // Importar OrderConfirmationPage
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   runApp(
@@ -69,22 +69,10 @@ class MyApp extends StatelessWidget {
           ),
         ),
         GoRoute(
-          path: '/details',
+          path: '/details/:name',
           builder: (context, state) {
-            // Verificar y convertir state.extra al tipo Game
-            final game = state.extra is Game ? state.extra as Game : null;
-
-            if (game == null) {
-              // Manejar el caso en el que no se pase un objeto Game
-              return Scaffold(
-                appBar: AppBar(title: const Text('Error')),
-                body: const Center(
-                  child: Text('No se proporcionaron detalles del juego.'),
-                ),
-              );
-            }
-
-            return GameDetailPage(game: game);
+            final gameName = state.pathParameters['name']!;
+            return GameDetailPage(gameName: gameName);
           },
         ),
         GoRoute(
@@ -150,6 +138,16 @@ class MyApp extends StatelessWidget {
       ),
       routerConfig: router, // Configuración de GoRouter
       debugShowCheckedModeBanner: false, // Ocultar el banner de modo debug
+      supportedLocales: const [
+        Locale('es', 'ES'), // Español (España)
+        Locale('en', 'US'), // Inglés (Estados Unidos)
+      ],
+      locale: const Locale('es', 'ES'), // Establecer el idioma predeterminado a español
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 }

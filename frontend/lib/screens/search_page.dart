@@ -152,11 +152,8 @@ class _SearchPageState extends State<SearchPage> {
                                       ),
                                       child: InkWell(
                                         onTap: () {
-                                          // Navegar a la página de detalles del juego usando GoRouter
-                                          context.go(
-                                            '/details',
-                                            extra: game, // Pasar el objeto Game como argumento
-                                          );
+                                          final formattedName = game.name.replaceAll(' ', '-'); // Reemplazar espacios por guiones
+                                          context.go('/details/$formattedName'); // Navegar a la página de detalles con el nombre formateado
                                         },
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,

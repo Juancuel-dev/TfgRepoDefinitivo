@@ -180,9 +180,9 @@ class MainScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () {
+                        final formattedName = featuredGame.name.replaceAll(' ', '-'); // Reemplazar espacios por guiones
                         context.go(
-                          '/details',
-                          extra: featuredGame, // Pasar el objeto Game como argumento
+                          '/details/$formattedName', // Pasar el nombre del juego formateado en la URL
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -210,7 +210,7 @@ class MainScreen extends StatelessWidget {
   // Sección de productos populares
   Widget _buildPopularProductsSection(BuildContext context) {
     return FutureBuilder<List<Game>>(
-      future: GamesService().fetchGames(),
+      future: GamesService().fetchGamesLimit(9), // Usar el nuevo método con un límite de 9
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -229,7 +229,7 @@ class MainScreen extends StatelessWidget {
             ),
           );
         } else {
-          final games = snapshot.data!.take(9).toList(); // Limitar a 9 juegos
+          final games = snapshot.data!; // Ya no es necesario limitar aquí
           final isMobile = MediaQuery.of(context).size.width < 600;
 
           if (isMobile) {
@@ -250,9 +250,9 @@ class MainScreen extends StatelessWidget {
                     ),
                     child: InkWell(
                       onTap: () {
+                        final formattedName = game.name.replaceAll(' ', '-'); // Reemplazar espacios por guiones
                         context.go(
-                          '/details',
-                          extra: game, // Pasar el objeto Game como argumento
+                          '/details/$formattedName', // Pasar el nombre del juego formateado en la URL
                         );
                       },
                       child: Column(
@@ -332,9 +332,9 @@ class MainScreen extends StatelessWidget {
                       ),
                       child: InkWell(
                         onTap: () {
+                          final formattedName = game.name.replaceAll(' ', '-'); // Reemplazar espacios por guiones
                           context.go(
-                            '/details',
-                            extra: game, // Pasar el objeto Game como argumento
+                            '/details/$formattedName', // Pasar el nombre del juego formateado en la URL
                           );
                         },
                         child: Column(
@@ -447,9 +447,9 @@ class MainScreen extends StatelessWidget {
                           ),
                           child: InkWell(
                             onTap: () {
+                              final formattedName = game.name.replaceAll(' ', '-'); // Reemplazar espacios por guiones
                               context.go(
-                                '/details',
-                                extra: game,
+                                '/details/$formattedName', // Pasar el nombre del juego formateado en la URL
                               );
                             },
                             child: Column(

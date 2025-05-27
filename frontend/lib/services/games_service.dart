@@ -9,16 +9,17 @@ class GamesService {
 
   Future<List<Game>> fetchGames() async {
     final response = await http.get(
-      Uri.parse(apiUrl), // Agregar el número de página a la URL
+      Uri.parse(apiUrl),
       headers: {
         'Content-Type': 'application/json',
       },
     );
 
     if (response.statusCode == 200) {
-      List<dynamic> body = jsonDecode(response.body);
-      List<Game> games = body.map((dynamic item) => Game.fromJson(item)).toList();
-      return games;
+      // Decodificar como UTF-8
+      final body = utf8.decode(response.bodyBytes);
+      List<dynamic> data = jsonDecode(body);
+      return data.map((dynamic item) => Game.fromJson(item)).toList();
     } else {
       throw Exception('Failed to load games');
     }
@@ -33,9 +34,10 @@ class GamesService {
     );
 
     if (response.statusCode == 200) {
-      List<dynamic> body = jsonDecode(response.body);
-      List<Game> games = body.map((dynamic item) => Game.fromJson(item)).toList();
-      return games;
+      // Decodificar como UTF-8
+      final body = utf8.decode(response.bodyBytes);
+      List<dynamic> data = jsonDecode(body);
+      return data.map((dynamic item) => Game.fromJson(item)).toList();
     } else {
       throw Exception('Failed to load games for category $consola');
     }
@@ -46,7 +48,9 @@ class GamesService {
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+      // Decodificar como UTF-8
+      final body = utf8.decode(response.bodyBytes);
+      final List<dynamic> data = jsonDecode(body);
       return data.map((json) => Game.fromJson(json)).toList();
     } else {
       throw Exception('Error al buscar juegos');
@@ -62,8 +66,10 @@ class GamesService {
     );
 
     if (response.statusCode == 200) {
-      List<dynamic> body = jsonDecode(response.body);
-      List<Game> games = body.map((dynamic item) {
+      // Decodificar como UTF-8
+      final body = utf8.decode(response.bodyBytes);
+      List<dynamic> data = jsonDecode(body);
+      List<Game> games = data.map((dynamic item) {
         Game game = Game.fromJson(item);
         // Generar un descuento aleatorio entre 15% y 50%
         final random = Random();
@@ -79,6 +85,24 @@ class GamesService {
       return games.take(20).toList();
     } else {
       throw Exception('Failed to load discounted games');
+    }
+  }
+
+  Future<List<Game>> fetchGamesLimit(int limit) async {
+    final response = await http.get(
+      Uri.parse('$apiUrl?limit=$limit'), // Agregar el parámetro de límite a la URL
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // Decodificar como UTF-8
+      final body = utf8.decode(response.bodyBytes);
+      List<dynamic> data = jsonDecode(body);
+      return data.map((dynamic item) => Game.fromJson(item)).toList();
+    } else {
+      throw Exception('Failed to load games with limit $limit');
     }
   }
 }

@@ -4,6 +4,7 @@ import com.model.Game;
 import com.service.GamesService;
 import com.util.exception.GameNotFoundException;
 import com.util.exception.UnauthorizedException;
+import jakarta.ws.rs.QueryParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -27,10 +28,17 @@ public class GamesController {
     public ResponseEntity<List<Game>> findAll() {
             return ResponseEntity.ok(gamesService.findAll());
     }
+
+    @GetMapping
+    public ResponseEntity<List<Game>> findAllLimit(@QueryParam("limit")String limit) {
+            return ResponseEntity.ok(gamesService.findAllLimit(limit));
+    }
+
     @GetMapping("/consola/{consola}")
     public ResponseEntity<List<Game>> findAllByConsola(@PathVariable String consola) {
             return ResponseEntity.ok(gamesService.findAllByConsola(consola));
     }
+
     @GetMapping("/fetchgames/{page}")
     public ResponseEntity<List<Game>> fetchGames(@PathVariable String page) {
             return ResponseEntity.ok(gamesService.fetchGamesAPI(page));
@@ -40,6 +48,15 @@ public class GamesController {
     public ResponseEntity<Game> findById(@PathVariable String id) {
         try{
             return ResponseEntity.ok(gamesService.findById(id));
+        }catch(GameNotFoundException gnfe){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @GetMapping("/name/{name}")
+    public ResponseEntity<Game> findByName(@PathVariable String name) {
+        try{
+            return ResponseEntity.ok(gamesService.findByName(name));
         }catch(GameNotFoundException gnfe){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

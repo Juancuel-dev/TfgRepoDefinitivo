@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/config/server_config.dart';
+import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:flutter_auth_app/services/auth_provider.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +18,13 @@ class AdminPanel extends StatefulWidget {
 class _AdminPanelState extends State<AdminPanel> {
   String selectedCategory = 'Operaciones de Usuario'; // Categoría seleccionada por defecto
   bool isMenuVisible = false; // Controla si el menú está visible en móvil
+  List<OrderEntry> userOrders = []; // Lista de pedidos del usuario
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllOrders(); // Obtener todos los pedidos al cargar la página
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,13 +134,7 @@ class _AdminPanelState extends State<AdminPanel> {
       case 'Operaciones de Productos':
         return _buildProductOperations();
       case 'Operaciones de Pedidos':
-        return _buildOrderOperations();
-      case 'Volver a Mi Cuenta':
-        // Redirigir a "Mi Cuenta" (opcional, ya se maneja en el onTap del menú)
-        Future.microtask(() => context.go('/my-account'));
-        return const Center(
-          child: CircularProgressIndicator(), // Mostrar un indicador mientras se redirige
-        );
+        return _buildOrdersSection(); // Mostrar la sección de pedidos
       default:
         return const Center(
           child: Text(
@@ -203,7 +205,7 @@ class _AdminPanelState extends State<AdminPanel> {
                 crossAxisCount: 2, // Número de columnas
                 crossAxisSpacing: 16.0, // Espaciado horizontal
                 mainAxisSpacing: 16.0, // Espaciado vertical
-                childAspectRatio: 4 / 1, // Relación de aspecto ajustada para tarjetas más estrechas
+                childAspectRatio: 3 / 2, // Relación de aspecto ajustada para mostrar más detalles
               ),
               itemCount: products.length,
               itemBuilder: (context, index) {
@@ -215,37 +217,64 @@ class _AdminPanelState extends State<AdminPanel> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            product['name'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis, // Cortar texto si es muy largo
+                        Text(
+                          product['name'] ?? 'Sin nombre',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
+                          overflow: TextOverflow.ellipsis, // Cortar texto si es muy largo
                         ),
-                        GestureDetector(
-                          onTap: () => _deleteData('games', product['id']),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                            decoration: BoxDecoration(
-                              color: Colors.red, // Fondo rojo para el botón
-                              borderRadius: BorderRadius.circular(4.0),
-                            ),
-                            child: const Text(
-                              'Eliminar',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(height: 8),
+                        Text(
+                          'Precio: ${product['precio']?.toStringAsFixed(2) ?? 'N/A'}€',
+                          style: const TextStyle(color: Colors.greenAccent, fontSize: 14),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Metacritic: ${product['metacritic'] ?? 'N/A'}',
+                          style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Consola: ${product['consola'] ?? 'N/A'}',
+                          style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Descripción: ${product['descripcion'] ?? 'Sin descripción'}',
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis, // Cortar texto si es muy largo
+                        ),
+                        const Spacer(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                              onTap: () => _deleteData('games', product['id']),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.red, // Fondo rojo para el botón
+                                  borderRadius: BorderRadius.circular(4.0),
+                                ),
+                                child: const Text(
+                                  'Eliminar',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            
+                          ],
                         ),
                       ],
                     ),
@@ -274,38 +303,97 @@ class _AdminPanelState extends State<AdminPanel> {
     );
   }
 
-  Widget _buildOrderOperations() {
-    return FutureBuilder<List<dynamic>>(
-      future: _fetchData('orders'),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.blue));
-        } else if (snapshot.hasError) {
-          return const Center(
-            child: Text('Error al cargar pedidos', style: TextStyle(color: Colors.red)),
-          );
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Text('No hay pedidos disponibles', style: TextStyle(color: Colors.white70)),
-          );
-        }
-
-        final orders = snapshot.data!;
-        return ListView.builder(
-          itemCount: orders.length,
-          itemBuilder: (context, index) {
-            final order = orders[index];
-            return ListTile(
-              title: Text('Pedido ID: ${order['orderId']}', style: const TextStyle(color: Colors.white)),
-              subtitle: Text('Total: \$${order['precio']}', style: const TextStyle(color: Colors.white70)),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _deleteData('orders', order['orderId']),
-              ),
-            );
-          },
-        );
-      },
+  Widget _buildOrdersSection() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Pedidos de Todos los Clientes',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          userOrders.isEmpty
+              ? const Text(
+                  'No hay pedidos realizados.',
+                  style: TextStyle(color: Colors.white70),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: userOrders.length,
+                  itemBuilder: (context, index) {
+                    final order = userOrders[index];
+                    return Card(
+                      color: Colors.grey[800],
+                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pedido ID: ${order.orderId}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Cliente ID: ${order.clientId}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Fecha: ${order.fecha.toLocal()}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Precio Total: ${order.precio.toStringAsFixed(2)}€',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Juegos:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            ...order.games.map((game) {
+                              return Text(
+                                '- ${game.name} (${game.consola}) - ${game.precio.toStringAsFixed(2)}€ (x${game.quantity})',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white70,
+                                ),
+                              );
+                            }).toList(),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ],
+      ),
     );
   }
 
@@ -326,6 +414,55 @@ class _AdminPanelState extends State<AdminPanel> {
     } catch (e) {
       print('Error fetching data from $endpoint: $e');
       throw Exception('Error al obtener datos de $endpoint');
+    }
+  }
+
+  Future<void> _fetchAllOrders() async {
+    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+
+    print('Iniciando la solicitud para obtener todos los pedidos...');
+    print('Token JWT: $token');
+
+    try {
+      final response = await http.get(
+        Uri.parse('${ServerConfig.serverIp}/gateway/orders'),
+        headers: {
+          'Authorization': 'Bearer $token', // Pasar el token como parámetro de autorización
+        },
+      );
+
+      print('Respuesta del servidor: ${response.statusCode}');
+      print('Cuerpo de la respuesta: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body); // Decodificar como lista dinámica
+        print('Datos decodificados: $data');
+
+        setState(() {
+          userOrders = data.map((json) {
+            print('Procesando pedido: $json');
+            return OrderEntry.fromJson(json as Map<String, dynamic>); // Mapear a objetos OrderEntry
+          }).toList();
+        });
+
+        print('Pedidos procesados correctamente: $userOrders');
+      } else {
+        print('Error al obtener los pedidos. Código de estado: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al obtener los pedidos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error al realizar la solicitud: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error de conexión al servidor'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -532,6 +669,58 @@ class _AdminPanelState extends State<AdminPanel> {
           style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), // Texto blanco
         ),
       ),
+    );
+  }
+}
+
+class OrderEntry {
+  final String orderId;
+  final String clientId;
+  final DateTime fecha;
+  final double precio;
+  final List<GameEntry> games;
+
+  OrderEntry({
+    required this.orderId,
+    required this.clientId,
+    required this.fecha,
+    required this.precio,
+    required this.games,
+  });
+
+  factory OrderEntry.fromJson(Map<String, dynamic> json) {
+    return OrderEntry(
+      orderId: json['orderId'] ?? 'Sin ID',
+      clientId: json['clientId'] ?? 'Sin cliente',
+      fecha: DateTime.parse(json['fecha']),
+      precio: (json['precio'] as num).toDouble(),
+      games: (json['games'] as List<dynamic>)
+          .map((gameJson) => GameEntry.fromJson(gameJson as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class GameEntry {
+  final String name;
+  final double precio;
+  final String consola;
+  final int quantity;
+
+  GameEntry({
+    required this.name,
+    required this.precio,
+    required this.consola,
+    required this.quantity,
+  });
+
+  factory GameEntry.fromJson(Map<String, dynamic> json) {
+    final game = json['game'] as Map<String, dynamic>; // Acceder al objeto 'game'
+    return GameEntry(
+      name: game['name'] ?? 'Sin nombre', // Manejar valores nulos
+      precio: (game['precio'] as num?)?.toDouble() ?? 0.0, // Manejar valores nulos
+      consola: game['consola'] ?? 'Desconocida', // Manejar valores nulos
+      quantity: json['quantity'] as int? ?? 0, // Manejar valores nulos
     );
   }
 }

@@ -4,6 +4,7 @@ import com.util.exception.GameNotFoundException;
 import com.util.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,18 @@ public class GamesService{
             return gamesRepository.findAll();
 
 
-        }// Obtener todos los juegos por categoria
+        }
+    // Obtener todos los juegos con limite
+    public List<Game> findAllLimit(String limit) {
+
+        int limitNumber = Integer.parseInt(limit);
+        List<Game> games = new ArrayList<>();
+        PageRequest pageRequest = PageRequest.of(0, limitNumber);
+        gamesRepository.findAll(pageRequest).forEach(games::add);
+        return games;
+    }
+
+        // Obtener todos los juegos por categoria
     public List<Game> findAllByConsola(String consola) {
             return gamesRepository.findAllByConsola(consola);
         }
@@ -38,6 +50,12 @@ public class GamesService{
     public Game findById(String id) throws GameNotFoundException {
         return gamesRepository.findById(id)
                 .orElseThrow(()->new GameNotFoundException("Juego " + id + " no encontrado"));
+
+    }// Buscar un juego por su nombre
+    public Game findByName(String name) throws GameNotFoundException {
+        name = name.replaceAll("-"," ");
+        return (Game) gamesRepository.findByName(name)
+                .orElseThrow(()->new GameNotFoundException("Juego no encontrado"));
     }
 
     public List<Game> searchGamesByName(String name) {

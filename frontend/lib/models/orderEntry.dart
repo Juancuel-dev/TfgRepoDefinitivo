@@ -1,12 +1,12 @@
 import 'cart.dart';
 
 class OrderEntry {
-  final String id;
-  final String orderId;
-  final String clientId;
-  final double precio;
-  final DateTime fecha;
-  final List<CartItem> games;
+  final String? id;
+  final String? orderId;
+  final String? clientId;
+  final double? precio;
+  final DateTime? fecha;
+  final List<CartItem>? games;
 
   OrderEntry({
     required this.id,
@@ -38,8 +38,8 @@ class OrderEntry {
       'orderId': orderId,
       'clientId': clientId,
       'precio': precio,
-      'fecha': fecha.toIso8601String(),
-      'games': games.map((game) => game.toJson()).toList(),
+      'fecha': fecha!.toIso8601String(),
+      'games': games!.map((game) => game.toJson()).toList(),
     };
   }
 }
