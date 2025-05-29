@@ -29,7 +29,7 @@ public class GamesController {
             return ResponseEntity.ok(gamesService.findAll());
     }
 
-    @GetMapping
+    @GetMapping("/limit")
     public ResponseEntity<List<Game>> findAllLimit(@QueryParam("limit")String limit) {
             return ResponseEntity.ok(gamesService.findAllLimit(limit));
     }

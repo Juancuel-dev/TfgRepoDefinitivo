@@ -1,7 +1,6 @@
 package com.service;
 
 import com.model.LoginRequest;
-import com.model.UserDTO;
 import com.model.register.RegisterUsersRequest;
 import com.model.register.RegisterAuthRequest;
 import com.util.RegisterRequestMapper;
@@ -10,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.*;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -127,38 +125,6 @@ public class AuthService {
             log.error("Error during proxy request", e);
             return ResponseEntity.internalServerError()
                     .body("Error en el gateway: " + e.getMessage());
-        }
-    }
-
-    public ResponseEntity<UserDTO> myself(Jwt jwt) {
-        if (jwt == null) {
-            log.error("JWT is null");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        String tokenValue = "Bearer " + jwt.getTokenValue();
-        log.info("JWT Token: {}", tokenValue);
-
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", tokenValue);
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            String url = "http://" + USER_SERVICE + "/users/me";
-            log.info("Sending request to URL: {}", url);
-
-            return restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    new HttpEntity<>(headers),
-                    UserDTO.class // Directly expect UserDTO
-            );
-        } catch (HttpClientErrorException e) {
-            log.error("Client error during request to user service: {}", e.getMessage());
-            return ResponseEntity.status(e.getStatusCode()).build();
-        } catch (Exception e) {
-            log.error("Error during proxy request to get user info: ", e);
-            return ResponseEntity.internalServerError().build();
         }
     }
 

@@ -34,7 +34,6 @@ public class SecurityConfig {
 
         return http.build();
     }
-
     @Bean
     public JwtDecoder jwtDecoder() {
         String secretKey = "dGhlIHNhbXBsZSBub3RlIG9mIHRoZSBzdGF0ZW1lbnQgaXMgdGhlIHRydWUgdGhlcnJpY2FsIGtleQ";
