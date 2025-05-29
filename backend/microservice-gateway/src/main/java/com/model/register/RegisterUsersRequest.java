@@ -23,4 +23,10 @@ public class RegisterUsersRequest {
     @JsonProperty("nombre")
     private String nombre;
 
+    @JsonProperty("pais")
+    private String pais;
+
+    @JsonProperty("edad")
+    private Byte edad;
+
 }

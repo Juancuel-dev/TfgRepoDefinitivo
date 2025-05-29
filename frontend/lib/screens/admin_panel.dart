@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:flutter_auth_app/services/auth_provider.dart';
+import 'package:flutter_auth_app/services/image_service.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -151,40 +152,78 @@ class _AdminPanelState extends State<AdminPanel> {
     }
   }
 
-  Widget _buildUserOperations() {
-    return FutureBuilder<List<dynamic>>(
-      future: _fetchData('users'),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.blue));
-        } else if (snapshot.hasError) {
-          return const Center(
-            child: Text('Error al cargar usuarios', style: TextStyle(color: Colors.red)),
-          );
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Text('No hay usuarios disponibles', style: TextStyle(color: Colors.white70)),
-          );
-        }
-
-        final users = snapshot.data!;
-        return ListView.builder(
-          itemCount: users.length,
-          itemBuilder: (context, index) {
-            final user = users[index];
-            return ListTile(
-              title: Text(user['username'], style: const TextStyle(color: Colors.white)),
-              subtitle: Text(user['email'], style: const TextStyle(color: Colors.white70)),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _deleteData('users', user['id']),
-              ),
-            );
-          },
+Widget _buildUserOperations() {
+  return FutureBuilder<List<dynamic>>(
+    future: _fetchData('users'),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(
+          child: CircularProgressIndicator(color: Colors.blue),
         );
-      },
-    );
-  }
+      } else if (snapshot.hasError) {
+        return const Center(
+          child: Text('Error al cargar usuarios', style: TextStyle(color: Colors.red)),
+        );
+      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        return const Center(
+          child: Text('No hay usuarios disponibles', style: TextStyle(color: Colors.white70)),
+        );
+      }
+
+      final users = snapshot.data!;
+      return ListView.builder(
+        itemCount: users.length,
+        itemBuilder: (context, index) {
+          final user = users[index];
+          final int? imageId = user['imagen'] is int
+              ? user['imagen']
+              : int.tryParse(user['imagen'].toString());
+
+          return FutureBuilder<AssetImage>(
+            future: imageId != null
+                ? ImageService.loadUserProfileImage(imageId, context)
+                : Future.value(const AssetImage('images/default.jpg')),
+            builder: (context, imageSnapshot) {
+              final AssetImage image = imageSnapshot.data ?? const AssetImage('images/default.jpg');
+
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                color: Colors.grey[850],
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: image,
+                  ),
+                  title: Text(
+                    user['nombre'] ?? 'Sin nombre',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Usuario: ${user['username']}', style: const TextStyle(color: Colors.white70)),
+                      Text('Email: ${user['email']}', style: const TextStyle(color: Colors.white70)),
+                      Text('Edad: ${user['edad']}', style: const TextStyle(color: Colors.white70)),
+                      Text('País: ${user['pais']}', style: const TextStyle(color: Colors.white70)),
+                    ],
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteData('users', user['id']),
+                  ),
+                  isThreeLine: true,
+                ),
+              );
+            },
+          );
+        },
+      );
+    },
+  );
+}
+
+
+
+
 
   Widget _buildProductOperations() {
     return Stack(
@@ -473,50 +512,63 @@ class _AdminPanelState extends State<AdminPanel> {
   }
 
   Future<void> _deleteData(String endpoint, String id) async {
-    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+  final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
 
-    try {
-      // Primera solicitud DELETE
-      final response = await http.delete(
-        Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint/$id'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (response.statusCode == 204) {
-        // Si el endpoint es "users", realiza la segunda solicitud DELETE
-        if (endpoint == 'users') {
-          final authResponse = await http.delete(
-            Uri.parse('${ServerConfig.serverIp}/gateway/auth/$id'),
-            headers: {'Authorization': 'Bearer $token'},
+  try {
+    // Primera solicitud DELETE
+    final response = await http.delete(
+      Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 204) {
+      // Si el endpoint es "users", realiza la segunda solicitud DELETE
+      if (endpoint == 'users') {
+        final authResponse = await http.delete(
+          Uri.parse('${ServerConfig.serverIp}/gateway/auth/$id'),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+
+        if (authResponse.statusCode != 204) {
+          print('Error deleting user in auth: ${authResponse.statusCode}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error al eliminar el usuario en auth'),
+              backgroundColor: Colors.red,
+            ),
           );
-
-          if (authResponse.statusCode != 204) {
-            print('Error deleting user in auth: ${authResponse.statusCode}');
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Error al eliminar el usuario en auth'),
-                backgroundColor: Colors.red,
-              ),
-            );
-            return;
-          }
+          return;
         }
-
-        // Mostrar mensaje de éxito
-        setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuario eliminado con éxito'), backgroundColor: Colors.green),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al eliminar el usuario'), backgroundColor: Colors.red),
-        );
       }
-    } catch (e) {
+
+      // Mostrar mensaje de éxito dependiendo del endpoint
+      setState(() {}); // Refrescar la UI
+      final successMessage = endpoint == 'users'
+          ? 'Usuario eliminado con éxito'
+          : 'Juego eliminado con éxito';
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error de conexión al servidor'), backgroundColor: Colors.red),
+        SnackBar(content: Text(successMessage), backgroundColor: Colors.green),
+      );
+    } else {
+      final errorMessage = endpoint == 'users'
+          ? 'Error al eliminar el usuario'
+          : 'Error al eliminar el juego';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
       );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error de conexión al servidor'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
+
 
   Future<void> _addGame(
     String name,

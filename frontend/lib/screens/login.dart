@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_auth_app/services/auth_provider.dart';
 import 'package:flutter_auth_app/services/auth_service.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:go_router/go_router.dart';
-import 'package:logger/logger.dart'; // Importar GoRouter para la navegación
+import 'package:logger/logger.dart';
+import 'package:provider/provider.dart'; // Importar GoRouter para la navegación
 
 class LoginPage extends StatefulWidget {
   final Function(String) onLogin;
@@ -118,51 +120,55 @@ class _LoginPageState extends State<LoginPage> {
                         widthFactor: 0.5,
                         child: ElevatedButton(
                           onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
-                              setState(() {
-                                _isLoading = true;
-                                _errorMessage = null;
-                              });
+  if (_formKey.currentState!.validate()) {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-                              _logger.i('Iniciando sesión...');
-                              _logger.d('Usuario: ${_usernameController.text.trim()}');
+    _logger.i('Iniciando sesión...');
+    _logger.d('Usuario: ${_usernameController.text.trim()}');
 
-                              try {
-                                // Llamar al servicio de inicio de sesión
-                                String? token = await _authService.login(
-                                  _usernameController.text.trim(),
-                                  _passwordController.text.trim(),
-                                );
+    try {
+      String? token = await _authService.login(
+        _usernameController.text.trim(),
+        _passwordController.text.trim(),
+      );
 
-                                if (token == null) {
-                                  _logger.w('Inicio de sesión fallido: Usuario o contraseña incorrectos.');
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Error: Usuario o contraseña incorrectos.'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                } else {
-                                  _logger.i('Inicio de sesión exitoso. Token recibido.');
-                                  widget.onLogin(token);
-                                  context.go('/'); // Navegación con GoRouter
-                                }
-                              } catch (e) {
-                                _logger.e('Error inesperado durante el inicio de sesión', e);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              } finally {
-                                setState(() {
-                                  _isLoading = false;
-                                });
-                                _logger.i('Finalizado el proceso de inicio de sesión.');
-                              }
-                            }
-                          },
+      if (token == null) {
+        _logger.w('Inicio de sesión fallido: Usuario o contraseña incorrectos.');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Usuario o contraseña incorrectos.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        _logger.i('Inicio de sesión exitoso. Token recibido.');
+
+        // Guardar token en AuthProvider (que guarda en SharedPreferences)
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.setToken(token);
+
+        // Navegar a la página principal
+        context.go('/');
+      }
+    } catch (e) {
+      _logger.e('Error inesperado durante el inicio de sesión', e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+      _logger.i('Finalizado el proceso de inicio de sesión.');
+    }
+  }
+},
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color.fromARGB(255, 98, 150, 38),
                             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),

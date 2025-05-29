@@ -239,7 +239,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         'Ecuador',
                         'Egipto',
                         'El Salvador',
-                        'España',
                         'Estados Unidos',
                         'Francia',
                         'Grecia',
@@ -256,6 +255,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         'Portugal',
                         'Reino Unido',
                         'Rusia',
+                        'Spain',
                         'Suecia',
                         'Suiza',
                         'Uruguay',
@@ -327,7 +327,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               final username = _usernameController.text.trim();
                               final age = int.parse(_ageController.text.trim());
                               final country = _selectedCountry!;
-
+                              print (country);
+                              print(age);
                               final success = await _authService.register(
                                 name,
                                 username,

@@ -9,6 +9,8 @@ import 'package:flutter_auth_app/services/image_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
+
 class MyAccountPage extends StatefulWidget {
   const MyAccountPage({super.key});
 
@@ -368,7 +370,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: Text(
-                            'Tu consola favorita es: $favoriteConsole',
+                            'Basado en tus compras, tu consola favorita es: $favoriteConsole',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -731,7 +733,7 @@ class _ChangePasswordSectionState extends State<ChangePasswordSection> {
   final List<String> _passwordErrors = [];
   bool _isButtonEnabled = false; // Variable para habilitar/deshabilitar el botón
 
-  void _validatePassword(String password) {
+  void _validatePassword(String password) async{
     final errors = <String>[];
 
     if (password.isEmpty) {
@@ -755,6 +757,11 @@ class _ChangePasswordSectionState extends State<ChangePasswordSection> {
     if (_hasConsecutiveNumbers(password)) {
       errors.add('No debe contener números consecutivos');
     }
+    final isPwned = await _isPasswordPwned(password);
+    if(isPwned) {
+      errors.add('Según Have I Been Pwnd: Esta contraseña ha sido comprometida en una filtración de datos');
+    }
+
 
     setState(() {
       _passwordErrors.clear();
@@ -774,6 +781,39 @@ class _ChangePasswordSectionState extends State<ChangePasswordSection> {
       }
     }
     return false;
+  }
+  Future<bool> _isPasswordPwned(String password) async {
+    // Calcular el hash SHA-1 de la contraseña
+    final bytes = utf8.encode(password);
+    final sha1Hash = sha1.convert(bytes).toString().toUpperCase();
+
+    // Obtener los primeros 5 caracteres del hash
+    final prefix = sha1Hash.substring(0, 5);
+    final suffix = sha1Hash.substring(5);
+
+    // Consultar la API de Have I Been Pwned
+    final url = Uri.parse('https://api.pwnedpasswords.com/range/$prefix');
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        // Buscar el sufijo en la respuesta
+        final hashes = response.body.split('\n');
+        for (final hash in hashes) {
+          final parts = hash.split(':');
+          if (parts[0] == suffix) {
+            return true; // La contraseña ha sido comprometida
+          }
+        }
+        return false; // La contraseña no ha sido encontrada
+      } else {
+        print('Error al consultar la API de HIBP: ${response.statusCode}');
+        return false; // Asumir que no está comprometida si hay un error
+      }
+    } catch (e) {
+      print('Error al consultar la API de HIBP: $e');
+      return false; // Asumir que no está comprometida si hay un error
+    }
   }
 
   Future<void> _handleChangePassword() async {

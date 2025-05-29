@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final String apiUrl = '${ServerConfig.serverIp}/gateway';
@@ -36,11 +37,12 @@ class AuthService {
         'password': password,
         'username': username,
         'email': email,
-        'edad': edad, // Agregar edad al cuerpo de la solicitud
-        'pais': pais, // Agregar país al cuerpo de la solicitud
+        'edad': edad,
+        'pais': pais, 
       }),
     );
-
+    print(pais);
+    print(edad);
     return response.statusCode == 201; // Assuming 201 Created is returned on successful registration
   }
 
@@ -110,5 +112,16 @@ Future<Map<String, dynamic>?> fetchUserInfo(String jwtToken) async {
       print('Error en la solicitud HTTP: $e');
       return null;
     }
+  }
+  // Guarda token en SharedPreferences
+  Future<void> saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+  }
+
+  // Obtiene token guardado
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('auth_token');
   }
 }
