@@ -10,18 +10,18 @@ import 'package:go_router/go_router.dart'; // Importación necesaria para la nav
 import 'package:logger/logger.dart';
 
 class AdminPanel extends StatefulWidget {
-  const AdminPanel({super.key});
+  const AdminPanel({Key? key}) : super(key: key);
 
   @override
   _AdminPanelState createState() => _AdminPanelState();
 }
 
 class _AdminPanelState extends State<AdminPanel> {
-  
+
   final Logger _logger = Logger(
-    level: Level.debug, 
-    printer: PrettyPrinter(), 
-  ); 
+    level: Level.debug,
+    printer: PrettyPrinter(),
+  );
 
   String selectedCategory = 'Operaciones de Usuario'; // Categoría seleccionada por defecto
   bool isMenuVisible = false; // Controla si el menú está visible en móvil
@@ -152,78 +152,74 @@ class _AdminPanelState extends State<AdminPanel> {
     }
   }
 
-Widget _buildUserOperations() {
-  return FutureBuilder<List<dynamic>>(
-    future: _fetchData('users'),
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return const Center(
-          child: CircularProgressIndicator(color: Colors.blue),
-        );
-      } else if (snapshot.hasError) {
-        return const Center(
-          child: Text('Error al cargar usuarios', style: TextStyle(color: Colors.red)),
-        );
-      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-        return const Center(
-          child: Text('No hay usuarios disponibles', style: TextStyle(color: Colors.white70)),
-        );
-      }
-
-      final users = snapshot.data!;
-      return ListView.builder(
-        itemCount: users.length,
-        itemBuilder: (context, index) {
-          final user = users[index];
-          final int? imageId = user['imagen'] is int
-              ? user['imagen']
-              : int.tryParse(user['imagen'].toString());
-
-          return FutureBuilder<AssetImage>(
-            future: imageId != null
-                ? ImageService.loadUserProfileImage(imageId, context)
-                : Future.value(const AssetImage('images/default.jpg')),
-            builder: (context, imageSnapshot) {
-              final AssetImage image = imageSnapshot.data ?? const AssetImage('images/default.jpg');
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                color: Colors.grey[850],
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: image,
-                  ),
-                  title: Text(
-                    user['nombre'] ?? 'Sin nombre',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Usuario: ${user['username']}', style: const TextStyle(color: Colors.white70)),
-                      Text('Email: ${user['email']}', style: const TextStyle(color: Colors.white70)),
-                      Text('Edad: ${user['edad']}', style: const TextStyle(color: Colors.white70)),
-                      Text('País: ${user['pais']}', style: const TextStyle(color: Colors.white70)),
-                    ],
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteData('users', user['id']),
-                  ),
-                  isThreeLine: true,
-                ),
-              );
-            },
+  Widget _buildUserOperations() {
+    return FutureBuilder<List<dynamic>>(
+      future: _fetchData('users'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.blue),
           );
-        },
-      );
-    },
-  );
-}
+        } else if (snapshot.hasError) {
+          return const Center(
+            child: Text('Error al cargar usuarios', style: TextStyle(color: Colors.red)),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('No hay usuarios disponibles', style: TextStyle(color: Colors.white70)),
+          );
+        }
 
+        final users = snapshot.data!;
+        return ListView.builder(
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            final user = users[index];
+            final int? imageId = user['imagen'] is int
+                ? user['imagen']
+                : int.tryParse(user['imagen'].toString());
 
+            return FutureBuilder<AssetImage>(
+              future: imageId != null
+                  ? ImageService.loadUserProfileImage(imageId, context)
+                  : Future.value(const AssetImage('images/default.jpg')),
+              builder: (context, imageSnapshot) {
+                final AssetImage image = imageSnapshot.data ?? const AssetImage('images/default.jpg');
 
-
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  color: Colors.grey[850],
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: image,
+                    ),
+                    title: Text(
+                      user['nombre'] ?? 'Sin nombre',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Usuario: ${user['username']}', style: const TextStyle(color: Colors.white70)),
+                        Text('Email: ${user['email']}', style: const TextStyle(color: Colors.white70)),
+                        Text('Edad: ${user['edad']}', style: const TextStyle(color: Colors.white70)),
+                        Text('País: ${user['pais']}', style: const TextStyle(color: Colors.white70)),
+                      ],
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _deleteData('users', user['id']),
+                    ),
+                    isThreeLine: true,
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
 
   Widget _buildProductOperations() {
     return Stack(
@@ -250,8 +246,10 @@ Widget _buildUserOperations() {
                 crossAxisCount: 2, // Número de columnas
                 crossAxisSpacing: 16.0, // Espaciado horizontal
                 mainAxisSpacing: 16.0, // Espaciado vertical
-                childAspectRatio: 3 / 2, // Relación de aspecto ajustada para mostrar más detalles
+                childAspectRatio: 1 / 1.8, // Relación de aspecto ajustada para mostrar más detalles
               ),
+              shrinkWrap: true, // Add this
+              physics: const ClampingScrollPhysics(), // Add this
               itemCount: products.length,
               itemBuilder: (context, index) {
                 final product = products[index];
@@ -280,9 +278,11 @@ Widget _buildUserOperations() {
                           style: const TextStyle(color: Colors.greenAccent, fontSize: 14),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'Metacritic: ${product['metacritic'] ?? 'N/A'}',
-                          style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        Flexible(
+                          child: Text(
+                            'Metacritic: ${product['metacritic'] ?? 'N/A'}',
+                            style: const TextStyle(color: Colors.white70, fontSize: 14),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -290,11 +290,13 @@ Widget _buildUserOperations() {
                           style: const TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'Descripción: ${product['descripcion'] ?? 'Sin descripción'}',
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis, // Cortar texto si es muy largo
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Text(
+                              'Descripción: ${product['descripcion'] ?? 'Sin descripción'}',
+                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            ),
+                          ),
                         ),
                         const Spacer(),
                         Row(
@@ -318,7 +320,6 @@ Widget _buildUserOperations() {
                                 ),
                               ),
                             ),
-                            
                           ],
                         ),
                       ],
@@ -512,72 +513,71 @@ Widget _buildUserOperations() {
   }
 
   Future<void> _deleteData(String endpoint, String id) async {
-  final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
 
-  try {
-    // Primera solicitud DELETE
-    final response = await http.delete(
-      Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint/$id'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (response.statusCode == 204) {
-      // Si el endpoint es "users", realiza la segunda solicitud DELETE
-      if (endpoint == 'users') {
-        final authResponse = await http.delete(
-          Uri.parse('${ServerConfig.serverIp}/gateway/auth/$id'),
-          headers: {'Authorization': 'Bearer $token'},
-        );
-
-        if (authResponse.statusCode != 204) {
-          print('Error deleting user in auth: ${authResponse.statusCode}');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al eliminar el usuario en auth'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          return;
-        }
-      }
-
-      // Mostrar mensaje de éxito dependiendo del endpoint
-      setState(() {}); // Refrescar la UI
-      final successMessage = endpoint == 'users'
-          ? 'Usuario eliminado con éxito'
-          : 'Juego eliminado con éxito';
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(successMessage), backgroundColor: Colors.green),
+    try {
+      // Primera solicitud DELETE
+      final response = await http.delete(
+        Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint/$id'),
+        headers: {'Authorization': 'Bearer $token'},
       );
-    } else {
-      final errorMessage = endpoint == 'users'
-          ? 'Error al eliminar el usuario'
-          : 'Error al eliminar el juego';
 
+      if (response.statusCode == 204) {
+        // Si el endpoint is 'users', realiza la segunda solicitud DELETE
+        if (endpoint == 'users') {
+          final authResponse = await http.delete(
+            Uri.parse('${ServerConfig.serverIp}/gateway/auth/$id'),
+            headers: {'Authorization': 'Bearer $token'},
+          );
+
+          if (authResponse.statusCode != 204) {
+            print('Error deleting user in auth: ${authResponse.statusCode}');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Error al eliminar el usuario en auth'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+        }
+
+        // Mostrar mensaje de éxito dependiendo del endpoint
+        setState(() {}); // Refrescar la UI
+        final successMessage = endpoint == 'users'
+            ? 'Usuario eliminado con éxito'
+            : 'Juego eliminado con éxito';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(successMessage), backgroundColor: Colors.green),
+        );
+      } else {
+        final errorMessage = endpoint == 'users'
+            ? 'Error al eliminar el usuario'
+            : 'Error al eliminar el juego';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Error de conexión al servidor'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Error de conexión al servidor'),
-        backgroundColor: Colors.red,
-      ),
-    );
   }
-}
-
 
   Future<void> _addGame(
-    String name,
-    double precio,
-    int? metacritic,
-    String consola,
-    String imageUrl,
-    String descripcion,
-  ) async {
+      String name,
+      double precio,
+      int? metacritic,
+      String consola,
+      String imageUrl,
+      String descripcion,
+      ) async {
     final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
 
     final newGame = {
