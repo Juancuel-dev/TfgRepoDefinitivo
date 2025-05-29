@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
           builder: (context, state) => LoginPage(
             onLogin: (String newToken) {
               authProvider.setToken(newToken);
-              context.go('/'); // Redirige a la raíz después del login
+              context.go('/'); // Redirige al home después del login
             },
           ),
         ),
@@ -64,7 +64,7 @@ class MyApp extends StatelessWidget {
           builder: (context, state) => RegisterPage(
             onRegister: (String newToken) {
               authProvider.setToken(newToken);
-              context.go('/'); // Redirige a la raíz después del registro
+              context.go('/'); // Redirige al home después del registro
             },
           ),
         ),
@@ -101,11 +101,11 @@ class MyApp extends StatelessWidget {
         ),
         GoRoute(
           path: '/my-account',
-          builder: (context, state) => const MyAccountPage(), // Nueva ruta para "Mi Cuenta"
+          builder: (context, state) => const MyAccountPage(), //  "Mi Cuenta"
         ),
         GoRoute(
           path: '/order-confirmation',
-          builder: (context, state) => const OrderConfirmationPage(), // Nueva ruta para "Confirmación de Pedido"
+          builder: (context, state) => const OrderConfirmationPage(), // "Confirmación de Pedido"
         ),
       ],
       redirect: (context, state) {
@@ -132,7 +132,7 @@ class MyApp extends StatelessWidget {
     );
 
     return MaterialApp.router(
-      title: 'Tienda de Videojuegos',
+      title: 'LevelUp Shop',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -140,7 +140,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false, // Ocultar el banner de modo debug
       supportedLocales: const [
         Locale('es', 'ES'), // Español (España)
-        Locale('en', 'US'), // Inglés (Estados Unidos)
       ],
       locale: const Locale('es', 'ES'), // Establecer el idioma predeterminado a español
       localizationsDelegates: const [

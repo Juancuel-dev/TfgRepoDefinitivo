@@ -35,7 +35,6 @@ public class PedidoEntryService {
     @Value("${ruta.auth}/token-info")
     private String rutaAuth;
 
-
     public List<PedidoEntry> findAll(Jwt jwt) throws UnauthorizedException {
         if (jwt.getClaim("role").equals("ADMIN")) {
             return repository.findAll();

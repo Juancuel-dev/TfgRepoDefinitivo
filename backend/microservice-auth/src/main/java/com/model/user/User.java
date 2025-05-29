@@ -1,5 +1,6 @@
 package com.model.user;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
@@ -9,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("users")
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class User{
 
     @Id
@@ -20,11 +22,4 @@ public class User{
     private String email;
     private String role;
 
-    public User(String id,String username, String password, String role, String email) {
-        this.id=id;
-        this.username = username;
-        this.password = password;
-        this.role = role;
-        this.email = email;
-    }
 }

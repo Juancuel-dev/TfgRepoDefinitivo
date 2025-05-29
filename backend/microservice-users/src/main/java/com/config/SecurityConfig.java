@@ -42,7 +42,7 @@ public class SecurityConfig {
         byte[] keyBytes = Base64.getDecoder().decode(secretKey);
         return NimbusJwtDecoder.withSecretKey(Keys.hmacShaKeyFor(keyBytes)).build();
 
-}
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

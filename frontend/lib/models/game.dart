@@ -2,7 +2,7 @@ class Game {
   final String id;
   final String name;
   double precio;
-  final int? metacritic; // Cambiar a nullable (int?)
+  final int? metacritic; 
   final String consola;
   final String imageUrl;
   final String descripcion;
@@ -11,12 +11,14 @@ class Game {
     required this.id,
     required this.name,
     required this.precio,
-    this.metacritic, // Permitir que sea null
+    this.metacritic, 
     required this.consola,
     required this.imageUrl,
     required this.descripcion
   });
 
+
+  // Método para convertir un objeto JSON a GAME
   factory Game.fromJson(Map<String, dynamic> json) {
     return Game(
       id: json['id'] ?? '', // Valor predeterminado si el id es null
