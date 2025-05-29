@@ -101,13 +101,4 @@ public class GamesController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
-
-    @GetMapping("/game-info")
-    public String getGameInfo(@AuthenticationPrincipal Jwt jwt) {
-        String Gamename = jwt.getClaim("Gamename"); // "sub" en JWT
-        String role = jwt.getClaim("role"); // Claims personalizados
-        String email = jwt.getClaim("email");
-
-        return "Usuario: " + Gamename + " | Rol: " + role + " | Email: " + email;
-    }
 }

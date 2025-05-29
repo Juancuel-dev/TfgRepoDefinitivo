@@ -89,7 +89,7 @@ String _decodeBase64(String str) {
 }
 
 Future<Map<String, dynamic>?> fetchUserInfo(String jwtToken) async {
-    const url = '${ServerConfig.serverIp}/gateway/users/me'; // Cambia esto por tu URL real
+    const url = '${ServerConfig.serverIp}/gateway/users/me'; 
 
     try {
       final response = await http.get(

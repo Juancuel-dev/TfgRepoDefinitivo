@@ -2,7 +2,6 @@ package com.controller;
 
 import com.cohere.api.types.AssistantMessageResponse;
 import com.model.LoginRequest;
-import com.model.UserDTO;
 import com.model.register.RegisterUsersRequest;
 import com.service.AIService;
 import com.service.AuthService;
@@ -52,7 +51,7 @@ public class GatewayController {
 
     @RequestMapping(
             value = "/users/**",
-            method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH}
+            method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE}
     )
     public ResponseEntity<Object> usersProxy(HttpServletRequest request) {
         log.debug("Proxying user request to path: {}", request.getRequestURI());
@@ -61,7 +60,7 @@ public class GatewayController {
 
     @RequestMapping(
             value = "/games/**",
-            method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH}
+            method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE}
     )
     public ResponseEntity<Object> gamesProxy(HttpServletRequest request) {
         log.debug("Proxying game request to path: {}", request.getRequestURI());
@@ -70,7 +69,7 @@ public class GatewayController {
 
     @RequestMapping(
             value = "/orders/**",
-            method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH}
+            method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE}
     )
     public ResponseEntity<Object> cartProxy(HttpServletRequest request) {
         log.debug("Proxying cart request to path: {}", request.getRequestURI());
@@ -88,17 +87,11 @@ public class GatewayController {
 
     @RequestMapping(
             value = "/auth/**",
-            method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH}
+            method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE}
     )
     public ResponseEntity<Object> authProxy(HttpServletRequest request) {
         log.debug("Proxying auth request to path: {}", request.getRequestURI());
         return authService.proxyRequest(AUTH_SERVICE, request);
-    }
-
-    @RequestMapping("/me")
-    public ResponseEntity<UserDTO> getMySelf(@AuthenticationPrincipal Jwt jwt){
-        log.info("El username desde el que se hace la peticion es: " + jwt.getClaim("username"));
-        return authService.myself(jwt);
     }
 
     @PostMapping("/ai")
