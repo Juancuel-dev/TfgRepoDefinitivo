@@ -1,26 +1,34 @@
-FROM ghcr.io/cirruslabs/flutter:3.13.9
+name: flutter_auth_app
+description: A simple Flutter app for login.
 
-WORKDIR /app
+publish_to: 'none'
 
-COPY . .
+version: 1.0.0+1
 
-RUN flutter config --enable-web \
- && flutter pub get \
- && flutter build web
+environment:
+  sdk: '>=3.0.0 <4.0.0'
 
-RUN dart pub add shelf shelf_static
+dependencies:
+  provider: ^6.0.5
+  flutter:
+    sdk: flutter
+  http: ^1.1.0
+  jwt_decoder: ^2.0.1
+  go_router: ^15.1.1
+  shared_preferences: ^2.0.15
+  crypto: ^3.0.0
+  flutter_localizations:
+    sdk: flutter
+  logger: ^1.1.0
+  shelf: ^1.4.0
+  shelf_static: ^1.1.0
 
-RUN echo 'import "dart:io";\n'\
-'import "package:shelf/shelf.dart";\n'\
-'import "package:shelf/shelf_io.dart" as io;\n'\
-'import "package:shelf_static/shelf_static.dart";\n\n'\
-'void main() async {\n'\
-'  final handler = createStaticHandler("build/web", defaultDocument: "index.html");\n'\
-'  final port = int.parse(Platform.environment["PORT"] ?? "8080");\n'\
-'  final server = await io.serve(handler, "0.0.0.0", port);\n'\
-'  print("✅ Servidor iniciado en http://localhost:\${server.port}");\n'\
-'}' > server.dart
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
 
-EXPOSE 8080
-
-CMD ["dart", "server.dart"]
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

@@ -8,18 +8,7 @@ RUN flutter config --enable-web \
  && flutter pub get \
  && flutter build web
 
-RUN dart pub add shelf shelf_static
-
-RUN echo 'import "dart:io";\n'\
-'import "package:shelf/shelf.dart";\n'\
-'import "package:shelf/shelf_io.dart" as io;\n'\
-'import "package:shelf_static/shelf_static.dart";\n\n'\
-'void main() async {\n'\
-'  final handler = createStaticHandler("build/web", defaultDocument: "index.html");\n'\
-'  final port = int.parse(Platform.environment["PORT"] ?? "8080");\n'\
-'  final server = await io.serve(handler, "0.0.0.0", port);\n'\
-'  print("✅ Servidor iniciado en http://localhost:\${server.port}");\n'\
-'}' > server.dart
+RUN dart pub get
 
 EXPOSE 8080
 
