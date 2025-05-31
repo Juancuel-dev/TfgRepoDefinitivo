@@ -1,53 +1,28 @@
-FROM ubuntu:20.04
+FROM ghcr.io/cirruslabs/flutter:3.10.5
 
-ARG DEBIAN_FRONTEND=noninteractive
-
-# Instala dependencias necesarias
-RUN apt-get update && apt-get install -y \
-  curl git wget unzip xz-utils libglu1-mesa ca-certificates nginx \
-  && apt-get clean
-
-# Instala Flutter
-RUN wget -q https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.10.5-stable.tar.xz -O flutter.tar.xz \
-  && mkdir /opt/flutter \
-  && tar -xf flutter.tar.xz -C /opt/flutter --strip-components=1
-
-ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
-
-# Prepara Flutter para compilación Web
-RUN flutter config --enable-web
-RUN flutter precache --web
-
-# Establece el directorio de trabajo
 WORKDIR /app
 
-# Copia archivos del proyecto
 COPY . .
 
-# Diagnóstico: Muestra estructura de archivos y contenido de pubspec.yaml
-RUN echo "✅ Verificando archivos copiados:" && \
-    ls -la /app && \
-    echo "✅ Mostrando pubspec.yaml:" && \
-    cat pubspec.yaml
+RUN flutter config --enable-web \
+ && flutter pub get \
+ && flutter build web
 
-# Corre doctor para detectar errores del proyecto
-RUN flutter doctor -v
+# Agrega el paquete shelf_static para servir archivos
+RUN dart pub add shelf shelf_static
 
-# Obtiene las dependencias del proyecto
-RUN flutter pub get
+# Servidor Dart simple que sirve build/web
+RUN echo 'import "dart:io";\n'\
+'import "package:shelf/shelf.dart";\n'\
+'import "package:shelf/shelf_io.dart" as io;\n'\
+'import "package:shelf_static/shelf_static.dart";\n\n'\
+'void main() async {\n'\
+'  final handler = createStaticHandler("build/web", defaultDocument: "index.html");\n'\
+'  final port = int.parse(Platform.environment["PORT"] ?? "8080");\n'\
+'  final server = await io.serve(handler, "0.0.0.0", port);\n'\
+'  print("✅ Servidor iniciado en http://localhost:\${server.port}");\n'\
+'}' > server.dart
 
-# Compila la aplicación Flutter Web
-RUN flutter build web
+EXPOSE 8080
 
-# Copia los archivos web a NGINX
-RUN rm -rf /var/www/html/* \
-  && cp -r build/web/* /var/www/html/
-
-# Expone el puerto web
-EXPOSE 80
-
-# Sirve la app con NGINX
-CMD ["nginx", "-g", "daemon off;"]
-
-# Healthcheck para Railway
-HEALTHCHECK --interval=10s --timeout=5s CMD curl -f http://localhost/ || exit 1
+CMD ["dart", "server.dart"]
