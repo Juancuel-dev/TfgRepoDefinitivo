@@ -9,6 +9,7 @@ RUN mkdir /opt/flutter
 RUN ls -l flutter_sdk.tar.xz
 RUN tar -xf flutter_sdk.tar.xz -C /opt/flutter --strip-components=1
 ENV PATH="$PATH:/opt/flutter/bin"
+RUN flutter config --enable-web
 RUN flutter doctor
 
 # Install Dart
@@ -28,7 +29,7 @@ COPY . .
 RUN flutter build web
 
 # Expose port 8080
-EXPOSE 8080
+EXPOSE 54695
 
 # Start Dart HTTP server
-CMD dart run :8080 --directory=build/web
+CMD dart run :54695 --directory=build/web
