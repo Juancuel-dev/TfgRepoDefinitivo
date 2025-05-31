@@ -1,41 +1,49 @@
-FROM ubuntu:latest
+FROM ubuntu:20.04
 
-# Install dependencies
-RUN apt-get update && apt-get install -y curl git wget unzip xz-utils
+# Evita preguntas interactivas al instalar paquetes
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Install Flutter
-RUN wget -q --tries=3 https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.10.5-stable.tar.xz -O flutter_sdk.tar.xz
-RUN mkdir /opt/flutter
-RUN ls -l flutter_sdk.tar.xz
-RUN tar -xf flutter_sdk.tar.xz -C /opt/flutter --strip-components=1
-ENV PATH="$PATH:/opt/flutter/bin"
+# Instala dependencias
+RUN apt-get update && apt-get install -y \
+  curl git wget unzip xz-utils libglu1-mesa \
+  && apt-get clean
 
-# Install Dart
-RUN apt-get update && apt-get install -y wget
-RUN wget https://storage.googleapis.com/dart-archive/channels/stable/release/3.5.0/sdk/dartsdk-linux-x64-release.zip -O dartsdk.zip
-RUN unzip dartsdk.zip -d /opt/
-ENV PATH="$PATH:/opt/dart-sdk/bin"
-ENV DART_SDK=/opt/dart-sdk
-RUN export PATH=$PATH:/opt/dart-sdk/bin
-RUN dart --version
+# Instala Flutter
+RUN wget -q https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.10.5-stable.tar.xz -O flutter.tar.xz \
+  && mkdir /opt/flutter \
+  && tar -xf flutter.tar.xz -C /opt/flutter --strip-components=1
 
+ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
+
+# Prepara Flutter para compilación Web
+RUN flutter doctor -v
 RUN flutter config --enable-web
-RUN flutter doctor
+RUN flutter precache --web
 
-# Set working directory
+# Crea y usa el directorio de la app
 WORKDIR /app
 
-# Copy project files
+# Copia los archivos de la app
 COPY . .
 
-# Build the Flutter web app
+# Obtiene dependencias
+RUN flutter pub get
+
+# Compila la app web
 RUN flutter build web
 
-# Expose port 54695
-EXPOSE 54695
+# Instala servidor HTTP simple
+RUN apt-get install -y nginx
 
-# Start Dart HTTP server
-CMD dart run :54695 --directory=build/web
+# Copia archivos generados al directorio de NGINX
+RUN rm -rf /var/www/html/* \
+  && cp -r build/web/* /var/www/html/
 
-HEALTHCHECK --interval=5s --timeout=3s \
-  CMD curl -f http://localhost:54695/ || exit 1
+# Expone el puerto que usa NGINX
+EXPOSE 80
+
+# Reemplaza el entrypoint para que NGINX sirva el sitio web
+CMD ["nginx", "-g", "daemon off;"]
+
+# Opcional: Healthcheck
+HEALTHCHECK --interval=10s --timeout=5s CMD curl -f http://localhost/ || exit 1
