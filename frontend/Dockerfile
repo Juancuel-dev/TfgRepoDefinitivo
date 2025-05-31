@@ -14,7 +14,7 @@ RUN flutter doctor
 
 # Install Dart
 RUN apt-get update && apt-get install -y wget
-RUN wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/sdk/dartsdk-linux-x64-release.zip -O dartsdk.zip
+RUN wget https://storage.googleapis.com/dart-archive/channels/stable/release/3.5.0/sdk/dartsdk-linux-x64-release.zip -O dartsdk.zip
 RUN unzip dartsdk.zip -d /opt/
 ENV PATH="$PATH:/opt/dart-sdk/bin"
 RUN dart --version
@@ -28,7 +28,7 @@ COPY . .
 # Build the Flutter web app
 RUN flutter build web
 
-# Expose port 8080
+# Expose port 54695
 EXPOSE 54695
 
 # Start Dart HTTP server
