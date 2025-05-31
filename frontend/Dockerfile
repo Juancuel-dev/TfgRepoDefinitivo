@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y wget
 RUN wget https://storage.googleapis.com/dart-archive/channels/stable/release/3.5.0/sdk/dartsdk-linux-x64-release.zip -O dartsdk.zip
 RUN unzip dartsdk.zip -d /opt/
 ENV PATH="$PATH:/opt/dart-sdk/bin"
+RUN export PATH=$PATH:/opt/dart-sdk/bin
 RUN dart --version
 
 # Set working directory
