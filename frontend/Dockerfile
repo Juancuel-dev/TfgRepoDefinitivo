@@ -1,30 +1,29 @@
-# Usamos la imagen oficial de Flutter para construir
-FROM ghcr.io/cirruslabs/flutter:stable AS build
+# Etapa de construcción - Usamos imagen oficial de Flutter
+FROM ghcr.io/flutter/flutter:stable AS build
 
-# Configuramos el entorno de trabajo
+# Configuración del entorno
 WORKDIR /app
+ENV FLUTTER_WEB_BUILD_MODE=release
 
-# 1. Copiamos primero solo las dependencias para optimizar la caché
+# 1. Copia estratégica para optimizar caché
 COPY pubspec.yaml pubspec.lock ./
 RUN flutter pub get
 
-# 2. Copiamos el resto del código fuente
+# 2. Copia el código y construye
 COPY . .
-
-# 3. Construimos la aplicación web en modo release
 RUN flutter build web --release --web-renderer html --no-source-maps
 
-# Etapa de producción - usamos la imagen mínima de Dart
-FROM google/dart:stable-sdk
+# Etapa de producción - Usamos imagen Alpine con servidor web mínimo
+FROM alpine:latest
 
-# Instalamos dhttpd (servidor web liviano)
-RUN pub global activate dhttpd
+# Instala un servidor HTTP mínimo (BusyBox)
+RUN apk add --no-cache busybox
 
-# Copiamos los archivos construidos
-COPY --from=build /app/build/web /app/web
+# Copia los archivos construidos
+COPY --from=build /app/build/web /app
 
-# Puerto que usará Railway (puede ser cualquier puerto, Railway lo manejará)
+# Puerto expuesto (Railway lo manejará)
 EXPOSE 8080
 
-# Comando para iniciar el servidor web
-CMD ["dhttpd", "--path", "/app/web", "--port", "8080"]
+# Comando de inicio
+CMD ["busybox", "httpd", "-f", "-p", "8080", "-h", "/app"]
