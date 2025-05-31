@@ -24,8 +24,3 @@ RUN dart --version
 # Set working directory
 WORKDIR /app
 
-# Copy project files
-COPY . .
-
-# Build the Flutter web app
-RUN flutter build web
