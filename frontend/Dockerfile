@@ -1,38 +1,32 @@
-# Etapa de construcción - Usamos imagen base de Ubuntu e instalamos Flutter manualmente
-FROM ubuntu:22.04 AS build
+FROM ubuntu:latest
 
-# Instala dependencias básicas
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    curl \
-    git \
-    unzip \
-    xz-utils \
-    libglu1-mesa \
-    && rm -rf /var/lib/apt/lists/*
+# Install dependencies
+RUN apt-get update && apt-get install -y curl git wget unzip
 
-# Instala Flutter manualmente
-RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
-ENV PATH="$PATH:/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin"
+# Install Flutter
+RUN curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.10.5-stable.tar.xz -o flutter_sdk.tar.xz
+RUN mkdir /opt/flutter
+RUN tar -xf flutter_sdk.tar.xz -C /opt/flutter --strip-components=1
+ENV PATH="$PATH:/opt/flutter/bin"
+RUN flutter doctor
 
-# Verifica la instalación
-RUN flutter doctor -v
+# Install Dart
+RUN apt-get update && apt-get install -y apt-transport-https
+RUN sh -c 'wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -'
+RUN sh -c 'wget -qO- https://storage.googleapis.com/download.dartlang.org/linux/debian_stable/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list'
+RUN apt-get update && apt-get install -y dart
 
-# Configura el entorno de trabajo
+# Set working directory
 WORKDIR /app
-COPY pubspec.yaml pubspec.lock ./
-RUN flutter pub get
+
+# Copy project files
 COPY . .
-RUN flutter build web --release --web-renderer html --no-source-maps
 
-# Etapa de producción - Servidor web mínimo
-FROM busybox:latest
+# Build the Flutter web app
+RUN flutter build web
 
-# Copia los archivos construidos
-COPY --from=build /app/build/web /app
+# Expose port 8080
+EXPOSE 54695
 
-# Expone el puerto 8080 (Railway lo manejará)
-EXPOSE 8080
-
-# Inicia un servidor HTTP simple
-CMD ["busybox", "httpd", "-f", "-p", "8080", "-h", "/app"]
+# Start Dart HTTP server
+CMD dart run :8080 --directory=build/web
