@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y curl git wget unzip
 # Install Flutter
 RUN curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.10.5-stable.tar.xz -o flutter_sdk.tar.xz
 RUN mkdir /opt/flutter
+RUN ls -l flutter_sdk.tar.xz
 RUN tar -xf flutter_sdk.tar.xz -C /opt/flutter --strip-components=1
 ENV PATH="$PATH:/opt/flutter/bin"
 RUN flutter doctor
@@ -26,7 +27,7 @@ COPY . .
 RUN flutter build web
 
 # Expose port 8080
-EXPOSE 54695
+EXPOSE 8080
 
 # Start Dart HTTP server
 CMD dart run :8080 --directory=build/web
