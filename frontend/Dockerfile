@@ -1,11 +1,10 @@
 FROM ubuntu:20.04
 
-# Evita preguntas interactivas al instalar paquetes
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Instala dependencias
+# Instala dependencias necesarias
 RUN apt-get update && apt-get install -y \
-  curl git wget unzip xz-utils libglu1-mesa \
+  curl git wget unzip xz-utils libglu1-mesa ca-certificates nginx \
   && apt-get clean
 
 # Instala Flutter
@@ -16,34 +15,39 @@ RUN wget -q https://storage.googleapis.com/flutter_infra_release/releases/stable
 ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
 
 # Prepara Flutter para compilación Web
-RUN flutter doctor -v
 RUN flutter config --enable-web
 RUN flutter precache --web
 
-# Crea y usa el directorio de la app
+# Establece el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos de la app
+# Copia archivos del proyecto
 COPY . .
 
-# Obtiene dependencias
+# Diagnóstico: Muestra estructura de archivos y contenido de pubspec.yaml
+RUN echo "✅ Verificando archivos copiados:" && \
+    ls -la /app && \
+    echo "✅ Mostrando pubspec.yaml:" && \
+    cat pubspec.yaml
+
+# Corre doctor para detectar errores del proyecto
+RUN flutter doctor -v
+
+# Obtiene las dependencias del proyecto
 RUN flutter pub get
 
-# Compila la app web
+# Compila la aplicación Flutter Web
 RUN flutter build web
 
-# Instala servidor HTTP simple
-RUN apt-get install -y nginx
-
-# Copia archivos generados al directorio de NGINX
+# Copia los archivos web a NGINX
 RUN rm -rf /var/www/html/* \
   && cp -r build/web/* /var/www/html/
 
-# Expone el puerto que usa NGINX
+# Expone el puerto web
 EXPOSE 80
 
-# Reemplaza el entrypoint para que NGINX sirva el sitio web
+# Sirve la app con NGINX
 CMD ["nginx", "-g", "daemon off;"]
 
-# Opcional: Healthcheck
+# Healthcheck para Railway
 HEALTHCHECK --interval=10s --timeout=5s CMD curl -f http://localhost/ || exit 1
