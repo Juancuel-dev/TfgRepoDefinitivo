@@ -12,18 +12,11 @@ ENV PATH="$PATH:/opt/flutter/bin"
 RUN flutter doctor
 
 # Install Dart
-RUN apt-get update && apt-get install -y apt-transport-https gnupg
-RUN wget -q https://dl-ssl.google.com/linux/linux_signing_key.pub -O dart.key
-RUN gpg --dearmor dart.key | tee /etc/apt/trusted.gpg.d/dart.gpg > /dev/null
-RUN retries=3; \
-while [ $retries -gt 0 ]; do \
-  wget --no-check-certificate -qO- https://storage.googleapis.com/download.dartlang.org/linux/debian_stable/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && break || \
-  echo "Download failed, retrying..." && retries=$((retries-1)) && sleep 1; \
-done; \
-if [ $retries -eq 0 ]; then \
-  echo "Download failed after multiple retries." && exit 1; \
-fi
-RUN apt-get update && apt-get install -y dart
+RUN apt-get update && apt-get install -y wget
+RUN wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/sdk/dartsdk-linux-x64-release.zip -O dartsdk.zip
+RUN unzip dartsdk.zip -d /opt/
+ENV PATH="$PATH:/opt/dart-sdk/bin"
+RUN dart --version
 
 # Set working directory
 WORKDIR /app
