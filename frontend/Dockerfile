@@ -1,4 +1,4 @@
-FROM ghcr.io/cirruslabs/flutter:3.10.5
+FROM ghcr.io/cirruslabs/flutter:3.13.9
 
 WORKDIR /app
 
@@ -8,10 +8,8 @@ RUN flutter config --enable-web \
  && flutter pub get \
  && flutter build web
 
-# Agrega el paquete shelf_static para servir archivos
 RUN dart pub add shelf shelf_static
 
-# Servidor Dart simple que sirve build/web
 RUN echo 'import "dart:io";\n'\
 'import "package:shelf/shelf.dart";\n'\
 'import "package:shelf/shelf_io.dart" as io;\n'\
