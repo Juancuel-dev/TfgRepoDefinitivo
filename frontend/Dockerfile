@@ -9,17 +9,18 @@ RUN mkdir /opt/flutter
 RUN ls -l flutter_sdk.tar.xz
 RUN tar -xf flutter_sdk.tar.xz -C /opt/flutter --strip-components=1
 ENV PATH="$PATH:/opt/flutter/bin"
-ENV DART_SDK=/opt/dart-sdk
-RUN flutter config --enable-web
-RUN flutter doctor
 
 # Install Dart
 RUN apt-get update && apt-get install -y wget
 RUN wget https://storage.googleapis.com/dart-archive/channels/stable/release/3.5.0/sdk/dartsdk-linux-x64-release.zip -O dartsdk.zip
 RUN unzip dartsdk.zip -d /opt/
 ENV PATH="$PATH:/opt/dart-sdk/bin"
+ENV DART_SDK=/opt/dart-sdk
 RUN export PATH=$PATH:/opt/dart-sdk/bin
 RUN dart --version
+
+RUN flutter config --enable-web
+RUN flutter doctor
 
 # Set working directory
 WORKDIR /app
