@@ -15,7 +15,7 @@ RUN flutter doctor
 RUN apt-get update && apt-get install -y apt-transport-https gnupg
 RUN wget -q https://dl-ssl.google.com/linux/linux_signing_key.pub -O dart.key
 RUN gpg --dearmor dart.key | tee /etc/apt/trusted.gpg.d/dart.gpg > /dev/null
-RUN wget -qO- https://storage.googleapis.com/download.dartlang.org/linux/debian_stable/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list
+RUN wget --no-check-certificate -qO- https://storage.googleapis.com/download.dartlang.org/linux/debian_stable/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list
 RUN apt-get update && apt-get install -y dart
 
 # Set working directory
@@ -31,4 +31,4 @@ RUN flutter build web
 EXPOSE 54695
 
 # Start Dart HTTP server
-CMD dart run :8080 --directory=build/web
+CMD dart run :54695 --directory=build/web
