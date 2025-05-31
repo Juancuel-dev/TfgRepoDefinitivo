@@ -12,9 +12,9 @@ ENV PATH="$PATH:/opt/flutter/bin"
 RUN flutter doctor
 
 # Install Dart
-RUN apt-get update && apt-get install -y apt-transport-https
+RUN apt-get update && apt-get install -y apt-transport-https gnupg
 RUN wget -q https://dl-ssl.google.com/linux/linux_signing_key.pub -O dart.key
-RUN apt-key add dart.key
+RUN gpg --dearmor dart.key | tee /etc/apt/trusted.gpg.d/dart.gpg > /dev/null
 RUN wget -qO- https://storage.googleapis.com/download.dartlang.org/linux/debian_stable/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list
 RUN apt-get update && apt-get install -y dart
 
@@ -28,7 +28,7 @@ COPY . .
 RUN flutter build web
 
 # Expose port 8080
-EXPOSE 8080
+EXPOSE 54695
 
 # Start Dart HTTP server
 CMD dart run :8080 --directory=build/web
