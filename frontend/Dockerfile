@@ -24,3 +24,17 @@ RUN dart --version
 # Set working directory
 WORKDIR /app
 
+# Copy project files
+COPY . .
+
+# Build the Flutter web app
+RUN flutter build web
+
+# Expose port 54695
+EXPOSE 54695
+
+# Start Dart HTTP server
+CMD dart run :54695 --directory=build/web
+
+HEALTHCHECK --interval=5s --timeout=3s \
+  CMD curl -f http://localhost:54695/ || exit 1
