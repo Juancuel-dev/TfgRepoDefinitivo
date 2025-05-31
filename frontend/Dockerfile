@@ -1,29 +1,38 @@
-# Etapa de construcción - Usamos imagen oficial de Flutter desde Docker Hub
-FROM flutter/flutter:stable AS build
+# Etapa de construcción - Usamos imagen base de Ubuntu e instalamos Flutter manualmente
+FROM ubuntu:22.04 AS build
 
-# Configuración del entorno
+# Instala dependencias básicas
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    unzip \
+    xz-utils \
+    libglu1-mesa \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instala Flutter manualmente
+RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
+ENV PATH="$PATH:/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin"
+
+# Verifica la instalación
+RUN flutter doctor -v
+
+# Configura el entorno de trabajo
 WORKDIR /app
-ENV FLUTTER_WEB_BUILD_MODE=release
-
-# 1. Copia estratégica para optimizar caché
 COPY pubspec.yaml pubspec.lock ./
 RUN flutter pub get
-
-# 2. Copia el código y construye
 COPY . .
 RUN flutter build web --release --web-renderer html --no-source-maps
 
-# Etapa de producción - Usamos imagen oficial de Nginx
-FROM nginx:stable-alpine
+# Etapa de producción - Servidor web mínimo
+FROM busybox:latest
 
 # Copia los archivos construidos
-COPY --from=build /app/build/web /usr/share/nginx/html
+COPY --from=build /app/build/web /app
 
-# Configuración mínima de Nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Expone el puerto 8080 (Railway lo manejará)
+EXPOSE 8080
 
-# Puerto expuesto (Railway lo manejará)
-EXPOSE 54695
-
-# Comando de inicio
-CMD ["nginx", "-g", "daemon off;"]
+# Inicia un servidor HTTP simple
+CMD ["busybox", "httpd", "-f", "-p", "8080", "-h", "/app"]
