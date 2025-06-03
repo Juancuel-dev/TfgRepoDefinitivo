@@ -691,7 +691,7 @@ class _ChatWidgetState extends State<_ChatWidget> {
 
       // Realizar la solicitud HTTP
       final response = await http.post(
-        Uri.parse('https://mba-messenger-controllers-gdp.trycloudflare.com/gateway/ai'),
+        Uri.parse('http://localhost:8080/gateway/ai'),
         headers: headers,
         body: jsonEncode({"texto": userMessage}),
       );

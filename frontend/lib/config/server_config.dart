@@ -1,4 +1,4 @@
 class ServerConfig {
   // Dirección IP del servidor
-  static const String serverIp = 'https://tells-jackson-seeds-engagement.trycloudflare.com';  
+  static const String serverIp = 'http://localhost:8080'; 
 }

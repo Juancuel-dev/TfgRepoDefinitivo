@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthService {
   final String apiUrl = '${ServerConfig.serverIp}/gateway';
 
-  Future<String> login(String username, String password) async {
+  Future<String?> login(String username, String password) async {
     final response = await http.post(
       Uri.parse('$apiUrl/login'),
       headers: {
@@ -22,7 +22,7 @@ class AuthService {
       final Map<String, dynamic> responseBody = jsonDecode(response.body);
       return responseBody['token']; // Assuming the JWT is returned in the 'token' field
     } else {
-      return "";
+      return null;
     }
   }
 

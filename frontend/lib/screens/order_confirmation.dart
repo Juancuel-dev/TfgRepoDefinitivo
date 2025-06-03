@@ -257,9 +257,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                       return FadeTransition(opacity: animation, child: child);
                     },
                     child: isSubmitted
-                        ? const Icon(
+                        ? Icon(
                             Icons.check_circle,
-                            key: ValueKey('tick'),
+                            key: const ValueKey('tick'),
                             color: Colors.green,
                             size: 100,
                           )
