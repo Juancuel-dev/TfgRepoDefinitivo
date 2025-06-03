@@ -130,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
     _logger.d('Usuario: ${_usernameController.text.trim()}');
 
     try {
-      String? token = await _authService.login(
+      String token = await _authService.login(
         _usernameController.text.trim(),
         _passwordController.text.trim(),
       );
