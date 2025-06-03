@@ -45,22 +45,12 @@ final staticHandler = createStaticHandler(
   serveFilesOutsidePath: true,  // Add this line
 );
 
-Middleware rootRedirect() {
-  return (Handler innerHandler) {
-    return (Request request) {
-      if (request.url.path.isEmpty || request.url.path == '/') {
-        return Response.found(Uri.parse('/build/web/'));
-      }
-      return innerHandler(request);
-    };
-  };
-}
+
 
 // Update your handler pipeline:
 final handler = Pipeline()
   .addMiddleware(loggingMiddleware())
-  .addMiddleware(mimeFixer())
-  .addMiddleware(rootRedirect())  // Add this
+  .addMiddleware(mimeFixer()) 
   .addHandler(staticHandler);
  
   final port = int.parse(Platform.environment['PORT'] ?? '56000');
