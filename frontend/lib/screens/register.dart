@@ -292,7 +292,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         widthFactor: 0.5,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:  Color.fromARGB(255, 98, 150, 38),
+                            backgroundColor:  const Color.fromARGB(255, 98, 150, 38),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 32, vertical: 16),
                             shape: RoundedRectangleBorder(
@@ -419,7 +419,7 @@ class _RegisterPageState extends State<RegisterPage> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: Colors.white70),
-        prefixIcon: Icon(icon, color: Color.fromARGB(255, 118, 194, 30)),
+        prefixIcon: Icon(icon, color: const Color.fromARGB(255, 118, 194, 30)),
         filled: true,
         fillColor: Colors.grey[850],
         border: OutlineInputBorder(

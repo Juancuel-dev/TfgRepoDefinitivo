@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,14 +30,28 @@ public class AuthService {
 
     public ResponseEntity<String> login(LoginRequest loginRequest) {
         try {
+            HttpHeaders headers = new HttpHeaders();
+            String body = new String(loginRequest.toString().getBytes(StandardCharsets.UTF_8));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setContentLength(body.getBytes(StandardCharsets.UTF_8).length);
+
+            HttpEntity<LoginRequest> requestEntity = new HttpEntity<>(loginRequest, headers);
+
             ResponseEntity<String> response = restTemplate.postForEntity(
                     "http://" + AUTH_SERVICE + "/auth/login",
-                    loginRequest,
+                    requestEntity,
                     String.class
             );
-            return ResponseEntity.status(response.getStatusCode())
-                    .headers(response.getHeaders())
-                    .body(response.getBody());
+
+            HttpHeaders responseHeaders = new HttpHeaders();
+            response.getHeaders().forEach((key, values) -> {
+                if (!key.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING)) {
+                    responseHeaders.put(key, values);
+                }
+            });
+
+            return new ResponseEntity<>(response.getBody(), responseHeaders, response.getStatusCode());
+
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .headers(e.getResponseHeaders())
@@ -48,22 +63,29 @@ public class AuthService {
         }
     }
 
+
     public ResponseEntity<String> register(RegisterUsersRequest registerRequest) {
         registerRequest.setId(UUID.randomUUID().toString());
         RegisterAuthRequest authRequest = RegisterRequestMapper.INSTANCE.toRegisterAuthRequest(registerRequest);
 
         try {
-            // Llamada auth-service
+            // Headers comunes
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Auth service
+            HttpEntity<RegisterAuthRequest> authEntity = new HttpEntity<>(authRequest, headers);
             ResponseEntity<String> authResponse = restTemplate.postForEntity(
                     "http://" + AUTH_SERVICE + "/auth/register",
-                    authRequest,
+                    authEntity,
                     String.class
             );
 
-            // Llamada a user-service
+            // User service
+            HttpEntity<RegisterUsersRequest> userEntity = new HttpEntity<>(registerRequest, headers);
             ResponseEntity<String> userResponse = restTemplate.postForEntity(
                     "http://" + USER_SERVICE + "/users/register",
-                    registerRequest,
+                    userEntity,
                     String.class
             );
 
@@ -75,6 +97,7 @@ public class AuthService {
                 return ResponseEntity.badRequest()
                         .body("Error al registrar usuario");
             }
+
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .headers(e.getResponseHeaders())
@@ -85,6 +108,7 @@ public class AuthService {
                     .body("Error interno del servidor: " + e.getMessage());
         }
     }
+
 
     public ResponseEntity<Object> proxyRequest(String serviceName, HttpServletRequest request) {
         try {
@@ -102,10 +126,19 @@ public class AuthService {
             HttpMethod method = HttpMethod.valueOf(request.getMethod());
             HttpHeaders headers = new HttpHeaders();
             Collections.list(request.getHeaderNames())
-                    .forEach(headerName -> headers.addAll(headerName,
-                            Collections.list(request.getHeaders(headerName))));
+                    .forEach(headerName -> {
+                        if (!headerName.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING)) {
+                            headers.addAll(headerName, Collections.list(request.getHeaders(headerName)));
+                        }
+                    });
 
             String body = request.getReader().lines().collect(Collectors.joining());
+
+
+            if (!body.isEmpty()) {
+                headers.setContentLength(body.getBytes(StandardCharsets.UTF_8).length);
+            }
+
 
             ResponseEntity<String> response = restTemplate.exchange(
                     url,
@@ -113,10 +146,15 @@ public class AuthService {
                     new HttpEntity<>(body.isEmpty() ? null : body, headers),
                     String.class
             );
+            HttpHeaders responseHeaders = new HttpHeaders();
+            response.getHeaders().forEach((key, values) -> {
+                if (!key.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING)) {
+                    responseHeaders.put(key, values);
+                }
+            });
 
-            return ResponseEntity.status(response.getStatusCode())
-                    .headers(response.getHeaders())
-                    .body(response.getBody());
+            return new ResponseEntity<>(response.getBody(), responseHeaders, response.getStatusCode());
+
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .headers(e.getResponseHeaders())
