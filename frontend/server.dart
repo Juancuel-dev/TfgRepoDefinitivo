@@ -40,7 +40,7 @@ Middleware loggingMiddleware() {
 
 void main() async {
 final staticHandler = createStaticHandler(
-  'build/web',
+  '/web_files/',
   defaultDocument: 'index.html',
   serveFilesOutsidePath: true,  // Add this line
 );
