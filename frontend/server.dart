@@ -7,17 +7,19 @@ Middleware mimeFixer() {
   return (Handler innerHandler) {
     return (Request request) async {
       final response = await innerHandler(request);
-
-      if (request.url.path.endsWith('.js')) {
-        final contentType = response.headers[HttpHeaders.contentTypeHeader];
-        if (contentType == null || contentType == 'text/plain') {
-          return response.change(headers: {
-            HttpHeaders.contentTypeHeader: 'application/javascript',
-          });
-        }
+      
+      final path = request.url.path;
+      final headers = <String, String>{};
+      
+      if (path.endsWith('.js')) {
+        headers[HttpHeaders.contentTypeHeader] = 'application/javascript';
+      } else if (path.endsWith('.css')) {
+        headers[HttpHeaders.contentTypeHeader] = 'text/css';
+      } else if (path.endsWith('.html')) {
+        headers[HttpHeaders.contentTypeHeader] = 'text/html';
       }
-
-      return response;
+      
+      return headers.isEmpty ? response : response.change(headers: headers);
     };
   };
 }
