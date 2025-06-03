@@ -35,13 +35,34 @@ Middleware loggingMiddleware() {
   };
 }
 
-void main() async {
-final staticHandler = createStaticHandler('build/web', defaultDocument: 'index.html');
-  final handler = Pipeline()
-      .addMiddleware(loggingMiddleware())
-      .addMiddleware(mimeFixer())
-      .addHandler(staticHandler);
 
+
+
+void main() async {
+final staticHandler = createStaticHandler(
+  'build/web',
+  defaultDocument: 'index.html',
+  serveFilesOutsidePath: true,  // Add this line
+);
+
+Middleware rootRedirect() {
+  return (Handler innerHandler) {
+    return (Request request) {
+      if (request.url.path.isEmpty || request.url.path == '/') {
+        return Response.found(Uri.parse('/build/web/'));
+      }
+      return innerHandler(request);
+    };
+  };
+}
+
+// Update your handler pipeline:
+final handler = Pipeline()
+  .addMiddleware(loggingMiddleware())
+  .addMiddleware(mimeFixer())
+  .addMiddleware(rootRedirect())  // Add this
+  .addHandler(staticHandler);
+ 
   final port = int.parse(Platform.environment['PORT'] ?? '56000');
   final server = await io.serve(handler, InternetAddress.anyIPv4, port);
   print('✅ Servidor iniciado en http://localhost:${server.port}');
