@@ -346,7 +346,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   _isLoading = false;
                                 });
 
-                                if (token != null) {
+                                if (token != "") {
                                   if (widget.onRegister != null) {
                                     widget.onRegister!(token);
                                   }

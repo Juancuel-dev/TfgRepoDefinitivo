@@ -130,30 +130,20 @@ class _LoginPageState extends State<LoginPage> {
     _logger.d('Usuario: ${_usernameController.text.trim()}');
 
     try {
-      String? token = await _authService.login(
+      String token = await _authService.login(
         _usernameController.text.trim(),
         _passwordController.text.trim(),
       );
 
-      if (token == null) {
-        _logger.w('Inicio de sesión fallido: Usuario o contraseña incorrectos.');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error: Usuario o contraseña incorrectos.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      } else {
-        _logger.i('Inicio de sesión exitoso. Token recibido.');
+      _logger.i('Inicio de sesión exitoso. Token recibido.');
 
-        // Guardar token en AuthProvider (que guarda en SharedPreferences)
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        await authProvider.setToken(token);
+      // Guardar token en AuthProvider (que guarda en SharedPreferences)
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.setToken(token);
 
-        // Navegar a la página principal
-        context.go('/');
-      }
-    } catch (e) {
+      // Navegar a la página principal
+      context.go('/');
+        } catch (e) {
       _logger.e('Error inesperado durante el inicio de sesión', e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
