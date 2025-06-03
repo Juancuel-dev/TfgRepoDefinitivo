@@ -10,6 +10,6 @@ RUN flutter config --enable-web \
 
 RUN dart pub get
 
-EXPOSE 8080
+EXPOSE 56000
 
 CMD ["dart", "server.dart"]
