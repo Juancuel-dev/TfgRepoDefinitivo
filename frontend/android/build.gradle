@@ -2,16 +2,15 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        // Add this for Flutter plugins:
+        maven {
+            url "https://storage.googleapis.com/download.flutter.io"
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.2.1'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
+        // Add version for Flutter plugin:
+        classpath 'dev.flutter:flutter-gradle-plugin:2.3.0'
     }
 }

@@ -24,7 +24,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
   String selectedCategory = 'Perfil'; // Categoría seleccionada por defecto
   bool isMenuVisible = false; // Controla si el menú está visible
   String? userRole; // Rol del usuario
-  AssetImage? userProfileImage = const AssetImage('assets/images/default.jpg'); // Imagen de perfil seleccionada
+  AssetImage? userProfileImage = const AssetImage('images/default.jpg'); // Imagen de perfil seleccionada
   List<dynamic> userOrders = []; // Lista de pedidos del usuario
 
   @override
@@ -306,7 +306,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                     onTap: _showImagePickerDialog, // Cambiar imagen de perfil
                     child: CircleAvatar(
                       radius: 40,
-                      backgroundImage: userProfileImage ?? const AssetImage('assets/images/default.jpg'),
+                      backgroundImage: userProfileImage ?? const AssetImage('images/default.jpg'),
                     ),
                   ),
                   const SizedBox(width: 16),
