@@ -34,8 +34,7 @@ Middleware loggingMiddleware() {
 }
 
 void main() async {
-  final staticHandler = createStaticHandler('build/web', defaultDocument: 'index.html');
-
+final staticHandler = createStaticHandler('build/web', defaultDocument: 'index.html');
   final handler = Pipeline()
       .addMiddleware(loggingMiddleware())
       .addMiddleware(mimeFixer())
