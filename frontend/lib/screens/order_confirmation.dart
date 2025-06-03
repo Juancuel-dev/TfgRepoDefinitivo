@@ -222,7 +222,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Subtotal: \$${(item.game.precio * item.quantity).toStringAsFixed(2)}',
+                                      'Subtotal: ${(item.game.precio * item.quantity).toStringAsFixed(2)}€',
                                       style: const TextStyle(fontSize: 14, color: Colors.greenAccent),
                                     ),
                                   ],
@@ -235,12 +235,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'IVA (21%): \$${iva.toStringAsFixed(2)}',
+                      'IVA (21%): ${iva.toStringAsFixed(2)}€',
                       style: const TextStyle(fontSize: 16, color: Colors.white70),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Total: \$${totalConIva.toStringAsFixed(2)}',
+                      'Total: ${totalConIva.toStringAsFixed(2)}€',
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ],
@@ -257,7 +257,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                       return FadeTransition(opacity: animation, child: child);
                     },
                     child: isSubmitted
-                        ? Icon(
+                        ? const Icon(
                             Icons.check_circle,
                             key: const ValueKey('tick'),
                             color: Colors.green,

@@ -91,7 +91,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
     try {
       // 2. Llamar al método fetchUserInfo del AuthService
-      final fetchedUserData = await authService.fetchUserInfo(token);
+      final fetchedUserData = await authService.fetchUserInfo();
 
       if (fetchedUserData != null) {
         setState(() {

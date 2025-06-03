@@ -3,8 +3,6 @@ package com.model.register;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
-import java.io.Serializable;
-
 @Setter
 @Getter
 @Data

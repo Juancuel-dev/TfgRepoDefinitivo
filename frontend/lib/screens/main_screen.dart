@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/services/games_service.dart';
@@ -691,7 +692,7 @@ class _ChatWidgetState extends State<_ChatWidget> {
 
       // Realizar la solicitud HTTP
       final response = await http.post(
-        Uri.parse('http://localhost:8080/gateway/ai'),
+        Uri.parse('${ServerConfig.serverIp}/gateway/ai'),
         headers: headers,
         body: jsonEncode({"texto": userMessage}),
       );

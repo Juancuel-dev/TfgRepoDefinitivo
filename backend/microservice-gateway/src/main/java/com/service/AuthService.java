@@ -63,7 +63,6 @@ public class AuthService {
         }
     }
 
-
     public ResponseEntity<String> register(RegisterUsersRequest registerRequest) {
         registerRequest.setId(UUID.randomUUID().toString());
         RegisterAuthRequest authRequest = RegisterRequestMapper.INSTANCE.toRegisterAuthRequest(registerRequest);

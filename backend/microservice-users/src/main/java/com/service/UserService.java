@@ -41,10 +41,6 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public Integer getUserImage(String username){
-        return userRepository.findByUsername(username).orElseThrow(()->new UsernameNotFoundException("Usuario " + username +" no encontrado")).getImagen();
-    }
-
     public User edit(Jwt jwt,User user) throws UnauthorizedException {
         if(userRepository.existsById(user.getId())){
 
@@ -67,14 +63,23 @@ public class UserService {
     }
 
     public void deleteById(Jwt jwt, String id) throws UnauthorizedException, UsernameNotFoundException {
+
         if (!userRepository.existsById(id)) {
             throw new UsernameNotFoundException("Usuario con id " + id + " no encontrado");
         }
-        if(jwt.getClaim("role").equals("ADMIN")|| jwt.getClaim("clientId").equals(id)) {
 
+        String requesterId = jwt.getClaim("clientId");
+        String requesterRole = jwt.getClaim("role");
+
+        boolean isAdmin = "ADMIN".equals(requesterRole);
+        boolean isSelfDeletion = requesterId.equals(id);
+
+        if (isAdmin && !isSelfDeletion) {
             userRepository.deleteById(id);
-        }else{
-            throw new UnauthorizedException("No estas autorizado para realizar esta accion");
+        } else if (isSelfDeletion) {
+            userRepository.deleteById(id);
+        } else {
+            throw new UnauthorizedException("No tienes permisos para esta acción");
         }
     }
 

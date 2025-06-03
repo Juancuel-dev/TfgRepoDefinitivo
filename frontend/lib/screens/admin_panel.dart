@@ -182,9 +182,9 @@ class _AdminPanelState extends State<AdminPanel> {
             return FutureBuilder<AssetImage>(
               future: imageId != null
                   ? ImageService.loadUserProfileImage(imageId, context)
-                  : Future.value(const AssetImage('images/default.jpg')),
+                  : Future.value(const AssetImage('assets/images/default.jpg')),
               builder: (context, imageSnapshot) {
-                final AssetImage image = imageSnapshot.data ?? const AssetImage('images/default.jpg');
+                final AssetImage image = imageSnapshot.data ?? const AssetImage('assets/images/default.jpg');
 
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

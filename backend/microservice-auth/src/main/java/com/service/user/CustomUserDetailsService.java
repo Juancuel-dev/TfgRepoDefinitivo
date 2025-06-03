@@ -1,7 +1,5 @@
 package com.service.user;
 
-import com.model.user.User;
-import com.model.user.UserDTO;
 import com.repository.user.UserRepository;
 import com.util.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +19,4 @@ public class CustomUserDetailsService implements UserDetailsService {
         return UserMapper.INSTANCE.userToUserDTO(userRepository.findByUsername(username).orElseThrow(()->new UsernameNotFoundException("Usuario no encontrado con username " + username)));
     }
 
-    public UserDetails loadUserById(String id) throws UsernameNotFoundException {
-        return UserMapper.INSTANCE.userToUserDTO(userRepository.findById(id).orElseThrow(()->new UsernameNotFoundException("Usuario no encontrado con id " + id)));
-    }
 }
