@@ -516,7 +516,7 @@ int _reloadTrigger = 0;
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        return json.decode(utf8.decode(response.bodyBytes));
       } else {
         throw Exception('Error al obtener datos de $endpoint');
       }
