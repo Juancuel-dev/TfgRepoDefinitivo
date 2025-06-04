@@ -4,7 +4,7 @@ import 'package:flutter_auth_app/services/auth_service.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
-import 'package:provider/provider.dart'; // Importar GoRouter para la navegación
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   final Function(String) onLogin;
@@ -180,7 +180,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                 const SizedBox(height: 16),
 
-                // Mensaje de error
                 if (_errorMessage != null)
                   Text(
                     _errorMessage!,
@@ -188,7 +187,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 const SizedBox(height: 16),
 
-                // Enlace para crear cuenta
                 MouseRegion(
                   cursor: SystemMouseCursors.click, // Cambiar el cursor a una mano señalando
                   child: GestureDetector(
@@ -199,9 +197,9 @@ class _LoginPageState extends State<LoginPage> {
                       '¿No tienes cuenta? Crear Cuenta',
                       style: TextStyle(
                         color: Color.fromARGB(255, 118, 194, 30), // Color verde para resaltar
-                        fontSize: 14, // Tamaño de fuente pequeño pero legible
-                        fontWeight: FontWeight.w500, // Peso medio para destacar
-                        decoration: TextDecoration.underline, // Subrayado para indicar que es un enlace
+                        fontSize: 14, 
+                        fontWeight: FontWeight.w500, 
+                        decoration: TextDecoration.underline,
                       ),
                     ),
                   ),

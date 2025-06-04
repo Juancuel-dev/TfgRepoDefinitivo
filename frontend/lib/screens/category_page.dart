@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/models/game.dart';
 import 'package:flutter_auth_app/services/games_service.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
-import 'package:go_router/go_router.dart'; // Importar GoRouter para la navegación
+import 'package:go_router/go_router.dart';
 
 class CategoryPage extends StatefulWidget {
   final String category;
@@ -91,7 +91,7 @@ class _CategoryPageState extends State<CategoryPage> {
                         final childAspectRatio = cardWidth / cardHeight;
 
                         return GridView.builder(
-                          shrinkWrap: true, // Permite que el GridView se ajuste al contenido
+                          shrinkWrap: true, // GridView ajusta al contenido
                           physics: const NeverScrollableScrollPhysics(), // Desactiva el scroll interno del GridView
                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: crossAxisCount,

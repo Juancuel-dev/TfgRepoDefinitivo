@@ -15,10 +15,9 @@ class OrderConfirmationPage extends StatefulWidget {
 }
 
 class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
-  // Clave global para el formulario
+
   final _formKey = GlobalKey<FormState>();
 
-  // Controladores para los campos de texto
   final _cardNumberController = TextEditingController();
   final _expiryDateController = TextEditingController();
   final _cvvController = TextEditingController();
@@ -37,7 +36,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      // Si el formulario es válido, cambiar el estado para mostrar el "tick verde"
+      // Si el formulario es válido, cambiar el estado para mostrar el tick verde
       _isFormSubmitted.value = true;
     }
   }
@@ -49,12 +48,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     String clientId,
   ) async {
     
-    print('JWT Token: $jwtToken');
-    print('Client ID: $clientId');
-    print('Items en el carrito: ${cartProvider.items}');
 
     if (jwtToken.isEmpty || clientId.isEmpty || cartProvider.items.isEmpty) {
-      print('Error: Datos inválidos para confirmar el pedido');
       return;
     }
 
@@ -79,8 +74,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     // Cerrar el indicador de carga
     Navigator.of(context).pop();
 
-    // Imprimir la respuesta del servidor
-    print('Respuesta del servidor: ${cartService.lastResponseBody}');
 
     if (success) {
       // Pedido creado con éxito
@@ -110,7 +103,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
     // Verificar si el token JWT está disponible
     if (jwtToken == null || jwtToken.isEmpty) {
-      print('Token JWT no disponible. Redirigiendo a /login...');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         context.go('/login'); // Redirige a la página de inicio de sesión si no hay token
       });
@@ -393,7 +385,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     return;
                   }
 
-                  print('Confirmando pedido...');
                   await _handleOrderConfirmation(context, cartProvider, jwtToken, clientId);
                 },
                 style: ElevatedButton.styleFrom(

@@ -81,7 +81,7 @@ class GamesService {
       // Mezclar los juegos en un orden aleatorio
       games.shuffle(Random());
 
-      // Tomar los primeros 20 juegos
+      // primeros 20 juegos
       return games.take(20).toList();
     } else {
       throw Exception('Failed to load discounted games');
@@ -90,7 +90,7 @@ class GamesService {
 
   Future<List<Game>> fetchGamesLimit(int limit) async {
     final response = await http.get(
-      Uri.parse('$apiUrl?limit=$limit'), // Agregar el parámetro de límite a la URL
+      Uri.parse('$apiUrl?limit=$limit'), // parámetro de límite a la URL
       headers: {
         'Content-Type': 'application/json',
       },

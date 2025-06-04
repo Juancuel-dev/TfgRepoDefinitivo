@@ -30,7 +30,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
   @override
   void initState() {
     super.initState();
-    _fetchUserData(); // Esto está bien en initState porque no depende del BuildContext
+    _fetchUserData(); 
   }
 
   @override
@@ -95,7 +95,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
       if (fetchedUserData != null) {
         setState(() {
-          print(fetchedUserData);
           userData = fetchedUserData;
           isLoading = false;
         });
@@ -108,7 +107,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
         Future.microtask(() => context.go('/login'));
       }
     } catch (e) {
-      print('Error fetching user data: $e');
       Future.microtask(() => context.go('/login'));
     }
     _loadUserProfileImage();
@@ -116,14 +114,12 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
   Future<void> _loadUserProfileImage() async {
     final imageId = userData?['imagen']; // Usar un ID por defecto si no está definido
-    print('El image id es $imageId'); // Depuración
     try {
       final String imagePath = 'assets/images/$imageId.jpg'; // Ruta de la imagen en los assets
       setState(() {
         userProfileImage = AssetImage(imagePath); // Asignar el objeto AssetImage
       });
     } catch (e) {
-      print('Error al cargar la imagen de perfil: $e');
     }
   }
 
@@ -172,7 +168,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
-                        child: _buildContent(), // Contenido dinámico según la categoría seleccionada
+                        child: _buildContent(), 
                       ),
                     ),
                   ],
@@ -265,7 +261,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
       case 'Admin Panel':
         Future.microtask(() => context.go('/admin')); // Redirigir a /admin
         return const Center(
-          child: CircularProgressIndicator(), // Mostrar un indicador mientras se redirige
+          child: CircularProgressIndicator(),
         );
       default:
         return const Center(
@@ -390,8 +386,8 @@ class _MyAccountPageState extends State<MyAccountPage> {
             child: GestureDetector(
               onTap: () {
                 final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                authProvider.logout(); // Llamar al método de logout
-                context.go('/login'); // Navegar al login
+                authProvider.logout(); 
+                context.go('/login');
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -420,7 +416,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
     // Cargar las imágenes
     final images = await ImageService.loadAllProfileImages();
 
-    // Mostrar el diálogo con las imágenes cargadas
     showDialog(
       context: context,
       builder: (context) {
@@ -430,8 +425,8 @@ class _MyAccountPageState extends State<MyAccountPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: SizedBox(
-            width: 300, // Ancho del diálogo
-            height: 450, // Altura del diálogo
+            width: 300, 
+            height: 450, 
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
@@ -448,24 +443,21 @@ class _MyAccountPageState extends State<MyAccountPage> {
                   const SizedBox(height: 8),
                   Expanded(
                     child: GridView.builder(
-                      physics: const BouncingScrollPhysics(), // Permitir scroll con efecto rebote
+                      physics: const BouncingScrollPhysics(), 
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3, // Mostrar 3 imágenes por fila
-                        crossAxisSpacing: 8.0, // Espaciado horizontal entre imágenes
-                        mainAxisSpacing: 8.0, // Espaciado vertical entre imágenes
-                        childAspectRatio: 1, // Relación de aspecto cuadrada para las imágenes
+                        crossAxisCount: 3, 
+                        crossAxisSpacing: 8.0, 
+                        mainAxisSpacing: 8.0, 
+                        childAspectRatio: 1, 
                       ),
                       itemCount: images.length,
                       itemBuilder: (context, index) {
                         final AssetImage image = images[index];
                         return GestureDetector(
                           onTap: () async {
-                            print('Imagen seleccionada: ${image.assetName}');
 
-                            // Realizar la petición para actualizar la imagen en el backend
                             await _updateUserProfileImage(image.assetName);
 
-                            // Cerrar el diálogo después de completar la petición
                             Navigator.pop(context);
                           },
                           child: ClipRRect(
@@ -512,7 +504,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
 
       // Enviar la solicitud PUT al backend
       final response = await http.put(
-        Uri.parse('${ServerConfig.serverIp}/gateway/users/update-image/$imageId'), // Endpoint para actualizar el usuario
+        Uri.parse('${ServerConfig.serverIp}/gateway/users/update-image/$imageId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token', // Token de autenticación
@@ -534,7 +526,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
         );
       } else {
         // Manejar errores del servidor
-        print('Error al actualizar la imagen de perfil: ${response.body}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error al actualizar la imagen de perfil'),
@@ -544,7 +535,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
       }
     } catch (e) {
       // Manejar errores de red
-      print('Error de conexión al servidor: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error de conexión al servidor'),
@@ -652,14 +642,9 @@ class _MyAccountPageState extends State<MyAccountPage> {
     final token = authProvider.jwtToken;
 
     if (token == null) {
-      print('JWT Token no encontrado. Redirigiendo al login.');
       Future.microtask(() => context.go('/login'));
       return;
     }
-
-    print('Intentando cambiar contraseña...');
-    print('Nueva contraseña: $newPassword');
-    print('JWT Token: $token');
 
     try {
       final response = await http.post(
@@ -670,11 +655,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
         },
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
-        print('Contraseña cambiada con éxito.');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Contraseña cambiada con éxito'),
@@ -683,7 +664,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
           ),
         );
       } else {
-        print('Error al cambiar la contraseña. Código de estado: ${response.statusCode}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error al cambiar la contraseña'),
@@ -692,7 +672,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
         );
       }
     } catch (e) {
-      print('Error de conexión al servidor: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error de conexión al servidor'),
@@ -807,11 +786,9 @@ class _ChangePasswordSectionState extends State<ChangePasswordSection> {
         }
         return false; // La contraseña no ha sido encontrada
       } else {
-        print('Error al consultar la API de HIBP: ${response.statusCode}');
         return false; // Asumir que no está comprometida si hay un error
       }
     } catch (e) {
-      print('Error al consultar la API de HIBP: $e');
       return false; // Asumir que no está comprometida si hay un error
     }
   }

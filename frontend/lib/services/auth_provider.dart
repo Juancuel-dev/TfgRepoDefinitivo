@@ -23,7 +23,6 @@ class AuthProvider with ChangeNotifier {
     _jwtToken = prefs.getString('auth_token');
     _sessionActive = prefs.getBool('session_active') ?? false;
     
-    // Validar el token si existe
     if (_jwtToken != null) {
       final isValid = await _validateToken(_jwtToken!);
       if (!isValid) {
@@ -45,7 +44,6 @@ class AuthProvider with ChangeNotifier {
       final payload = _decodeBase64(parts[1]);
       final claims = json.decode(payload) as Map<String, dynamic>;
       
-      // Verificar expiración
       final expiry = claims['exp'] as int?;
       if (expiry != null) {
         final expiryDate = DateTime.fromMillisecondsSinceEpoch(expiry * 1000);
@@ -97,10 +95,8 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> logout() async {
     await _clearSession();
-    // Aquí puedes agregar lógica adicional de limpieza
   }
 
-  // Método para forzar cierre de sesión cuando se detecta un token inválido
   Future<void> forceLogout() async {
     await _clearSession();
     debugPrint('Forced logout due to invalid session');

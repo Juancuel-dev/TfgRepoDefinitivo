@@ -79,14 +79,14 @@ class _GameDetailPageState extends State<GameDetailPage> {
             fit: BoxFit.cover,
           ),
         ),
-        // Gradiente superpuesto para reducir la prominencia de la imagen de fondo
+       
         Positioned.fill(
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withOpacity(0.9), // Más oscuro en la parte inferior
-                  Colors.black.withOpacity(0.7), // Menos oscuro en la parte superior
+                  Colors.black.withValues(), 
+                  Colors.black.withValues(), 
                 ],
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
@@ -111,7 +111,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
                       child: Image.network(
                         game.imageUrl,
                         fit: BoxFit.cover,
-                        width: screenWidth * 0.8, // Imagen responsive
+                        width: screenWidth * 0.8, 
                         height: screenHeight * 0.3,
                       ),
                     ),
@@ -120,7 +120,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
                     Text(
                       game.name,
                       style: TextStyle(
-                        fontSize: screenWidth < 600 ? screenWidth * 0.07 : 32, // Tamaño adaptativo
+                        fontSize: screenWidth < 600 ? screenWidth * 0.07 : 32, 
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -131,7 +131,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
                     Text(
                       '${game.precio.toStringAsFixed(2)}€',
                       style: TextStyle(
-                        fontSize: screenWidth < 600 ? screenWidth * 0.06 : 28, // Tamaño adaptativo
+                        fontSize: screenWidth < 600 ? screenWidth * 0.06 : 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.greenAccent,
                       ),
@@ -151,7 +151,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
                     Text(
                       game.descripcion,
                       style: TextStyle(
-                        fontSize: screenWidth < 600 ? screenWidth * 0.045 : 16, // Tamaño adaptativo
+                        fontSize: screenWidth < 600 ? screenWidth * 0.045 : 16, 
                         color: Colors.white70,
                       ),
                       textAlign: TextAlign.center,
@@ -160,17 +160,17 @@ class _GameDetailPageState extends State<GameDetailPage> {
                     // Botón para añadir al carrito
                     GestureDetector(
                       onTap: () {
-                        // Usar el método addToCart del CartProvider
+                        
                         Provider.of<CartProvider>(context, listen: false).addToCart(game);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('${game.name} añadido al carrito'),
-                            duration: const Duration(seconds: 1), // Duración ajustada a 1 segundo
+                            duration: const Duration(seconds: 1), 
                           ),
                         );
                       },
                       child: Container(
-                        width: screenWidth < 600 ? screenWidth * 0.6 : 300, // Botón responsive
+                        width: screenWidth < 600 ? screenWidth * 0.6 : 300, 
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         decoration: BoxDecoration(
                           color: Colors.greenAccent,
@@ -187,7 +187,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
                           'Añadir al Carrito',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: screenWidth < 600 ? screenWidth * 0.05 : 18, // Tamaño adaptativo
+                            fontSize: screenWidth < 600 ? screenWidth * 0.05 : 18, 
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
@@ -205,7 +205,6 @@ class _GameDetailPageState extends State<GameDetailPage> {
     );
   }
 
-  // Widget para mostrar detalles como chips
   Widget _buildDetailChip(String label, Color color) {
     return Chip(
       label: Text(

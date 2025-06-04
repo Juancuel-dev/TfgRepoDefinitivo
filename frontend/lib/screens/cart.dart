@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_auth_app/services/cart_provider.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
-import 'package:logger/logger.dart'; // Importa el paquete logger
+import 'package:logger/logger.dart'; 
 
 class CartPage extends StatelessWidget {
   CartPage({super.key});
@@ -17,7 +17,7 @@ class CartPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final cartItems = Provider.of<CartProvider>(context).items;
 
-    _logger.i('Construyendo la pagina. Numero de items: ${cartItems.length}'); // Log de información
+    _logger.i('Construyendo la pagina. Numero de items: ${cartItems.length}'); 
 
     return BaseLayout(
       child: Padding(
@@ -42,7 +42,7 @@ class CartPage extends StatelessWidget {
                       itemCount: cartItems.length,
                       itemBuilder: (context, index) {
                         final item = cartItems[index];
-                        _logger.i('Renderizando item: ${item.game.name}, Cantidad: ${item.quantity}'); // Log de cada ítem
+                        _logger.i('Renderizando item: ${item.game.name}, Cantidad: ${item.quantity}'); 
 
                         return Container(
                           margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -96,7 +96,7 @@ class CartPage extends StatelessWidget {
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () {
-                                  _logger.i('Eliminando item: ${item.game.name}'); // Log de eliminación
+                                  _logger.i('Eliminando item: ${item.game.name}'); 
                                   Provider.of<CartProvider>(context, listen: false).removeItem(item);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -123,7 +123,7 @@ class CartPage extends StatelessWidget {
                 final cartItems = Provider.of<CartProvider>(context, listen: false).items;
 
                 if (cartItems.isEmpty) {
-                  _logger.w('Se ha intentado continuar con el carrito vacio'); // Log de advertencia
+                  _logger.w('Se ha intentado continuar con el carrito vacio'); 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('El carrito está vacío. Añade productos antes de continuar.'),
@@ -133,7 +133,7 @@ class CartPage extends StatelessWidget {
                   return;
                 }
 
-                _logger.i('Confirmando pedido. Articulos: ${cartItems.length}'); // Log de navegación
+                _logger.i('Confirmando pedido. Articulos: ${cartItems.length}'); 
                 context.go('/order-confirmation');
               },
               style: ElevatedButton.styleFrom(

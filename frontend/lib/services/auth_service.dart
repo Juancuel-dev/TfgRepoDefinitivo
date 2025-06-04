@@ -34,7 +34,7 @@ class AuthService {
         throw Exception('Invalid token received');
       }
     } else if (response.statusCode == 403) {
-      throw Exception('403');  // Lanzamos excepción específica para 403
+      throw Exception('403'); 
     } else {
       throw Exception('Login failed: ${response.statusCode}');
     }
@@ -43,7 +43,6 @@ class AuthService {
     rethrow;
   }
 }
-
 
   Future<bool> register(String nombre, String username, String password, 
                        String email, int edad, String pais) async {
@@ -73,27 +72,9 @@ class AuthService {
     await prefs.setString(_tokenKey, token);
     await prefs.setBool(_sessionActiveKey, true);
     
-    if (kIsWeb) {
-      // Configuración adicional para web si es necesario
-      _setupWebSessionCleanup();
-    }
   }
 
-  void _setupWebSessionCleanup() {
-    // Intenta limpiar la sesión al cerrar la pestaña (solo web)
-    // Nota: Esto no es 100% confiable en todos los navegadores
-    try {
-      /* 
-      // Implementación real requeriría dart:html o universal_html
-      import 'dart:html' as html;
-      html.window.addEventListener('beforeunload', (event) async {
-        await logout();
-      });
-      */
-    } catch (e) {
-      debugPrint('Error setting up web cleanup: $e');
-    }
-  }
+
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -109,14 +90,12 @@ class AuthService {
 
   bool _isTokenValid(String token) {
   try {
-    // Decodificar el token sincrónicamente ya que ya lo tenemos
     final parts = token.split('.');
     if (parts.length != 3) return false;
     
     final payload = _decodeBase64(parts[1]);
     final claims = json.decode(payload) as Map<String, dynamic>;
     
-    // Verificar expiración (si el token incluye 'exp')
     final expiry = claims['exp'] as int?;
     if (expiry != null) {
       final expiryDate = DateTime.fromMillisecondsSinceEpoch(expiry * 1000);
@@ -163,7 +142,6 @@ class AuthService {
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
       } else {
-        // Si el token es inválido, limpiamos la sesión
         if (response.statusCode == 401) {
           await logout();
         }
@@ -188,13 +166,13 @@ Map<String, dynamic>? _decodeTokenPayload(String token) {
   }
 }
 
-// Método para obtener claims del token (versión síncrona)
+// Método para obtener claims del token 
 String? getClaimFromToken(String token, String claim) {
   final claims = _decodeTokenPayload(token);
   return claims?[claim]?.toString();
 }
 
-// Método para obtener el rol del token (versión síncrona)
+// Método para obtener el rol del token 
 String? getRoleFromToken(String token) {
   return getClaimFromToken(token, 'role');
 }
@@ -218,7 +196,6 @@ String? getRoleFromToken(String token) {
     return token != null;
   }
 
-  // Limpieza para cuando se detecte un estado inconsistente
   Future<void> clearInvalidSession() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_tokenKey);
@@ -228,7 +205,6 @@ String? getRoleFromToken(String token) {
     }
   }
 
-  // Cerrar el stream controller cuando ya no se necesite
   void dispose() {
     _authStreamController.close();
   }

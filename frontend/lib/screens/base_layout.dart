@@ -28,7 +28,7 @@ class _BaseLayoutState extends State<BaseLayout> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600; // Detectar si es móvil
 
-    _logger.i('Construyendo BaseLayout. ¿Es movil?: $isMobile'); // Log de información
+    _logger.i('Construyendo BaseLayout. ¿Es movil?: $isMobile');
 
     return Scaffold(
       key: _scaffoldKey,
@@ -37,16 +37,16 @@ class _BaseLayoutState extends State<BaseLayout> {
           Column(
             children: [
               PreferredSize(
-                preferredSize: const Size.fromHeight(80), // Altura personalizada del AppBar
+                preferredSize: const Size.fromHeight(80), 
                 child: AppBar(
-                  toolbarHeight: 80, // Ajustar la altura exacta del AppBar
+                  toolbarHeight: 80, 
                   automaticallyImplyLeading: widget.showBackButton,
                   backgroundColor: Colors.grey[900],
                   title: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribuir elementos uniformemente
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center, // Centrar verticalmente
                     children: [
-                      // Logo
+                      
                       Flexible(
                         child: MouseRegion(
                           cursor: SystemMouseCursors.click, // Cambiar el cursor al de una mano señalando
@@ -72,7 +72,6 @@ class _BaseLayoutState extends State<BaseLayout> {
                         ),
                       ),
 
-                      // Categorías de plataformas
                       if (!isMobile)
                         Expanded(
                           flex: 2,
@@ -83,13 +82,12 @@ class _BaseLayoutState extends State<BaseLayout> {
                           icon: const Icon(Icons.menu, color: Colors.white),
                           onPressed: () {
                             setState(() {
-                              _showCategories = !_showCategories; // Alternar visibilidad del menú
-                              _logger.i('Pulsado menu de categorias. _showCategories: $_showCategories'); // Log del estado
+                              _showCategories = !_showCategories; 
+                              _logger.i('Pulsado menu de categorias. _showCategories: $_showCategories'); 
                             });
                           },
                         ),
 
-                      // Acciones (como búsqueda, carrito, etc.)
                       Row(
                         children: [
                           IconButton(
@@ -97,14 +95,14 @@ class _BaseLayoutState extends State<BaseLayout> {
                             onPressed: () {
                               setState(() {
                                 _showSearchBar = !_showSearchBar; // Alternar visibilidad de la barra de búsqueda
-                                _logger.i('Pulsado boton busqueda. _showSearchBar: $_showSearchBar'); // Log del estado
+                                _logger.i('Pulsado boton busqueda. _showSearchBar: $_showSearchBar'); 
                               });
                             },
                           ),
                           IconButton(
                             icon: const Icon(Icons.shopping_cart, color: Colors.white),
                             onPressed: () {
-                              _logger.i('Navegando a carrito.'); // Log de navegación
+                              _logger.i('Navegando a carrito.'); 
                               context.go('/cart'); // Navegación al carrito
                             },
                           ),
@@ -114,7 +112,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                                 icon: const Icon(Icons.person, color: Colors.white), // Ícono de persona
                                 onPressed: () {
                                   if (authProvider.isLoggedIn) {
-                                    _logger.i('El usuario esta loggeado.'); // Log de usuario logueado
+                                    _logger.i('El usuario esta loggeado.'); 
                                     context.go('/my-account'); // Navegar a My Account si está logueado
                                   } else {
                                     _logger.i('El usuario no esta loggeado'); // Log de usuario no logueado
@@ -128,7 +126,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                       ),
                     ],
                   ),
-                  centerTitle: false, // Desactivar centrado del título
+                  centerTitle: false, 
                 ),
               ),
 
@@ -137,7 +135,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 duration: const Duration(milliseconds: 300), // Animación suave
                 height: _showSearchBar ? 60 : 0, // Mostrar u ocultar la barra
                 color: Colors.grey[900], // Mismo color que el header
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8), // Agregar padding inferior
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8), 
                 child: _showSearchBar
                     ? Row(
                         children: [
@@ -185,7 +183,6 @@ class _BaseLayoutState extends State<BaseLayout> {
             ],
           ),
 
-          // Menú desplegable de categorías
           if (_showCategories)
             Positioned(
               top: 80, // Justo debajo del header
@@ -229,12 +226,12 @@ class _BaseLayoutState extends State<BaseLayout> {
             mainAxisSize: MainAxisSize.min,
             children: [
               CircleAvatar(
-                radius: 20, // Tamaño más pequeño del círculo
+                radius: 20,
                 backgroundColor: Colors.grey[800], // Fondo gris oscuro
                 child: Icon(
                   platform['icon'] as IconData,
                   color: platform['color'] as Color, // Ícono en blanco
-                  size: 20, // Tamaño más pequeño del ícono
+                  size: 20, 
                 ),
               ),
               const SizedBox(height: 4),
@@ -242,7 +239,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 platform['name'] as String,
                 style: const TextStyle(
                   color: Colors.white, // Texto en blanco
-                  fontSize: 12, // Tamaño de texto más pequeño
+                  fontSize: 12, 
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -263,16 +260,16 @@ class _BaseLayoutState extends State<BaseLayout> {
     ];
 
     return Container(
-      color: Colors.grey[900], // Mismo color que el header
-      padding: const EdgeInsets.all(8.0), // Reducir el padding
+      color: Colors.grey[900], 
+      padding: const EdgeInsets.all(8.0), 
       child: GridView.builder(
         shrinkWrap: true, // Ajustar el tamaño al contenido
         physics: const NeverScrollableScrollPhysics(), // Desactivar el scroll
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2, // Número de columnas
-          crossAxisSpacing: 8.0, // Espaciado horizontal reducido
-          mainAxisSpacing: 8.0, // Espaciado vertical reducido
-          childAspectRatio: 2.5, // Relación de aspecto ajustada para hacerlo más compacto
+          crossAxisSpacing: 8.0, 
+          mainAxisSpacing: 8.0,
+          childAspectRatio: 2.5, 
         ),
         itemCount: platforms.length,
         itemBuilder: (context, index) {
@@ -280,20 +277,20 @@ class _BaseLayoutState extends State<BaseLayout> {
           return GestureDetector(
             onTap: () {
               setState(() {
-                _showCategories = false; // Ocultar el menú
+                _showCategories = false; 
               });
-              context.go('/category/${platform['name']}'); // Navegar a la plataforma seleccionada
+              context.go('/category/${platform['name']}'); 
             },
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.grey[800], // Fondo gris oscuro
-                borderRadius: BorderRadius.circular(6.0), // Bordes redondeados más pequeños
+                borderRadius: BorderRadius.circular(6.0), // Bordes redondeados
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(platform['icon'] as IconData, color: Colors.white, size: 24), // Ícono más pequeño
-                  const SizedBox(height: 4), // Reducir el espacio entre ícono y texto
+                  Icon(platform['icon'] as IconData, color: Colors.white, size: 24),
+                  const SizedBox(height: 4), 
                   Text(
                     platform['name'] as String,
                     style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), // Texto más pequeño

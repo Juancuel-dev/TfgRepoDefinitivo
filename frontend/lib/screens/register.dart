@@ -6,7 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 
 class RegisterPage extends StatefulWidget {
-  final void Function(String token)? onRegister; // Callback opcional para manejar el token después del registro
+  final void Function(String token)? onRegister; 
 
   const RegisterPage({super.key, this.onRegister});
 
@@ -24,13 +24,13 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _selectedCountry; // Variable para almacenar el país seleccionado
   final List<String> _passwordErrors = []; // Lista de errores de la contraseña
 
-  final AuthService _authService = AuthService(); // Instancia del servicio de autenticación
-  bool _isLoading = false; // Controla el estado de carga
+  final AuthService _authService = AuthService(); 
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _passwordController.addListener(_validatePassword); // Escuchar cambios en la contraseña
+    _passwordController.addListener(_validatePassword); 
   }
 
   @override
@@ -314,7 +314,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     backgroundColor: Colors.red,
                                   ),
                                 );
-                                return; // Detener el registro si la contraseña ha sido comprometida
+                                return; 
                               }
 
                               setState(() {
@@ -327,8 +327,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               final username = _usernameController.text.trim();
                               final age = int.parse(_ageController.text.trim());
                               final country = _selectedCountry!;
-                              print (country);
-                              print(age);
                               final success = await _authService.register(
                                 name,
                                 username,
@@ -472,11 +470,9 @@ class _RegisterPageState extends State<RegisterPage> {
         }
         return false; // La contraseña no ha sido encontrada
       } else {
-        print('Error al consultar la API de HIBP: ${response.statusCode}');
         return false; // Asumir que no está comprometida si hay un error
       }
     } catch (e) {
-      print('Error al consultar la API de HIBP: $e');
       return false; // Asumir que no está comprometida si hay un error
     }
   }

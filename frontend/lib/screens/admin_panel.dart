@@ -7,7 +7,7 @@ import 'package:flutter_auth_app/services/image_service.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:go_router/go_router.dart'; // Importación necesaria para la navegación
+import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
 
 
@@ -96,7 +96,7 @@ int _reloadTrigger = 0;
       'Operaciones de Usuario',
       'Operaciones de Productos',
       'Operaciones de Pedidos',
-      'Volver a Mi Cuenta', // Nueva categoría
+      'Volver a Mi Cuenta',
     ];
 
     return Container(
@@ -144,7 +144,7 @@ int _reloadTrigger = 0;
       case 'Operaciones de Productos':
         return _buildProductOperations();
       case 'Operaciones de Pedidos':
-        return _buildOrdersSection(); // Mostrar la sección de pedidos
+        return _buildOrdersSection(); 
       default:
         return const Center(
           child: Text(
@@ -157,11 +157,10 @@ int _reloadTrigger = 0;
 
   Widget _buildUserOperations() {
   return FutureBuilder<List<dynamic>>(
-    key: ValueKey(_reloadTrigger), // 🔑 clave cambia => se reconstruye
+    key: ValueKey(_reloadTrigger), 
     future: _fetchData('users'),
     builder: (context, snapshot) {
-      // ... lo mismo
-
+      
       if (snapshot.connectionState == ConnectionState.waiting) {
         return const Center(
           child: CircularProgressIndicator(color: Colors.blue),
@@ -277,7 +276,7 @@ int _reloadTrigger = 0;
                   crossAxisCount: crossAxisCount,
                   crossAxisSpacing: 16.0,
                   mainAxisSpacing: 16.0,
-                  childAspectRatio: 0.75, // Ajustado para mejor visualización
+                  childAspectRatio: 0.75, 
                 ),
                 shrinkWrap: true,
                 physics: const ClampingScrollPhysics(),
@@ -599,7 +598,7 @@ int _reloadTrigger = 0;
 
     if (response.statusCode == 204) {
   setState(() {
-    _reloadTrigger++; // 🔁 fuerza reconstrucción
+    _reloadTrigger++;
   });
 
   ScaffoldMessenger.of(context).showSnackBar(
@@ -626,7 +625,7 @@ int _reloadTrigger = 0;
         ),
       );
     } else {
-      // Opcional: mostrar éxito completo
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Usuario eliminado correctamente'),
@@ -792,7 +791,7 @@ int _reloadTrigger = 0;
             style: const TextStyle(color: Colors.white), // Texto blanco
             decoration: const InputDecoration(
               border: InputBorder.none, // Sin bordes
-              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8), // Espaciado interno
+              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8), 
             ),
           ),
         ),
@@ -863,10 +862,10 @@ class GameEntry {
   factory GameEntry.fromJson(Map<String, dynamic> json) {
     final game = json['game'] as Map<String, dynamic>; // Acceder al objeto 'game'
     return GameEntry(
-      name: game['name'] ?? 'Sin nombre', // Manejar valores nulos
-      precio: (game['precio'] as num?)?.toDouble() ?? 0.0, // Manejar valores nulos
-      consola: game['consola'] ?? 'Desconocida', // Manejar valores nulos
-      quantity: json['quantity'] as int? ?? 0, // Manejar valores nulos
+      name: game['name'] ?? 'Sin nombre', 
+      precio: (game['precio'] as num?)?.toDouble() ?? 0.0, 
+      consola: game['consola'] ?? 'Desconocida',
+      quantity: json['quantity'] as int? ?? 0, 
     );
   }
 }
