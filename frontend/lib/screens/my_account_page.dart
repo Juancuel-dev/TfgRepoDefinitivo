@@ -612,7 +612,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Precio Total: \$${order['precio'].toStringAsFixed(2)}',
+                              'Precio Total: ${order['precio'].toStringAsFixed(2)}€',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.white70,

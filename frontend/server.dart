@@ -4,7 +4,7 @@ import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_static/shelf_static.dart';
 
 void main() async {
-  final handler = Pipeline()
+  final handler = const Pipeline()
       .addMiddleware(fixContentType) // Middleware para corregir el Content-Type
       .addHandler(createStaticHandler('build/web', defaultDocument: 'index.html'));
 

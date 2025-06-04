@@ -191,7 +191,7 @@ class _SearchPageState extends State<SearchPage> {
                                                   ),
                                                   const SizedBox(height: 4),
                                                   Text(
-                                                    '\$${game.precio.toStringAsFixed(2)}',
+                                                    '${game.precio.toStringAsFixed(2)}€',
                                                     style: const TextStyle(
                                                       color: Colors.greenAccent,
                                                       fontSize: 14,

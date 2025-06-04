@@ -259,7 +259,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     child: isSubmitted
                         ? const Icon(
                             Icons.check_circle,
-                            key: const ValueKey('tick'),
+                            key: ValueKey('tick'),
                             color: Colors.green,
                             size: 100,
                           )
