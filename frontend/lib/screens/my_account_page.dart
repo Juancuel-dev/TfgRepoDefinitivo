@@ -306,7 +306,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
                     onTap: _showImagePickerDialog, // Cambiar imagen de perfil
                     child: CircleAvatar(
                       radius: 40,
-                      backgroundImage: userProfileImage ?? const AssetImage('images/default.jpg'),
+                      backgroundImage: userProfileImage ?? const AssetImage('assets/images/default.jpg'),
                     ),
                   ),
                   const SizedBox(width: 16),

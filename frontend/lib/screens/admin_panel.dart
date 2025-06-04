@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_auth_app/config/server_config.dart';
 import 'package:flutter_auth_app/screens/base_layout.dart';
 import 'package:flutter_auth_app/services/auth_provider.dart';
+import 'package:flutter_auth_app/services/auth_service.dart';
 import 'package:flutter_auth_app/services/image_service.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:go_router/go_router.dart'; // Importación necesaria para la navegación
 import 'package:logger/logger.dart';
+
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({Key? key}) : super(key: key);
@@ -17,6 +19,7 @@ class AdminPanel extends StatefulWidget {
 }
 
 class _AdminPanelState extends State<AdminPanel> {
+int _reloadTrigger = 0;
 
   final Logger _logger = Logger(
     level: Level.debug,
@@ -153,201 +156,261 @@ class _AdminPanelState extends State<AdminPanel> {
   }
 
   Widget _buildUserOperations() {
-    return FutureBuilder<List<dynamic>>(
-      future: _fetchData('users'),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.blue),
-          );
-        } else if (snapshot.hasError) {
-          return const Center(
-            child: Text('Error al cargar usuarios', style: TextStyle(color: Colors.red)),
-          );
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Text('No hay usuarios disponibles', style: TextStyle(color: Colors.white70)),
-          );
-        }
+  return FutureBuilder<List<dynamic>>(
+    key: ValueKey(_reloadTrigger), // 🔑 clave cambia => se reconstruye
+    future: _fetchData('users'),
+    builder: (context, snapshot) {
+      // ... lo mismo
 
-        final users = snapshot.data!;
-        return ListView.builder(
-          itemCount: users.length,
-          itemBuilder: (context, index) {
-            final user = users[index];
-            final int? imageId = user['imagen'] is int
-                ? user['imagen']
-                : int.tryParse(user['imagen'].toString());
-
-            return FutureBuilder<AssetImage>(
-              future: imageId != null
-                  ? ImageService.loadUserProfileImage(imageId, context)
-                  : Future.value(const AssetImage('assets/images/default.jpg')),
-              builder: (context, imageSnapshot) {
-                final AssetImage image = imageSnapshot.data ?? const AssetImage('assets/images/default.jpg');
-
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  color: Colors.grey[850],
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: image,
-                    ),
-                    title: Text(
-                      user['nombre'] ?? 'Sin nombre',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Usuario: ${user['username']}', style: const TextStyle(color: Colors.white70)),
-                        Text('Email: ${user['email']}', style: const TextStyle(color: Colors.white70)),
-                        Text('Edad: ${user['edad']}', style: const TextStyle(color: Colors.white70)),
-                        Text('País: ${user['pais']}', style: const TextStyle(color: Colors.white70)),
-                      ],
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deleteData('users', user['id']),
-                    ),
-                    isThreeLine: true,
-                  ),
-                );
-              },
-            );
-          },
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(
+          child: CircularProgressIndicator(color: Colors.blue),
         );
-      },
-    );
-  }
+      } else if (snapshot.hasError) {
+        return const Center(
+          child: Text('Error al cargar usuarios', style: TextStyle(color: Colors.red)),
+        );
+      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        return const Center(
+          child: Text('No hay usuarios disponibles', style: TextStyle(color: Colors.white70)),
+        );
+      }
+
+      final users = snapshot.data!;
+      final authService = AuthService();
+
+      return FutureBuilder<String?>(
+        future: authService.getToken(),
+        builder: (context, tokenSnapshot) {
+          if (!tokenSnapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final token = tokenSnapshot.data!;
+          final currentUsername = authService.getClaimFromToken(token, "username");
+
+          return ListView.builder(
+            itemCount: users.length,
+            itemBuilder: (context, index) {
+              final user = users[index];
+              final int? imageId = user['imagen'] is int
+                  ? user['imagen']
+                  : int.tryParse(user['imagen'].toString());
+
+              final isSelf = user['username'] == currentUsername;
+
+              return FutureBuilder<AssetImage>(
+                future: imageId != null
+                    ? ImageService.loadUserProfileImage(imageId, context)
+                    : Future.value(const AssetImage('assets/images/default.jpg')),
+                builder: (context, imageSnapshot) {
+                  final AssetImage image = imageSnapshot.data ?? const AssetImage('assets/images/default.jpg');
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    color: Colors.grey[850],
+                    child: ListTile(
+                      leading: CircleAvatar(backgroundImage: image),
+                      title: Text(
+                        user['nombre'] ?? 'Sin nombre',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Usuario: ${user['username']}', style: const TextStyle(color: Colors.white70)),
+                          Text('Email: ${user['email']}', style: const TextStyle(color: Colors.white70)),
+                          Text('Edad: ${user['edad']}', style: const TextStyle(color: Colors.white70)),
+                          Text('País: ${user['pais']}', style: const TextStyle(color: Colors.white70)),
+                        ],
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete, color: isSelf ? Colors.grey : Colors.red),
+                        onPressed: isSelf ? null : () => _deleteData('users', user['id']),
+                      ),
+                      isThreeLine: true,
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
+      );
+    },
+  );
+}
 
   Widget _buildProductOperations() {
-    return Stack(
-      children: [
-        FutureBuilder<List<dynamic>>(
-          future: _fetchData('games'),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: Colors.blue));
-            } else if (snapshot.hasError) {
-              return const Center(
-                child: Text('Error al cargar productos', style: TextStyle(color: Colors.red)),
-              );
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(
-                child: Text('No hay productos disponibles', style: TextStyle(color: Colors.white70)),
-              );
-            }
+  return Stack(
+    children: [
+      FutureBuilder<List<dynamic>>(
+        future: _fetchData('games'),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: Colors.blue));
+          } else if (snapshot.hasError) {
+            return const Center(
+              child: Text('Error al cargar productos', style: TextStyle(color: Colors.red)),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text('No hay productos disponibles', style: TextStyle(color: Colors.white70)),
+            );
+          }
 
-            final products = snapshot.data!;
-            return GridView.builder(
-              padding: const EdgeInsets.all(16.0),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // Número de columnas
-                crossAxisSpacing: 16.0, // Espaciado horizontal
-                mainAxisSpacing: 16.0, // Espaciado vertical
-                childAspectRatio: 1 / 1.8, // Relación de aspecto ajustada para mostrar más detalles
+          final products = snapshot.data!;
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              // Determinar el número de columnas basado en el ancho de la pantalla
+              final crossAxisCount = constraints.maxWidth > 1200 
+                ? 4 
+                : constraints.maxWidth > 800 
+                  ? 3 
+                  : constraints.maxWidth > 600 
+                    ? 2 
+                    : 1;
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(16.0),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 16.0,
+                  mainAxisSpacing: 16.0,
+                  childAspectRatio: 0.75, // Ajustado para mejor visualización
+                ),
+                shrinkWrap: true,
+                physics: const ClampingScrollPhysics(),
+                itemCount: products.length,
+                itemBuilder: (context, index) {
+  final product = products[index];
+  final productName = (product['name'] ?? 'sin-nombre').toString().replaceAll(' ', '-');
+
+  return InkWell(
+    borderRadius: BorderRadius.circular(8),
+    onTap: () {
+      context.go('/details/$productName');
+    },
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        borderRadius: BorderRadius.circular(8.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 120,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                image: DecorationImage(
+                  image: NetworkImage(product['imagen'] ?? ''),
+                  fit: BoxFit.cover,
+                ),
               ),
-              shrinkWrap: true, // Add this
-              physics: const ClampingScrollPhysics(), // Add this
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                final product = products[index];
-                return Container(
+            ),
+            const SizedBox(height: 8),
+            Text(
+              product['name'] ?? 'Sin nombre',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const SizedBox(width: 4),
+                Text(
+                  '${product['precio']?.toStringAsFixed(2) ?? 'N/A'}€',
+                  style: const TextStyle(color: Colors.greenAccent, fontSize: 14),
+                ),
+                const Spacer(),
+                const Icon(Icons.star, color: Colors.amber, size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  '${product['metacritic'] ?? 'N/A'}',
+                  style: const TextStyle(color: Colors.amber, fontSize: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.videogame_asset, color: Colors.blueAccent, size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  product['consola'] ?? 'N/A',
+                  style: const TextStyle(color: Colors.blueAccent, fontSize: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Text(
+                  product['descripcion'] ?? 'Sin descripción',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: GestureDetector(
+                onTap: () => _deleteData('games', product['id']),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
                   decoration: BoxDecoration(
-                    color: Colors.grey[800], // Fondo oscuro para la tarjeta
-                    borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(4.0),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          product['name'] ?? 'Sin nombre',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis, // Cortar texto si es muy largo
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Precio: ${product['precio']?.toStringAsFixed(2) ?? 'N/A'}€',
-                          style: const TextStyle(color: Colors.greenAccent, fontSize: 14),
-                        ),
-                        const SizedBox(height: 8),
-                        Flexible(
-                          child: Text(
-                            'Metacritic: ${product['metacritic'] ?? 'N/A'}',
-                            style: const TextStyle(color: Colors.white70, fontSize: 14),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Consola: ${product['consola'] ?? 'N/A'}',
-                          style: const TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                        const SizedBox(height: 8),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Text(
-                              'Descripción: ${product['descripcion'] ?? 'Sin descripción'}',
-                              style: const TextStyle(color: Colors.white70, fontSize: 12),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            GestureDetector(
-                              onTap: () => _deleteData('games', product['id']),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                                decoration: BoxDecoration(
-                                  color: Colors.red, // Fondo rojo para el botón
-                                  borderRadius: BorderRadius.circular(4.0),
-                                ),
-                                child: const Text(
-                                  'Eliminar',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                  child: const Text(
+                    'Eliminar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                );
-              },
-            );
-          },
-        ),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: GestureDetector(
-            onTap: () => _showAddGameDialog(),
-            child: Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.blue, // Fondo azul para el botón flotante
-                borderRadius: BorderRadius.circular(50.0),
+                ),
               ),
-              child: const Icon(Icons.add, color: Colors.white, size: 24),
             ),
-          ),
+          ],
         ),
-      ],
-    );
-  }
+      ),
+    ),
+  );
+},
+              );
+            },
+          );
+        },
+      ),
+      Positioned(
+        bottom: 16,
+        right: 16,
+        child: FloatingActionButton(
+          onPressed: () => _showAddGameDialog(),
+          backgroundColor: Colors.blue,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _buildOrdersSection() {
     return SingleChildScrollView(
@@ -513,62 +576,87 @@ class _AdminPanelState extends State<AdminPanel> {
   }
 
   Future<void> _deleteData(String endpoint, String id) async {
-    final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+  final authService = AuthService();
+  final token = await authService.getToken();
 
-    try {
-      // Primera solicitud DELETE
-      final response = await http.delete(
-        Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint/$id'),
-        headers: {'Authorization': 'Bearer $token'},
+  if (token == null || token.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Token no encontrado. Inicia sesión nuevamente.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  try {
+    print (token);
+    final response = await http.delete(
+      
+      Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 204) {
+  setState(() {
+    _reloadTrigger++; // 🔁 fuerza reconstrucción
+  });
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Usuario eliminado correctamente'),
+      backgroundColor: Colors.green,
+    ),
+  );
+
+  if (endpoint == 'users') {
+    final authResponse = await http.delete(
+      Uri.parse('${ServerConfig.serverIp}/gateway/auth/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (authResponse.statusCode != 204) {
+      debugPrint('Error deleting user in auth: ${authResponse.statusCode}');
+
+      // Mostrar advertencia leve, sin tratarlo como fallo total
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Usuario eliminado, pero no completamente del sistema (código: ${authResponse.statusCode})'),
+          backgroundColor: Colors.orange,
+        ),
       );
-
-      if (response.statusCode == 204) {
-        // Si el endpoint is 'users', realiza la segunda solicitud DELETE
-        if (endpoint == 'users') {
-          final authResponse = await http.delete(
-            Uri.parse('${ServerConfig.serverIp}/gateway/auth/$id'),
-            headers: {'Authorization': 'Bearer $token'},
-          );
-
-          if (authResponse.statusCode != 204) {
-            print('Error deleting user in auth: ${authResponse.statusCode}');
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Error al eliminar el usuario en auth'),
-                backgroundColor: Colors.red,
-              ),
-            );
-            return;
-          }
-        }
-
-        // Mostrar mensaje de éxito dependiendo del endpoint
-        setState(() {}); // Refrescar la UI
-        final successMessage = endpoint == 'users'
-            ? 'Usuario eliminado con éxito'
-            : 'Juego eliminado con éxito';
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(successMessage), backgroundColor: Colors.green),
-        );
-      } else {
-        final errorMessage = endpoint == 'users'
-            ? 'Error al eliminar el usuario'
-            : 'Error al eliminar el juego';
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-        );
-      }
-    } catch (e) {
+    } else {
+      // Opcional: mostrar éxito completo
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Error de conexión al servidor'),
-          backgroundColor: Colors.red,
+          content: Text('Usuario eliminado correctamente'),
+          backgroundColor: Colors.green,
         ),
       );
     }
   }
+} else {
+  debugPrint('Error al eliminar del endpoint $endpoint: ${response.statusCode}');
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('Error al eliminar: ${response.statusCode}'),
+      backgroundColor: Colors.red,
+    ),
+  );
+}
+
+  } catch (e) {
+    debugPrint('Exception al eliminar: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error inesperado al eliminar'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
+
+
 
   Future<void> _addGame(
       String name,
