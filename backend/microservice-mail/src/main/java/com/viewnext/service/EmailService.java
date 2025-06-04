@@ -1,7 +1,6 @@
 package com.viewnext.service;
 
 import com.viewnext.model.MailRequest;
-import com.viewnext.model.MailResponse;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;

@@ -48,24 +48,6 @@ public class JwtService {
         return null;
     }
 
-    public String getUsernameFromToken(String token) {
-        AuthenticationResponse auth = callAuthMicroServiceAuth(token);
-        return auth != null ? auth.getUsername() : null;
-    }
-
-    public String getIdFromToken(String token) {
-        AuthenticationResponse auth = callAuthMicroServiceAuth(token);
-        return auth != null ? auth.getClientId() : null;
-    }
-
-    public SimpleGrantedAuthority getRoleFromToken(String token) {
-        AuthenticationResponse auth = callAuthMicroServiceAuth(token);
-        if (auth != null && !auth.getAuthorities().isEmpty()) {
-            return new SimpleGrantedAuthority(auth.getAuthorities().get(0));
-        }
-        throw new RuntimeException("No authorities found in token");
-    }
-
     private AuthenticationResponse callAuthMicroServiceAuth(String token) {
         HttpHeaders headers = new HttpHeaders();
         String cleanToken = token.replace("Bearer ", "");

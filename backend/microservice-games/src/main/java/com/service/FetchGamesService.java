@@ -28,11 +28,10 @@ public class FetchGamesService {
         for (Map<String, Object> result : results) {
             Game game = new Game();
             game.setName((String) result.get("name"));
-            game.setPrecio((float) (Math.random()*59+1)); // Valor predeterminado, ya que no está en la respuesta
+            game.setPrecio((float) (Math.random()*59+1));
             game.setMetacritic((Integer) result.get("metacritic"));
             game.setImagen((String) result.get("background_image"));
 
-            // Extraer la primera consola de la lista de plataformas
             List<Map<String, Object>> platforms = (List<Map<String, Object>>) result.get("platforms");
             if (platforms != null && !platforms.isEmpty()) {
                 Map<String, Object> platform = (Map<String, Object>) platforms.get(0).get("platform");

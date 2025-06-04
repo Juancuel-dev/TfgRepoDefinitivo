@@ -88,7 +88,6 @@ public class JwtService {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (JwtException e) {
-            // Maneja la excepción
             return null;
         }
     }
