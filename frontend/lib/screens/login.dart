@@ -137,20 +137,25 @@ class _LoginPageState extends State<LoginPage> {
 
       _logger.i('Inicio de sesión exitoso. Token recibido.');
 
-      // Guardar token en AuthProvider (que guarda en SharedPreferences)
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.setToken(token);
 
-      // Navegar a la página principal
       context.go('/');
-        } catch (e) {
+    } catch (e) {
       _logger.e('Error inesperado durante el inicio de sesión', e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+
+      if (e.toString().contains('403')) {
+        setState(() {
+          _errorMessage = 'Usuario o contraseña incorrectos.';
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -159,6 +164,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 },
+
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color.fromARGB(255, 98, 150, 38),
                             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),

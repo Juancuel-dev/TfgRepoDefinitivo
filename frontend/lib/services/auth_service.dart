@@ -15,33 +15,35 @@ class AuthService {
   Stream<bool> get authStatusStream => _authStreamController.stream;
 
   Future<String> login(String username, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$apiUrl/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': username, 'password': password}),
-      ).timeout(const Duration(seconds: 30));
+  try {
+    final response = await http.post(
+      Uri.parse('$apiUrl/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username, 'password': password}),
+    ).timeout(const Duration(seconds: 30));
 
-      if (response.statusCode == 200) {
-        final responseBody = jsonDecode(response.body);
-        final token = responseBody['token'] as String;
-        
-        // Validar token antes de guardarlo
-        if (_isTokenValid(token)) {
-          await _saveSession(token);
-          _authStreamController.add(true);
-          return token;
-        } else {
-          throw Exception('Invalid token received');
-        }
+    if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      final token = responseBody['token'] as String;
+
+      if (_isTokenValid(token)) {
+        await _saveSession(token);
+        _authStreamController.add(true);
+        return token;
       } else {
-        throw Exception('Login failed: ${response.statusCode}');
+        throw Exception('Invalid token received');
       }
-    } catch (e) {
-      _authStreamController.add(false);
-      rethrow;
+    } else if (response.statusCode == 403) {
+      throw Exception('403');  // Lanzamos excepción específica para 403
+    } else {
+      throw Exception('Login failed: ${response.statusCode}');
     }
+  } catch (e) {
+    _authStreamController.add(false);
+    rethrow;
   }
+}
+
 
   Future<bool> register(String nombre, String username, String password, 
                        String email, int edad, String pais) async {
