@@ -69,15 +69,8 @@ class GamesService {
       // Decodificar como UTF-8
       final body = utf8.decode(response.bodyBytes);
       List<dynamic> data = jsonDecode(body);
-      List<Game> games = data.map((dynamic item) {
-        Game game = Game.fromJson(item);
-        // Generar un descuento aleatorio entre 15% y 50%
-        final random = Random();
-        final discountPercentage = 15 + random.nextInt(36); // 15% a 50%
-        game.precio = (game.precio * (1 - discountPercentage / 100)).toDouble();
-        return game;
-      }).toList();
-
+      List<Game> games = data.map((dynamic item) => Game.fromJson(item)).toList();
+        
       // Mezclar los juegos en un orden aleatorio
       games.shuffle(Random());
 
