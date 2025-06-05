@@ -24,7 +24,7 @@ Middleware fixContentType = (Handler innerHandler) {
     } else if (request.url.path.endsWith('.css')) {
       contentType = 'text/css';
     } else {
-      return response; // No modificar otros tipos
+      return response; 
     }
 
     return response.change(headers: {'Content-Type': contentType});
