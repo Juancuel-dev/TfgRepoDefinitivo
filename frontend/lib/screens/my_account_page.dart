@@ -386,29 +386,33 @@ class _MyAccountPageState extends State<MyAccountPage> {
           const SizedBox(height: 16),
           // Botón "Cerrar Sesión"
           Center(
-            child: GestureDetector(
-              onTap: () {
-                final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                authProvider.logout(); 
-                context.go('/login');
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Cerrar Sesión',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click, // Cambia el puntero a una mano
+              child: GestureDetector(
+                onTap: () {
+                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                  authProvider.logout(); 
+                  context.go('/login');
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Cerrar Sesión',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
+
         ],
       ),
     );
