@@ -207,18 +207,20 @@ class _BaseLayoutState extends State<BaseLayout> {
 
   // Método para construir las categorías de plataformas en pantallas grandes
   Widget _buildPlatformCategories(BuildContext context) {
-    final platforms = [
-      {'name': 'PS5', 'icon': Icons.sports_esports, 'color': Colors.white},
-      {'name': 'PC', 'icon': Icons.computer, 'color': Colors.white},
-      {'name': 'XBOX', 'icon': Icons.videogame_asset, 'color': Colors.white},
-      {'name': 'SWITCH', 'icon': Icons.gamepad, 'color': Colors.white},
-    ];
+  final platforms = [
+    {'name': 'PS5', 'icon': Icons.sports_esports, 'color': Colors.white},
+    {'name': 'PC', 'icon': Icons.computer, 'color': Colors.white},
+    {'name': 'XBOX', 'icon': Icons.videogame_asset, 'color': Colors.white},
+    {'name': 'SWITCH', 'icon': Icons.gamepad, 'color': Colors.white},
+  ];
 
-    return Wrap(
-      spacing: 16.0, // Espacio horizontal entre elementos
-      alignment: WrapAlignment.center, // Centrar los elementos horizontalmente
-      children: platforms.map((platform) {
-        return GestureDetector(
+  return Wrap(
+    spacing: 16.0, // Espacio horizontal entre elementos
+    alignment: WrapAlignment.center, // Centrar los elementos horizontalmente
+    children: platforms.map((platform) {
+      return MouseRegion(
+        cursor: SystemMouseCursors.click, // Cambia el puntero a una mano
+        child: GestureDetector(
           onTap: () {
             context.go('/category/${platform['name']}'); // Navegar a la plataforma seleccionada
           },
@@ -231,7 +233,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 child: Icon(
                   platform['icon'] as IconData,
                   color: platform['color'] as Color, // Ícono en blanco
-                  size: 20, 
+                  size: 20,
                 ),
               ),
               const SizedBox(height: 4),
@@ -239,16 +241,18 @@ class _BaseLayoutState extends State<BaseLayout> {
                 platform['name'] as String,
                 style: const TextStyle(
                   color: Colors.white, // Texto en blanco
-                  fontSize: 12, 
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-        );
-      }).toList(),
-    );
-  }
+        ),
+      );
+    }).toList(),
+  );
+}
+
 
   // Método para construir el menú desplegable de categorías en móviles
   Widget _buildDropdownCategories(BuildContext context) {
