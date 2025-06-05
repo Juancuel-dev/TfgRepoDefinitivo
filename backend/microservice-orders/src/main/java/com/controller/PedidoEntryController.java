@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -25,6 +26,14 @@ public class PedidoEntryController {
     public ResponseEntity<List<PedidoEntry>> findAll(@AuthenticationPrincipal Jwt jwt) {
         try {
             return ResponseEntity.ok(service.findAll(jwt));
+        } catch (UnauthorizedException ue) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+    @GetMapping
+    public ResponseEntity<List<PedidoEntry>> findAllByDate(@AuthenticationPrincipal Jwt jwt, LocalDate date) {
+        try {
+            return ResponseEntity.ok(service.findAllByDate(jwt,date));
         } catch (UnauthorizedException ue) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }

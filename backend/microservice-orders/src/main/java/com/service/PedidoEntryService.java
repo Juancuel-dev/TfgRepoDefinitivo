@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,6 +39,13 @@ public class PedidoEntryService {
     public List<PedidoEntry> findAll(Jwt jwt) throws UnauthorizedException {
         if (jwt.getClaim("role").equals("ADMIN")) {
             return repository.findAll();
+        } else {
+            throw new UnauthorizedException("No estas autorizado para realizar esta accion");
+        }
+    }
+    public List<PedidoEntry> findAllByDate(Jwt jwt, LocalDate date) throws UnauthorizedException {
+        if (jwt.getClaim("role").equals("ADMIN")) {
+            return repository.findAllByFecha(date);
         } else {
             throw new UnauthorizedException("No estas autorizado para realizar esta accion");
         }
