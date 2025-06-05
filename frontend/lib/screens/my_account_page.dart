@@ -298,11 +298,14 @@ class _MyAccountPageState extends State<MyAccountPage> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: _showImagePickerDialog, // Cambiar imagen de perfil
-                    child: CircleAvatar(
-                      radius: 40,
-                      backgroundImage: userProfileImage ?? const AssetImage('assets/images/default.jpg'),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click, // Cambia el puntero a una mano
+                    child: GestureDetector(
+                      onTap: _showImagePickerDialog, // Cambiar imagen de perfil
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundImage: userProfileImage ?? const AssetImage('assets/images/default.jpg'),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
