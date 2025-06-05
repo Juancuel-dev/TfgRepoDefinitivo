@@ -30,10 +30,11 @@ public class PedidoEntryController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
-    @GetMapping
-    public ResponseEntity<List<PedidoEntry>> findAllByDate(@AuthenticationPrincipal Jwt jwt, LocalDate date) {
+    @GetMapping("/date/{date}")
+    public ResponseEntity<List<PedidoEntry>> findAllByDate(@AuthenticationPrincipal Jwt jwt, @PathVariable String date) {
+        LocalDate localDate = LocalDate.parse(date);
         try {
-            return ResponseEntity.ok(service.findAllByDate(jwt,date));
+            return ResponseEntity.ok(service.findAllByDate(jwt,localDate));
         } catch (UnauthorizedException ue) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }

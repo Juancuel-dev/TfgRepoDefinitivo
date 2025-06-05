@@ -20,7 +20,8 @@ class AdminPanel extends StatefulWidget {
 
 class _AdminPanelState extends State<AdminPanel> {
 int _reloadTrigger = 0;
-
+List<OrderEntry> dateFilteredOrders = [];
+DateTime? selectedDate;
   final Logger _logger = Logger(
     level: Level.debug,
     printer: PrettyPrinter(),
@@ -411,99 +412,208 @@ int _reloadTrigger = 0;
   );
 }
 
-  Widget _buildOrdersSection() {
-    return SingleChildScrollView(
+Widget _buildOrdersSection() {
+  return DefaultTabController(
+    length: 2,
+    child: Column(
+      children: [
+        const TabBar(
+          tabs: [
+            Tab(text: 'Todos'),
+            Tab(text: 'Por Fecha'),
+          ],
+          labelColor: Colors.white,  
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: Colors.blue,
+        ),
+        Expanded(
+          child: TabBarView(
+            children: [
+              // TAB 1: Todos los pedidos
+              _buildAllOrdersTab(),
+              // TAB 2: Pedidos por fecha
+              _buildDateFilteredOrdersTab(),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildAllOrdersTab() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const SizedBox(height: 12),
+      const Text(
+        'Pedidos de Todos los Clientes',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Expanded(
+        child: userOrders.isEmpty
+            ? const Center(
+                child: Text(
+                  'No hay pedidos realizados.',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              )
+            : ListView.builder(
+                itemCount: userOrders.length,
+                itemBuilder: (context, index) {
+                  final order = userOrders[index];
+                  return _buildOrderCard(order);
+                },
+              ),
+      ),
+    ],
+  );
+}
+
+Widget _buildDateFilteredOrdersTab() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const SizedBox(height: 12),
+      ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+        ),
+        onPressed: () async {
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: selectedDate ?? DateTime.now(),
+            firstDate: DateTime(2020),
+            lastDate: DateTime.now(),
+            builder: (context, child) {
+              return Theme(data: ThemeData.dark(), child: child!);
+            },
+          );
+          if (picked != null) {
+            await _fetchOrdersByDate(picked);
+          }
+        },
+        child: Text(
+          selectedDate == null
+              ? 'Seleccionar Fecha'
+              : 'Fecha seleccionada: ${selectedDate!.toLocal().toString().split(' ')[0]}',
+        ),
+      ),
+      const SizedBox(height: 12),
+      Expanded(
+        child: dateFilteredOrders.isEmpty
+            ? Center(
+                child: Text(
+                  selectedDate == null
+                      ? 'Seleccione una fecha para ver los pedidos'
+                      : 'No hay pedidos para esta fecha.',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              )
+            : ListView.builder(
+                itemCount: dateFilteredOrders.length,
+                itemBuilder: (context, index) {
+                  final order = dateFilteredOrders[index];
+                  return _buildOrderCard(order);
+                },
+              ),
+      ),
+    ],
+  );
+}
+
+Future<void> _fetchOrdersByDate(DateTime date) async {
+  final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
+  final String dateString = date.toIso8601String().split('T')[0];
+
+  final response = await http.get(
+    Uri.parse('${ServerConfig.serverIp}/gateway/orders/date/$dateString'),
+    headers: {'Authorization': 'Bearer $token'},
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+    setState(() {
+      dateFilteredOrders = data.map((json) => OrderEntry.fromJson(json)).toList();
+      selectedDate = date;
+    });
+  } else {
+    setState(() {
+      dateFilteredOrders = [];
+    });
+  }
+}
+
+Widget _buildOrderCard(OrderEntry order) {
+  return Card(
+    color: Colors.grey[800],
+    margin: const EdgeInsets.symmetric(vertical: 8.0),
+    child: Padding(
+      padding: const EdgeInsets.all(12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Pedidos de Todos los Clientes',
-            style: TextStyle(
-              fontSize: 18,
+          Text(
+            'Pedido ID: ${order.orderId}',
+            style: const TextStyle(
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
+          const SizedBox(height: 4),
+          Text(
+            'Cliente ID: ${order.clientId}',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Fecha: ${order.fecha.toLocal()}',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Precio Total: ${order.precio.toStringAsFixed(2)}€',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.white70,
+            ),
+          ),
           const SizedBox(height: 8),
-          userOrders.isEmpty
-              ? const Text(
-                  'No hay pedidos realizados.',
-                  style: TextStyle(color: Colors.white70),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: userOrders.length,
-                  itemBuilder: (context, index) {
-                    final order = userOrders[index];
-                    return Card(
-                      color: Colors.grey[800],
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Pedido ID: ${order.orderId}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Cliente ID: ${order.clientId}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Fecha: ${order.fecha.toLocal()}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Precio Total: ${order.precio.toStringAsFixed(2)}€',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Juegos:',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            ...order.games.map((game) {
-                              return Text(
-                                '- ${game.name} (${game.consola}) - ${game.precio.toStringAsFixed(2)}€ (x${game.quantity})',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white70,
-                                ),
-                              );
-                            }).toList(),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+          const Text(
+            'Juegos:',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          ...order.games.map((game) {
+            return Text(
+              '- ${game.name} (${game.consola}) - ${game.precio.toStringAsFixed(2)}€ (x${game.quantity})',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.white70,
+              ),
+            );
+          }).toList(),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Future<List<dynamic>> _fetchData(String endpoint) async {
     final token = Provider.of<AuthProvider>(context, listen: false).jwtToken;
@@ -520,7 +630,6 @@ int _reloadTrigger = 0;
         throw Exception('Error al obtener datos de $endpoint');
       }
     } catch (e) {
-      print('Error fetching data from $endpoint: $e');
       throw Exception('Error al obtener datos de $endpoint');
     }
   }
@@ -589,7 +698,6 @@ int _reloadTrigger = 0;
   }
 
   try {
-    print (token);
     final response = await http.delete(
       
       Uri.parse('${ServerConfig.serverIp}/gateway/$endpoint/$id'),
@@ -697,7 +805,6 @@ int _reloadTrigger = 0;
         );
       }
     } catch (e) {
-      print('Error adding game: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error de conexión al servidor'), backgroundColor: Colors.red),
       );
